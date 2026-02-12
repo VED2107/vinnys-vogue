@@ -48,50 +48,65 @@ export async function POST(req: Request) {
     });
 
     // ── Handle events ──────────────────────────────────────────────
-    // Razorpay nests the entity inside payload.payload.payment.entity
-    const entity =
-        (
-            (payload.payload as Record<string, unknown>)?.payment as Record<
+    const inner = payload.payload as Record<string, unknown> | undefined;
+
+    if (eventType === "refund.processed") {
+        // Refund events nest data under payload.refund.entity
+        const paymentId = (
+            (inner?.refund as Record<string, unknown>)?.entity as Record<
                 string,
                 unknown
             >
-        )?.entity as Record<string, unknown> | undefined;
+        )?.payment_id as string | undefined;
 
-    const razorpayOrderId = entity?.order_id as string | undefined;
+        if (!paymentId) {
+            return new Response("Missing payment_id", { status: 400 });
+        }
 
-    if (razorpayOrderId) {
-        switch (eventType) {
-            case "payment.captured": {
-                await supabase
-                    .from("orders")
-                    .update({
-                        payment_status: "paid",
-                        status: "confirmed",
-                        razorpay_payment_id: entity?.id as string,
-                    })
-                    .eq("razorpay_order_id", razorpayOrderId);
-                break;
+        await supabase
+            .from("orders")
+            .update({
+                payment_status: "refunded",
+                status: "cancelled",
+            })
+            .eq("razorpay_payment_id", paymentId);
+    } else {
+        // Payment events nest data under payload.payment.entity
+        const entity = (
+            (inner?.payment as Record<string, unknown>)?.entity as Record<
+                string,
+                unknown
+            >
+        ) as Record<string, unknown> | undefined;
+
+        const razorpayOrderId = entity?.order_id as string | undefined;
+
+        if (razorpayOrderId) {
+            switch (eventType) {
+                case "payment.captured": {
+                    await supabase
+                        .from("orders")
+                        .update({
+                            payment_status: "paid",
+                            status: "confirmed",
+                            razorpay_payment_id: entity?.id as string,
+                        })
+                        .eq("razorpay_order_id", razorpayOrderId);
+                    break;
+                }
+
+                case "payment.failed": {
+                    await supabase
+                        .from("orders")
+                        .update({ payment_status: "failed" })
+                        .eq("razorpay_order_id", razorpayOrderId);
+                    break;
+                }
+
+                default:
+                    // Unhandled event — already logged above
+                    break;
             }
-
-            case "payment.failed": {
-                await supabase
-                    .from("orders")
-                    .update({ payment_status: "failed" })
-                    .eq("razorpay_order_id", razorpayOrderId);
-                break;
-            }
-
-            case "refund.processed": {
-                await supabase
-                    .from("orders")
-                    .update({ payment_status: "refunded" })
-                    .eq("razorpay_order_id", razorpayOrderId);
-                break;
-            }
-
-            default:
-                // Unhandled event — already logged above
-                break;
         }
     }
 
