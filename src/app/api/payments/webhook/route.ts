@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 /**
@@ -51,25 +52,29 @@ export async function POST(req: Request) {
     const inner = payload.payload as Record<string, unknown> | undefined;
 
     if (eventType === "refund.processed") {
-        // Refund events nest data under payload.refund.entity
-        const paymentId = (
-            (inner?.refund as Record<string, unknown>)?.entity as Record<
-                string,
-                unknown
-            >
-        )?.payment_id as string | undefined;
+        const paymentId =
+            (inner?.refund as Record<string, Record<string, unknown>>)?.entity
+                ?.payment_id as string | undefined;
 
         if (!paymentId) {
-            return new Response("Missing payment_id", { status: 400 });
+            console.error("Refund webhook missing payment_id");
+            return NextResponse.json(
+                { error: "Missing payment_id" },
+                { status: 400 },
+            );
         }
 
-        await supabase
+        const { error } = await supabase
             .from("orders")
             .update({
                 payment_status: "refunded",
                 status: "cancelled",
             })
             .eq("razorpay_payment_id", paymentId);
+
+        if (error) {
+            console.error("Refund update failed:", error);
+        }
     } else {
         // Payment events nest data under payload.payment.entity
         const entity = (
