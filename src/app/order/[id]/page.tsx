@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatMoney } from "@/lib/format";
 import { getProductImagePublicUrl } from "@/lib/product-images";
 import { getPaymentStatusStyles } from "@/lib/payment-status";
+import PayNowButton from "@/components/pay-now-button";
 
 type OrderItemProduct = {
     id: string;
@@ -182,6 +183,13 @@ export default async function OrderConfirmationPage({
                         </span>
                     </div>
                 </div>
+
+                {/* Pay Now (only for unpaid orders) */}
+                {order.payment_status === "unpaid" && (
+                    <div className="mt-8 text-center animate-fade-in">
+                        <PayNowButton orderId={order.id} userEmail={user.email} />
+                    </div>
+                )}
 
                 {/* Continue shopping */}
                 <div className="mt-8 text-center animate-fade-in">
