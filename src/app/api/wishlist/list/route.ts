@@ -9,6 +9,11 @@ type WishlistProductRow = {
   image_path: string | null;
 };
 
+type WishlistQueryRow = {
+  product_id: string;
+  products: WishlistProductRow[] | null;
+};
+
 export async function GET() {
   try {
     const supabase = createSupabaseServerClient();
@@ -31,19 +36,21 @@ export async function GET() {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const items = (data ?? [])
+    const items = ((data ?? []) as WishlistQueryRow[])
       .map((row) => {
-        const product = (row as { products: WishlistProductRow | null }).products;
-        if (!product) return null;
+        if (!row.products || row.products.length === 0) return null;
+
+        const product = row.products[0];
+
         return {
           id: product.id,
           title: product.title,
-          price: product.price_cents,
+          price_cents: product.price_cents,
           currency: product.currency,
           image_path: product.image_path,
         };
       })
-      .filter(Boolean);
+      .filter((v): v is NonNullable<typeof v> => v !== null);
 
     return NextResponse.json({ items });
   } catch (err) {

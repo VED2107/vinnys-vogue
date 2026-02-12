@@ -12,7 +12,7 @@ type WishlistRow = {
     price_cents: number;
     currency: string;
     image_path: string | null;
-  } | null;
+  }[] | null;
 };
 
 export default async function WishlistPage() {
@@ -46,8 +46,11 @@ export default async function WishlistPage() {
 
   const rows = (data ?? []) as WishlistRow[];
   const items = rows
-    .map((r) => r.products)
-    .filter(Boolean) as NonNullable<WishlistRow["products"]>[];
+    .map((r) => {
+      if (!r.products || r.products.length === 0) return null;
+      return r.products[0];
+    })
+    .filter((v): v is NonNullable<typeof v> => v !== null);
 
   async function removeItem(formData: FormData) {
     "use server";
