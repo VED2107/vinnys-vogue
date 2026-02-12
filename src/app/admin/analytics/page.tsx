@@ -2,47 +2,10 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatMoney } from "@/lib/format";
 
-// Supabase JS returns Postgres bigint/numeric as string — use string | number
-type OrderStatsRaw = {
-    total_orders: string | number;
-    total_revenue: string | number;
-    avg_order_value: string | number;
-    pending_count: string | number;
-    confirmed_count: string | number;
-    shipped_count: string | number;
-    delivered_count: string | number;
-    cancelled_count: string | number;
-    paid_count: string | number;
-    unpaid_count: string | number;
-    failed_count: string | number;
-    refunded_count: string | number;
-};
+import AnalyticsCharts from "@/components/admin/analytics-charts";
 
-type StatKey =
-    | "pending_count"
-    | "confirmed_count"
-    | "shipped_count"
-    | "delivered_count"
-    | "cancelled_count"
-    | "paid_count"
-    | "unpaid_count"
-    | "failed_count"
-    | "refunded_count";
-
-const STATUS_ITEMS: { key: StatKey; label: string; color: string }[] = [
-    { key: "pending_count", label: "Pending", color: "bg-amber-500" },
-    { key: "confirmed_count", label: "Confirmed", color: "bg-blue-500" },
-    { key: "shipped_count", label: "Shipped", color: "bg-violet-500" },
-    { key: "delivered_count", label: "Delivered", color: "bg-emerald-500" },
-    { key: "cancelled_count", label: "Cancelled", color: "bg-red-500" },
-];
-
-const PAYMENT_ITEMS: { key: StatKey; label: string; color: string }[] = [
-    { key: "paid_count", label: "Paid", color: "bg-emerald-500" },
-    { key: "unpaid_count", label: "Unpaid", color: "bg-amber-500" },
-    { key: "failed_count", label: "Failed", color: "bg-red-500" },
-    { key: "refunded_count", label: "Refunded", color: "bg-violet-500" },
-];
+type OrdersByStatusRow = { status: string; count: number };
+type RevenuePoint = { date: string; revenue: number };
 
 export default async function AdminAnalyticsPage() {
     const supabase = createSupabaseServerClient();
@@ -65,37 +28,163 @@ export default async function AdminAnalyticsPage() {
         redirect("/");
     }
 
-    const { data, error } = await supabase
-        .from("admin_order_stats")
-        .select("*")
-        .single();
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfTomorrow = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + 1,
+    );
 
-    if (error) {
+    const start30 = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - 29,
+    );
+
+    const startOfTodayISO = startOfToday.toISOString();
+    const startOfTomorrowISO = startOfTomorrow.toISOString();
+    const start30ISO = start30.toISOString();
+
+    const [{ data: paidOrders }, { data: paidToday }, { count: ordersTodayCount }] =
+        await Promise.all([
+            supabase
+                .from("orders")
+                .select("total_amount")
+                .eq("payment_status", "paid"),
+            supabase
+                .from("orders")
+                .select("total_amount")
+                .eq("payment_status", "paid")
+                .gte("created_at", startOfTodayISO)
+                .lt("created_at", startOfTomorrowISO),
+            supabase
+                .from("orders")
+                .select("id", { count: "exact", head: true })
+                .gte("created_at", startOfTodayISO)
+                .lt("created_at", startOfTomorrowISO),
+        ]);
+
+    const totalRevenue = (paidOrders ?? []).reduce(
+        (sum, o) => sum + Number((o as { total_amount: number }).total_amount || 0),
+        0,
+    );
+    const revenueToday = (paidToday ?? []).reduce(
+        (sum, o) => sum + Number((o as { total_amount: number }).total_amount || 0),
+        0,
+    );
+    const ordersToday = ordersTodayCount ?? 0;
+
+    const { data: statusRows, error: statusError } = await supabase
+        .from("orders")
+        .select("status");
+
+    if (statusError) {
         return (
             <div className="min-h-screen bg-zinc-50 text-zinc-900">
                 <div className="mx-auto w-full max-w-6xl px-6 py-12">
                     <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-sm text-zinc-700">
-                        {error.message}
+                        {statusError.message}
                     </div>
                 </div>
             </div>
         );
     }
 
-    const raw = data as OrderStatsRaw;
+    const statusMap = new Map<string, number>();
+    for (const row of statusRows ?? []) {
+        const s = String((row as { status: string }).status || "").trim() || "unknown";
+        statusMap.set(s, (statusMap.get(s) ?? 0) + 1);
+    }
 
-    // Safely coerce all bigint/numeric values to number
-    const n = (v: string | number) => Number(v) || 0;
+    const ordersByStatus: OrdersByStatusRow[] = Array.from(statusMap.entries())
+        .map(([status, count]) => ({ status, count }))
+        .sort((a, b) => b.count - a.count);
 
-    const maxStatusCount = Math.max(
-        ...STATUS_ITEMS.map((s) => n(raw[s.key])),
-        1,
-    );
+    const { data: topProductItems, error: topError } = await supabase
+        .from("order_items")
+        .select("product_id, quantity")
+        .not("product_id", "is", null);
 
-    const maxPaymentCount = Math.max(
-        ...PAYMENT_ITEMS.map((s) => n(raw[s.key])),
-        1,
-    );
+    if (topError) {
+        return (
+            <div className="min-h-screen bg-zinc-50 text-zinc-900">
+                <div className="mx-auto w-full max-w-6xl px-6 py-12">
+                    <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-sm text-zinc-700">
+                        {topError.message}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    const soldMap = new Map<string, number>();
+    for (const row of topProductItems ?? []) {
+        const pid = String((row as { product_id: string | null }).product_id || "");
+        const qty = Number((row as { quantity: number }).quantity || 0);
+        if (!pid) continue;
+        soldMap.set(pid, (soldMap.get(pid) ?? 0) + qty);
+    }
+
+    let topProductId: string | null = null;
+    let topProductSold = 0;
+    for (const [pid, sold] of soldMap.entries()) {
+        if (sold > topProductSold) {
+            topProductSold = sold;
+            topProductId = pid;
+        }
+    }
+
+    let topProductTitle: string | null = null;
+    if (topProductId) {
+        const { data: prod } = await supabase
+            .from("products")
+            .select("title")
+            .eq("id", topProductId)
+            .maybeSingle();
+        topProductTitle = (prod as { title?: string } | null)?.title ?? null;
+    }
+
+    const { data: paid30, error: paid30Error } = await supabase
+        .from("orders")
+        .select("created_at,total_amount")
+        .eq("payment_status", "paid")
+        .gte("created_at", start30ISO)
+        .lt("created_at", startOfTomorrowISO)
+        .order("created_at", { ascending: true });
+
+    if (paid30Error) {
+        return (
+            <div className="min-h-screen bg-zinc-50 text-zinc-900">
+                <div className="mx-auto w-full max-w-6xl px-6 py-12">
+                    <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-sm text-zinc-700">
+                        {paid30Error.message}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    const revenueByDay = new Map<string, number>();
+    for (const row of paid30 ?? []) {
+        const createdAt = String((row as { created_at: string }).created_at);
+        const amount = Number((row as { total_amount: number }).total_amount || 0);
+        const day = new Date(createdAt);
+        const key = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(
+            day.getDate(),
+        ).padStart(2, "0")}`;
+        revenueByDay.set(key, (revenueByDay.get(key) ?? 0) + amount);
+    }
+
+    const revenueLast30Days: RevenuePoint[] = [];
+    for (let i = 0; i < 30; i++) {
+        const d = new Date(start30);
+        d.setDate(start30.getDate() + i);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+            d.getDate(),
+        ).padStart(2, "0")}`;
+        revenueLast30Days.push({ date: key, revenue: revenueByDay.get(key) ?? 0 });
+    }
 
     return (
         <div className="min-h-screen bg-zinc-50 text-zinc-900">
@@ -105,7 +194,7 @@ export default async function AdminAnalyticsPage() {
                     <div className="space-y-2">
                         <h1 className="text-3xl font-medium tracking-tight">Analytics</h1>
                         <p className="text-sm text-zinc-600">
-                            Order stats and revenue overview.
+                            Revenue, order stats, and product insights.
                         </p>
                     </div>
                     <a
@@ -119,89 +208,39 @@ export default async function AdminAnalyticsPage() {
                 {/* KPI Cards */}
                 <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-                        <div className="text-xs font-medium text-zinc-500">Total Orders</div>
-                        <div className="mt-2 text-3xl font-semibold text-zinc-900">
-                            {n(raw.total_orders)}
-                        </div>
-                    </div>
-                    <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
                         <div className="text-xs font-medium text-zinc-500">Total Revenue</div>
                         <div className="mt-2 text-3xl font-semibold text-zinc-900">
-                            {formatMoney(n(raw.total_revenue))}
+                            {formatMoney(totalRevenue)}
                         </div>
-                        <div className="mt-1 text-xs text-zinc-400">Only paid orders</div>
                     </div>
                     <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-                        <div className="text-xs font-medium text-zinc-500">Avg Order Value</div>
+                        <div className="text-xs font-medium text-zinc-500">Revenue Today</div>
                         <div className="mt-2 text-3xl font-semibold text-zinc-900">
-                            {formatMoney(n(raw.avg_order_value))}
+                            {formatMoney(revenueToday)}
                         </div>
-                        <div className="mt-1 text-xs text-zinc-400">Only paid orders</div>
                     </div>
                     <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-                        <div className="text-xs font-medium text-zinc-500">Paid Orders</div>
-                        <div className="mt-2 text-3xl font-semibold text-emerald-600">
-                            {n(raw.paid_count)}
+                        <div className="text-xs font-medium text-zinc-500">Orders Today</div>
+                        <div className="mt-2 text-3xl font-semibold text-zinc-900">
+                            {ordersToday}
+                        </div>
+                    </div>
+                    <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+                        <div className="text-xs font-medium text-zinc-500">Top Product</div>
+                        <div className="mt-2 text-lg font-semibold text-zinc-900 line-clamp-2">
+                            {topProductTitle ?? "—"}
+                        </div>
+                        <div className="mt-1 text-xs text-zinc-500">
+                            {topProductTitle ? `${topProductSold} sold` : ""}
                         </div>
                     </div>
                 </div>
 
                 {/* Charts */}
-                <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-                    {/* Order Status Breakdown */}
-                    <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-                        <div className="text-sm font-medium text-zinc-900 mb-6">
-                            Order Status Breakdown
-                        </div>
-                        <div className="space-y-4">
-                            {STATUS_ITEMS.map((s) => {
-                                const count = n(raw[s.key]);
-                                const pct = (count / maxStatusCount) * 100;
-                                return (
-                                    <div key={s.key}>
-                                        <div className="flex items-center justify-between text-sm mb-1.5">
-                                            <span className="text-zinc-700">{s.label}</span>
-                                            <span className="font-medium text-zinc-900">{count}</span>
-                                        </div>
-                                        <div className="h-3 w-full rounded-full bg-zinc-100 overflow-hidden">
-                                            <div
-                                                className={`h-full rounded-full ${s.color} transition-all duration-700 ease-out`}
-                                                style={{ width: `${pct}%` }}
-                                            />
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Payment Status Breakdown */}
-                    <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-                        <div className="text-sm font-medium text-zinc-900 mb-6">
-                            Payment Status Breakdown
-                        </div>
-                        <div className="space-y-4">
-                            {PAYMENT_ITEMS.map((s) => {
-                                const count = n(raw[s.key]);
-                                const pct = (count / maxPaymentCount) * 100;
-                                return (
-                                    <div key={s.key}>
-                                        <div className="flex items-center justify-between text-sm mb-1.5">
-                                            <span className="text-zinc-700">{s.label}</span>
-                                            <span className="font-medium text-zinc-900">{count}</span>
-                                        </div>
-                                        <div className="h-3 w-full rounded-full bg-zinc-100 overflow-hidden">
-                                            <div
-                                                className={`h-full rounded-full ${s.color} transition-all duration-700 ease-out`}
-                                                style={{ width: `${pct}%` }}
-                                            />
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </div>
+                <AnalyticsCharts
+                    revenueLast30Days={revenueLast30Days}
+                    ordersByStatus={ordersByStatus}
+                />
             </div>
         </div>
     );

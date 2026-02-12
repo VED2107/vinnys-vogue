@@ -1,4 +1,5 @@
 import { formatMoneyFromCents } from "@/lib/format";
+import WishlistToggle from "@/components/wishlist-toggle";
 
 type Product = {
   id: string;
@@ -11,15 +12,20 @@ type Product = {
 export function ProductCard({
   product,
   imageUrl,
+  initialInWishlist,
 }: {
   product: Product;
   imageUrl: string;
+  initialInWishlist?: boolean;
 }) {
   return (
     <a
       href={`/product/${product.id}`}
-      className="group block overflow-hidden rounded-2xl border border-zinc-200/60 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+      className="group relative block overflow-hidden rounded-2xl border border-zinc-200/60 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
     >
+      {typeof initialInWishlist === "boolean" ? (
+        <WishlistToggle productId={product.id} initialInWishlist={initialInWishlist} />
+      ) : null}
       <div className="aspect-[4/5] w-full overflow-hidden bg-cream">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img

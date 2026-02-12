@@ -16,19 +16,13 @@ interface RazorpayOptions {
     name: string;
     description: string;
     order_id: string;
-    handler: (response: RazorpayResponse) => void;
+    handler: () => void;
     theme: { color: string };
     prefill?: { email?: string };
 }
 
 interface RazorpayInstance {
     open: () => void;
-}
-
-interface RazorpayResponse {
-    razorpay_order_id: string;
-    razorpay_payment_id: string;
-    razorpay_signature: string;
 }
 
 export default function PayNowButton({
@@ -88,35 +82,13 @@ export default function PayNowButton({
                 key: data.key,
                 amount: data.amount,
                 currency: data.currency,
-                name: "Vinny's Vogue",
+                name: "Vinnys Vogue",
                 description: `Order ${data.orderId.slice(0, 8).toUpperCase()}`,
                 order_id: data.razorpayOrderId,
-                handler: async (response: RazorpayResponse) => {
-                    // Step 3: Verify on server
-                    try {
-                        const verifyRes = await fetch("/api/payments/verify", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                orderId: data.orderId,
-                                razorpay_order_id: response.razorpay_order_id,
-                                razorpay_payment_id: response.razorpay_payment_id,
-                                razorpay_signature: response.razorpay_signature,
-                            }),
-                        });
-
-                        if (verifyRes.ok) {
-                            // Reload page to reflect paid status
-                            window.location.reload();
-                        } else {
-                            const err = await verifyRes.json();
-                            alert(err.error || "Payment verification failed");
-                        }
-                    } catch {
-                        alert("Payment verification failed. Please contact support.");
-                    } finally {
-                        setLoading(false);
-                    }
+                handler: function () {
+                    // Do NOT update order here — only webhook changes status.
+                    // Just redirect to order page.
+                    window.location.href = `/order/${orderId}`;
                 },
                 theme: { color: "#18181b" },
                 prefill: userEmail ? { email: userEmail } : undefined,

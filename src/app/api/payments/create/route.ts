@@ -62,7 +62,10 @@ export async function POST(request: Request) {
         // Save razorpay_order_id to the orders table
         const { error: updateError } = await supabase
             .from("orders")
-            .update({ razorpay_order_id: razorpayOrder.id })
+            .update({
+                razorpay_order_id: razorpayOrder.id,
+                status: "payment_initiated",
+            })
             .eq("id", order.id);
 
         if (updateError) {

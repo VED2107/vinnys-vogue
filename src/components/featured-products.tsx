@@ -14,6 +14,23 @@ type ProductRow = {
 export async function FeaturedProducts() {
   const supabase = createSupabaseServerClient();
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const wishlistProductIds = new Set<string>();
+  if (user) {
+    const { data: wishlistRows } = await supabase
+      .from("wishlist")
+      .select("product_id")
+      .eq("user_id", user.id);
+
+    for (const row of wishlistRows ?? []) {
+      const productId = (row as { product_id: string }).product_id;
+      if (productId) wishlistProductIds.add(productId);
+    }
+  }
+
   const { data } = await supabase
     .from("products")
     .select(
@@ -41,6 +58,7 @@ export async function FeaturedProducts() {
           key={p.id}
           product={p}
           imageUrl={getProductImagePublicUrl(supabase, p.image_path)}
+          initialInWishlist={user ? wishlistProductIds.has(p.id) : undefined}
         />
       ))}
     </div>

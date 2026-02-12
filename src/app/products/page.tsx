@@ -24,6 +24,23 @@ export default async function ProductsPage({
 
   const supabase = createSupabaseServerClient();
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const wishlistProductIds = new Set<string>();
+  if (user) {
+    const { data: wishlistRows } = await supabase
+      .from("wishlist")
+      .select("product_id")
+      .eq("user_id", user.id);
+
+    for (const row of wishlistRows ?? []) {
+      const productId = (row as { product_id: string }).product_id;
+      if (productId) wishlistProductIds.add(productId);
+    }
+  }
+
   let query = supabase
     .from("products")
     .select(
@@ -102,6 +119,7 @@ export default async function ProductsPage({
                 key={p.id}
                 product={p}
                 imageUrl={getProductImagePublicUrl(supabase, p.image_path)}
+                initialInWishlist={user ? wishlistProductIds.has(p.id) : undefined}
               />
             ))}
           </div>

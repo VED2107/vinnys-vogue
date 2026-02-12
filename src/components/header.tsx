@@ -20,6 +20,7 @@ export async function Header() {
 
     // Lightweight cart count query — sum of quantities, RLS-safe
     let cartCount = 0;
+    let wishlistCount = 0;
     if (user) {
         const { data: cart } = await supabase
             .from("carts")
@@ -35,6 +36,13 @@ export async function Header() {
 
             cartCount = (items ?? []).reduce((sum, i) => sum + i.quantity, 0);
         }
+
+        const { count } = await supabase
+            .from("wishlist")
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", user.id);
+
+        wishlistCount = count ?? 0;
     }
 
     return (
@@ -56,6 +64,34 @@ export async function Header() {
                             className="rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50"
                         >
                             Admin
+                        </a>
+                    ) : null}
+
+                    {user ? (
+                        <a
+                            href="/wishlist"
+                            className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-700 transition hover:bg-zinc-50"
+                            aria-label="Wishlist"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <path d="M20.8 4.6c-1.6-1.6-4.2-1.6-5.8 0L12 7.6l-3-3c-1.6-1.6-4.2-1.6-5.8 0s-1.6 4.2 0 5.8l3 3L12 21l5.8-7.6 3-3c1.6-1.6 1.6-4.2 0-5.8Z" />
+                            </svg>
+
+                            {wishlistCount > 0 ? (
+                                <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-zinc-900 px-1 text-[10px] font-semibold text-white">
+                                    {wishlistCount > 99 ? "99+" : wishlistCount}
+                                </span>
+                            ) : null}
                         </a>
                     ) : null}
 

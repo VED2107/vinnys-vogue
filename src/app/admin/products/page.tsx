@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatMoneyFromCents } from "@/lib/format";
 import { getProductImagePublicUrl } from "@/lib/product-images";
 import { getCategoryLabel, PRODUCT_CATEGORIES } from "@/lib/categories";
+import StockAdjustModal from "@/components/admin/stock-adjust-modal";
 
 type ProductRow = {
   id: string;
@@ -14,6 +15,7 @@ type ProductRow = {
   category: string | null;
   show_on_home: boolean;
   display_order: number;
+  stock: number;
   created_at: string;
 };
 
@@ -67,7 +69,7 @@ export default async function AdminProductsPage({
   let query = supabase
     .from("products")
     .select(
-      "id,title,price_cents,currency,image_path,active,category,show_on_home,display_order,created_at",
+      "id,title,price_cents,currency,image_path,active,category,show_on_home,display_order,stock,created_at",
     )
     .order("created_at", { ascending: false });
 
@@ -166,7 +168,8 @@ export default async function AdminProductsPage({
             <div className="col-span-2">Category</div>
             <div className="col-span-2">Price</div>
             <div className="col-span-2">Status</div>
-            <div className="col-span-2 text-right">Actions</div>
+            <div className="col-span-1">Stock</div>
+            <div className="col-span-1 text-right">Actions</div>
           </div>
 
           <div className="divide-y divide-zinc-200">
@@ -189,6 +192,11 @@ export default async function AdminProductsPage({
                       <div className="mt-0.5 inline-flex items-center gap-1 text-[10px] font-medium text-amber-700">
                         <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500" />
                         Featured
+                      </div>
+                    ) : null}
+                    {p.stock < 3 ? (
+                      <div className="mt-1 inline-flex items-center rounded-full bg-red-50 px-2.5 py-1 text-[10px] font-semibold text-red-700">
+                        Low stock
                       </div>
                     ) : null}
                   </div>
@@ -219,13 +227,29 @@ export default async function AdminProductsPage({
                   </span>
                 </div>
 
-                <div className="col-span-2 flex items-center justify-end gap-2">
+                <div className="col-span-1 flex items-center">
+                  <span
+                    className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${p.stock < 3
+                      ? "bg-red-50 text-red-700"
+                      : "bg-zinc-100 text-zinc-700"
+                      }`}
+                  >
+                    {p.stock}
+                  </span>
+                </div>
+
+                <div className="col-span-1 flex items-center justify-end gap-2">
                   <a
                     href={`/admin/products/${p.id}`}
                     className="h-9 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50 inline-flex items-center"
                   >
                     Edit
                   </a>
+                  <StockAdjustModal
+                    productId={p.id}
+                    productTitle={p.title}
+                    currentStock={p.stock}
+                  />
                   <form action={toggleActive}>
                     <input type="hidden" name="productId" value={p.id} />
                     <input type="hidden" name="current" value={String(p.active)} />

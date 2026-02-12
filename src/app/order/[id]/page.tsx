@@ -1,9 +1,12 @@
+export const dynamic = "force-dynamic";
+
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatMoney } from "@/lib/format";
 import { getProductImagePublicUrl } from "@/lib/product-images";
 import { getPaymentStatusStyles } from "@/lib/payment-status";
 import PayNowButton from "@/components/pay-now-button";
+import DownloadInvoiceButton from "@/components/download-invoice-button";
 
 type OrderItemProduct = {
     id: string;
@@ -190,6 +193,13 @@ export default async function OrderConfirmationPage({
                         <PayNowButton orderId={order.id} userEmail={user.email} />
                     </div>
                 )}
+
+                {/* Invoice download (available after payment) */}
+                {order.payment_status === "paid" ? (
+                    <div className="mt-6 text-center animate-fade-in">
+                        <DownloadInvoiceButton orderId={order.id} />
+                    </div>
+                ) : null}
 
                 {/* Continue shopping */}
                 <div className="mt-8 text-center animate-fade-in">

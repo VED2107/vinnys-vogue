@@ -1,119 +1,109 @@
-import crypto from "crypto";
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import crypto from "crypto";
+import { createClient } from "@supabase/supabase-js";
 
-/**
- * Razorpay webhook handler (App Router, Next.js 14).
- *
- * Razorpay sends the raw body + `x-razorpay-signature` header.
- * We verify with HMAC-SHA256 using RAZORPAY_WEBHOOK_SECRET, then
- * process the event and log it.
- */
+const supabase = createClient(
+    process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+        auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false,
+        },
+    },
+);
+
 export async function POST(req: Request) {
-    const rawBody = await req.text();
-    const signature = req.headers.get("x-razorpay-signature") ?? "";
-
-    // ── Verify signature ───────────────────────────────────────────
-    const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
-    if (!secret) {
-        console.error("RAZORPAY_WEBHOOK_SECRET is not configured");
-        return new Response("Server configuration error", { status: 500 });
-    }
-
-    const expectedSignature = crypto
-        .createHmac("sha256", secret)
-        .update(rawBody)
-        .digest("hex");
-
-    if (expectedSignature !== signature) {
-        console.warn("Webhook signature mismatch");
-        return new Response("Invalid signature", { status: 400 });
-    }
-
-    // ── Parse payload ──────────────────────────────────────────────
-    let payload: Record<string, unknown>;
     try {
-        payload = JSON.parse(rawBody);
-    } catch {
-        return new Response("Invalid JSON", { status: 400 });
-    }
+        const body = await req.text();
+        const signature = req.headers.get("x-razorpay-signature");
 
-    const eventType = payload.event as string | undefined;
-
-    const supabase = createSupabaseServerClient();
-
-    // ── Log every event ────────────────────────────────────────────
-    await supabase.from("razorpay_webhook_logs").insert({
-        event_type: eventType ?? "unknown",
-        payload,
-    });
-
-    // ── Handle events ──────────────────────────────────────────────
-    const inner = payload.payload as Record<string, unknown> | undefined;
-
-    if (eventType === "refund.processed") {
-        const paymentId =
-            (inner?.refund as Record<string, Record<string, unknown>>)?.entity
-                ?.payment_id as string | undefined;
-
-        if (!paymentId) {
-            console.error("Refund webhook missing payment_id");
-            return NextResponse.json(
-                { error: "Missing payment_id" },
-                { status: 400 },
-            );
+        if (!signature) {
+            return new NextResponse("No signature", { status: 400 });
         }
 
-        const { error } = await supabase
-            .from("orders")
-            .update({
-                payment_status: "refunded",
-                status: "cancelled",
-            })
-            .eq("razorpay_payment_id", paymentId);
-
-        if (error) {
-            console.error("Refund update failed:", error);
+        const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+        if (!webhookSecret) {
+            console.error("Webhook misconfigured: missing RAZORPAY_WEBHOOK_SECRET");
+            return new NextResponse("OK", { status: 200 });
         }
-    } else {
-        // Payment events nest data under payload.payment.entity
-        const entity = (
-            (inner?.payment as Record<string, unknown>)?.entity as Record<
-                string,
-                unknown
-            >
-        ) as Record<string, unknown> | undefined;
 
-        const razorpayOrderId = entity?.order_id as string | undefined;
+        const expectedSignature = crypto
+            .createHmac("sha256", webhookSecret)
+            .update(body)
+            .digest("hex");
 
-        if (razorpayOrderId) {
-            switch (eventType) {
-                case "payment.captured": {
-                    await supabase
+        if (expectedSignature !== signature) {
+            return new NextResponse("Invalid signature", { status: 400 });
+        }
+
+        let event: unknown;
+        try {
+            event = JSON.parse(body) as unknown;
+        } catch {
+            console.error("Webhook received invalid JSON");
+            return new NextResponse("OK", { status: 200 });
+        }
+
+        const ack = new NextResponse("OK", { status: 200 });
+
+        void (async () => {
+            try {
+                const evt = event as {
+                    event?: unknown;
+                    payload?: { payment?: { entity?: { id?: unknown; order_id?: unknown } } };
+                };
+
+                const eventName = typeof evt.event === "string" ? evt.event : "";
+                const paymentEntity = evt.payload?.payment?.entity;
+                const paymentId =
+                    paymentEntity && typeof paymentEntity.id === "string"
+                        ? paymentEntity.id
+                        : null;
+                const razorpayOrderId =
+                    paymentEntity && typeof paymentEntity.order_id === "string"
+                        ? paymentEntity.order_id
+                        : null;
+
+                if (!razorpayOrderId) {
+                    console.error("Webhook missing payment.order_id");
+                    return;
+                }
+
+                if (eventName === "payment.captured") {
+                    const { error } = await supabase
                         .from("orders")
                         .update({
-                            payment_status: "paid",
                             status: "confirmed",
-                            razorpay_payment_id: entity?.id as string,
+                            payment_status: "paid",
+                            razorpay_payment_id: paymentId,
                         })
                         .eq("razorpay_order_id", razorpayOrderId);
-                    break;
-                }
 
-                case "payment.failed": {
-                    await supabase
+                    if (error) {
+                        console.error("Webhook update failed (payment.captured):", error);
+                    }
+                } else if (eventName === "payment.failed") {
+                    const { error } = await supabase
                         .from("orders")
-                        .update({ payment_status: "failed" })
+                        .update({
+                            payment_status: "unpaid",
+                        })
                         .eq("razorpay_order_id", razorpayOrderId);
-                    break;
+
+                    if (error) {
+                        console.error("Webhook update failed (payment.failed):", error);
+                    }
                 }
-
-                default:
-                    // Unhandled event — already logged above
-                    break;
+            } catch (error) {
+                console.error("Webhook background task error:", error);
             }
-        }
-    }
+        })();
 
-    return new Response("OK", { status: 200 });
+        return ack;
+    } catch (error) {
+        console.error("Webhook handler error:", error);
+        return new NextResponse("OK", { status: 200 });
+    }
 }
