@@ -1,28 +1,18 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatMoneyFromCents } from "@/lib/format";
+import { revalidatePath } from "next/cache";
 import { getProductImagePublicUrl } from "@/lib/product-images";
-import { CartItemControls } from "@/components/cart-item-controls";
+import { FadeIn } from "@/components/fade-in";
+import { PremiumButton } from "@/components/ui";
 
-type CartProduct = {
-    id: string;
-    title: string;
-    price_cents: number;
-    currency: string;
-    image_path: string | null;
-};
-
-type CartItemRow = {
+type CartItem = {
     id: string;
     quantity: number;
+    product_id: string;
     variant_id: string | null;
-    product: CartProduct;
-    product_variants: { size: string }[] | { size: string } | null;
-};
-
-type CartRow = {
-    id: string;
-    cart_items: CartItemRow[];
+    products: { title: string; price_cents: number; currency: string; image_path: string | null };
+    product_variants: { size: string } | null;
 };
 
 export default async function CartPage() {
@@ -32,167 +22,182 @@ export default async function CartPage() {
         data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) {
-        redirect("/login?redirect=/cart");
-    }
+    if (!user) redirect("/login?redirect=/cart");
 
-    // Single query — no N+1. Joins carts → cart_items → products.
-    const { data: cart, error } = await supabase
+    const { data: cart } = await supabase
         .from("carts")
-        .select(
-            "id, cart_items(id, quantity, variant_id, product:products(id, title, price_cents, currency, image_path), product_variants(size))",
-        )
+        .select("id")
         .eq("user_id", user.id)
         .maybeSingle();
 
-    if (error) {
-        return (
-            <div className="min-h-screen bg-zinc-50 text-zinc-900">
-                <div className="mx-auto w-full max-w-4xl px-6 py-12">
-                    <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-sm text-zinc-700">
-                        Something went wrong loading your cart.
-                    </div>
-                </div>
-            </div>
-        );
+    let items: CartItem[] = [];
+    if (cart) {
+        const { data } = await supabase
+            .from("cart_items")
+            .select("id,quantity,product_id,variant_id,products(title,price_cents,currency,image_path),product_variants(size)")
+            .eq("cart_id", cart.id);
+
+        items = (data ?? []) as unknown as CartItem[];
     }
 
-    // Sanitize Supabase result to strip non-serializable methods (e.g. .map)
-    // that cause "Functions cannot be passed directly to Client Components" errors.
-    const rawItems: CartItemRow[] =
-        JSON.parse(JSON.stringify((cart as CartRow | null)?.cart_items ?? []));
+    async function removeItem(formData: FormData) {
+        "use server";
+        const itemId = String(formData.get("itemId") || "");
+        if (!itemId) return;
+        const sp = createSupabaseServerClient();
+        const { data: { user: currentUser } } = await sp.auth.getUser();
+        if (!currentUser) return;
 
-    // Normalize product_variants — Supabase may return an array or single object
-    const items = rawItems.map((item) => {
-        let variantInfo: { size: string } | null = null;
-        if (Array.isArray(item.product_variants) && item.product_variants.length > 0) {
-            variantInfo = item.product_variants[0];
-        } else if (item.product_variants && !Array.isArray(item.product_variants)) {
-            variantInfo = item.product_variants;
+        // Verify ownership via cart → cart_items join
+        const { data: item } = await sp
+            .from("cart_items")
+            .select("id, carts!inner(user_id)")
+            .eq("id", itemId)
+            .maybeSingle();
+
+        if (!item || (item as unknown as { carts: { user_id: string } }).carts.user_id !== currentUser.id) return;
+
+        await sp.from("cart_items").delete().eq("id", itemId);
+        revalidatePath("/cart");
+    }
+
+    async function updateQuantity(formData: FormData) {
+        "use server";
+        const itemId = String(formData.get("itemId") || "");
+        const direction = String(formData.get("direction") || "");
+        if (!itemId) return;
+        const sp = createSupabaseServerClient();
+        const { data: { user: currentUser } } = await sp.auth.getUser();
+        if (!currentUser) return;
+
+        // Fetch current quantity from DB (avoids TOCTOU) and verify ownership
+        const { data: row } = await sp
+            .from("cart_items")
+            .select("id, quantity, carts!inner(user_id)")
+            .eq("id", itemId)
+            .maybeSingle();
+
+        if (!row || (row as unknown as { carts: { user_id: string } }).carts.user_id !== currentUser.id) return;
+
+        const current = (row as { quantity: number }).quantity;
+        const next = direction === "up" ? current + 1 : current - 1;
+        if (next <= 0) {
+            await sp.from("cart_items").delete().eq("id", itemId);
+        } else {
+            await sp.from("cart_items").update({ quantity: next }).eq("id", itemId);
         }
-        return { ...item, product_variants: variantInfo };
-    });
+        revalidatePath("/cart");
+    }
 
-    // Compute cart total from price_cents — never stored in DB
-    const cartTotal = items.reduce(
-        (sum, item) => sum + item.quantity * item.product.price_cents,
+    // Validate currency consistency
+    const currencies = new Set(items.map((i) => i.products.currency));
+    if (currencies.size > 1) {
+        throw new Error("Mixed currencies in cart are not supported.");
+    }
+
+    const totalCents = items.reduce(
+        (sum, item) => sum + item.products.price_cents * item.quantity,
         0,
     );
 
-    const currency = items[0]?.product.currency ?? "INR";
-
-    // Empty cart state
-    if (items.length === 0) {
-        return (
-            <div className="min-h-screen bg-zinc-50 text-zinc-900">
-                <div className="mx-auto w-full max-w-4xl px-6 py-12">
-                    <h1 className="text-2xl font-medium tracking-tight">Your Cart</h1>
-                    <div className="mt-8 rounded-2xl border border-zinc-200 bg-white p-10 text-center shadow-sm">
-                        <p className="text-zinc-500">Your cart is empty.</p>
-                        <a
-                            href="/products"
-                            className="mt-4 inline-block rounded-xl bg-zinc-900 px-6 py-2.5 text-sm font-medium text-zinc-50 transition hover:bg-zinc-800"
-                        >
-                            Continue Shopping
-                        </a>
-                    </div>
-                </div>
-            </div>
-        );
-    }
+    const currency = items[0]?.products.currency ?? "INR";
 
     return (
-        <div className="min-h-screen bg-zinc-50 text-zinc-900">
-            <div className="mx-auto w-full max-w-4xl px-6 py-12">
-                <h1 className="text-2xl font-medium tracking-tight">Your Cart</h1>
+        <div className="min-h-screen bg-bg-primary">
+            <div className="mx-auto w-full max-w-[1280px] px-6 py-16">
+                <FadeIn>
+                    <div className="space-y-3">
+                        <div className="gold-divider" />
+                        <div className="text-[11px] font-medium tracking-[0.25em] text-gold uppercase">Shopping</div>
+                        <h1 className="mt-3 font-serif text-[clamp(28px,4vw,42px)] font-light tracking-[-0.02em] leading-[1.15] text-heading">
+                            Your Cart
+                        </h1>
+                    </div>
+                </FadeIn>
 
-                <div className="mt-8 space-y-4">
-                    {items.map((item) => {
-                        const lineTotal = item.quantity * item.product.price_cents;
-                        const imageUrl = getProductImagePublicUrl(
-                            supabase,
-                            item.product.image_path,
-                        );
-
-                        return (
-                            <div
-                                key={item.id}
-                                className="flex items-center gap-5 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm"
-                            >
-                                {/* Product image */}
-                                <a
-                                    href={`/product/${item.product.id}`}
-                                    className="h-24 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-zinc-100"
-                                >
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                        src={imageUrl}
-                                        alt={item.product.title}
-                                        className="h-full w-full object-cover"
-                                    />
-                                </a>
-
-                                {/* Details */}
-                                <div className="flex flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                                    <div className="space-y-0.5">
-                                        <a
-                                            href={`/product/${item.product.id}`}
-                                            className="text-sm font-medium text-zinc-900 hover:underline"
-                                        >
-                                            {item.product.title}
-                                        </a>
-                                        {item.product_variants?.size && (
-                                            <div className="text-xs font-medium text-zinc-600">
-                                                Size: {item.product_variants.size}
+                {items.length === 0 ? (
+                    <FadeIn delay={0.08}>
+                        <div className="mt-16 rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-bg-card p-16 text-center">
+                            <div className="font-serif text-xl font-light text-heading">Your cart is empty</div>
+                            <p className="mt-3 text-[15px] text-muted">Explore our collection to find something special.</p>
+                            <div className="mt-8">
+                                <PremiumButton href="/products">Explore Collection</PremiumButton>
+                            </div>
+                        </div>
+                    </FadeIn>
+                ) : (
+                    <FadeIn delay={0.08}>
+                        <div className="mt-12 grid grid-cols-1 gap-10 lg:grid-cols-3">
+                            <div className="lg:col-span-2 space-y-4">
+                                {items.map((item) => (
+                                    <div
+                                        key={item.id}
+                                        className="flex gap-8 items-center rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-bg-card p-5"
+                                    >
+                                        <div className="w-40 flex-shrink-0 overflow-hidden rounded-2xl bg-[#EDE8E0]">
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img
+                                                src={getProductImagePublicUrl(supabase, item.products.image_path)}
+                                                alt={item.products.title}
+                                                className="img-matte h-full w-full object-cover aspect-[3/4]"
+                                            />
+                                        </div>
+                                        <div className="flex flex-1 justify-between">
+                                            <div className="space-y-2">
+                                                <div className="text-[14px] font-medium text-heading">{item.products.title}</div>
+                                                {item.product_variants ? (
+                                                    <div className="text-[13px] text-muted">Size: {item.product_variants.size}</div>
+                                                ) : null}
+                                                <div className="font-serif text-[15px] font-light text-gold">
+                                                    {formatMoneyFromCents(item.products.price_cents, item.products.currency)}
+                                                </div>
                                             </div>
-                                        )}
-                                        <div className="text-xs text-zinc-500">
-                                            {formatMoneyFromCents(
-                                                item.product.price_cents,
-                                                item.product.currency,
-                                            )}{" "}
-                                            each
+                                            <div className="flex flex-col items-end justify-between">
+                                                <form action={removeItem}>
+                                                    <input type="hidden" name="itemId" value={item.id} />
+                                                    <button className="text-[13px] text-muted transition hover:text-heading">Remove</button>
+                                                </form>
+                                                <div className="inline-flex items-center gap-3 rounded-full border border-[rgba(0,0,0,0.08)] bg-white px-4 py-2 shadow-sm">
+                                                    <form action={updateQuantity}>
+                                                        <input type="hidden" name="itemId" value={item.id} />
+                                                        <input type="hidden" name="direction" value="down" />
+                                                        <input type="hidden" name="current" value={String(item.quantity)} />
+                                                        <button className="flex h-7 w-7 items-center justify-center rounded-full text-[14px] text-heading transition hover:bg-[rgba(0,0,0,0.04)]">
+                                                            −
+                                                        </button>
+                                                    </form>
+                                                    <span className="w-6 text-center text-[14px] font-medium text-heading">{item.quantity}</span>
+                                                    <form action={updateQuantity}>
+                                                        <input type="hidden" name="itemId" value={item.id} />
+                                                        <input type="hidden" name="direction" value="up" />
+                                                        <input type="hidden" name="current" value={String(item.quantity)} />
+                                                        <button className="flex h-7 w-7 items-center justify-center rounded-full text-[14px] text-heading transition hover:bg-[rgba(0,0,0,0.04)]">
+                                                            +
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
+                                ))}
+                            </div>
 
-                                    <div className="flex items-center gap-4">
-                                        <CartItemControls
-                                            cartItemId={item.id}
-                                            quantity={item.quantity}
-                                        />
-                                        <div className="min-w-[5rem] text-right text-sm font-medium text-zinc-900">
-                                            {formatMoneyFromCents(lineTotal, item.product.currency)}
-                                        </div>
+                            <div className="lg:col-span-1">
+                                <div className="sticky top-24 rounded-3xl bg-white/70 backdrop-blur-md p-8 shadow-xl space-y-6">
+                                    <h2 className="font-serif text-xl font-light text-heading">Order Summary</h2>
+                                    <div className="gold-divider-gradient" />
+                                    <div className="flex justify-between text-[15px]">
+                                        <span className="text-muted">Subtotal ({items.length} items)</span>
+                                        <span className="font-serif font-light text-heading">{formatMoneyFromCents(totalCents, currency)}</span>
                                     </div>
+                                    <PremiumButton href="/checkout" className="w-full">
+                                        Proceed to Checkout
+                                    </PremiumButton>
                                 </div>
                             </div>
-                        );
-                    })}
-                </div>
-
-                {/* Cart summary + Checkout */}
-                <div className="mt-6 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm text-zinc-600">Total</span>
-                        <span className="text-lg font-medium text-zinc-900">
-                            {formatMoneyFromCents(cartTotal, currency)}
-                        </span>
-                    </div>
-                    <div className="mt-5">
-                        <a
-                            href="/checkout"
-                            className="flex h-12 w-full items-center justify-center rounded-2xl bg-gold text-sm font-medium tracking-wide text-zinc-950 transition hover:brightness-95"
-                        >
-                            Proceed to Checkout
-                        </a>
-                    </div>
-                    <a
-                        href="/products"
-                        className="mt-3 block text-center text-sm text-warm-gray transition hover:text-zinc-900"
-                    >
-                        Continue Shopping
-                    </a>
-                </div>
+                        </div>
+                    </FadeIn>
+                )}
             </div>
         </div>
     );

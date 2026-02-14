@@ -1,84 +1,77 @@
 "use client";
 
-import { useTransition } from "react";
-import {
-    updateCartItemQuantity,
-    removeCartItem,
-} from "@/app/cart/actions";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { updateCartItemQuantity, removeCartItem } from "@/app/cart/actions";
 
-export function CartItemControls({
+export default function CartItemControls({
     cartItemId,
-    quantity,
+    currentQty,
 }: {
     cartItemId: string;
-    quantity: number;
+    currentQty: number;
 }) {
+    const router = useRouter();
     const [isPending, startTransition] = useTransition();
+    const [error, setError] = useState<string | null>(null);
 
-    function handleDecrement() {
+    function handleQty(delta: number) {
+        setError(null);
         startTransition(async () => {
-            if (quantity <= 1) {
-                const result = await removeCartItem(cartItemId);
-                if (result.error) alert(result.error);
-            } else {
-                const result = await updateCartItemQuantity(
-                    cartItemId,
-                    quantity - 1,
-                );
-                if (result.error) alert(result.error);
+            try {
+                await updateCartItemQuantity(cartItemId, currentQty + delta);
+                router.refresh();
+            } catch (err) {
+                console.error("[CartItemControls] qty update failed", err);
+                setError("Failed to update quantity.");
             }
         });
     }
 
-    function handleIncrement() {
-        startTransition(async () => {
-            const result = await updateCartItemQuantity(
-                cartItemId,
-                quantity + 1,
-            );
-            if (result.error) alert(result.error);
-        });
-    }
-
     function handleRemove() {
+        setError(null);
         startTransition(async () => {
-            const result = await removeCartItem(cartItemId);
-            if (result.error) alert(result.error);
+            try {
+                await removeCartItem(cartItemId);
+                router.refresh();
+            } catch (err) {
+                console.error("[CartItemControls] remove failed", err);
+                setError("Failed to remove item.");
+            }
         });
     }
 
     return (
-        <div className="flex items-center gap-2">
-            <div className="flex items-center rounded-lg border border-zinc-200">
+        <div className="space-y-1">
+            <div className="flex items-center gap-3">
+                <div className="inline-flex items-center rounded-full border border-border/50">
+                    <button
+                        disabled={isPending || currentQty <= 1}
+                        onClick={() => handleQty(-1)}
+                        className="flex h-7 w-7 items-center justify-center rounded-l-full text-text-secondary transition hover:text-text-primary disabled:opacity-25"
+                    >
+                        −
+                    </button>
+                    <span className="min-w-[24px] text-center text-[13px] font-medium text-text-primary">
+                        {currentQty}
+                    </span>
+                    <button
+                        disabled={isPending}
+                        onClick={() => handleQty(1)}
+                        className="flex h-7 w-7 items-center justify-center rounded-r-full text-text-secondary transition hover:text-text-primary disabled:opacity-25"
+                    >
+                        +
+                    </button>
+                </div>
                 <button
-                    onClick={handleDecrement}
                     disabled={isPending}
-                    aria-label="Decrease quantity"
-                    className="flex h-8 w-8 items-center justify-center text-sm text-zinc-600 transition hover:bg-zinc-100 disabled:opacity-50"
+                    onClick={handleRemove}
+                    className="text-[11px] font-light text-text-secondary transition hover:text-gold disabled:opacity-25"
                 >
-                    −
-                </button>
-                <span className="flex h-8 w-8 items-center justify-center text-sm font-medium text-zinc-900">
-                    {quantity}
-                </span>
-                <button
-                    onClick={handleIncrement}
-                    disabled={isPending}
-                    aria-label="Increase quantity"
-                    className="flex h-8 w-8 items-center justify-center text-sm text-zinc-600 transition hover:bg-zinc-100 disabled:opacity-50"
-                >
-                    +
+                    Remove
                 </button>
             </div>
-
-            <button
-                onClick={handleRemove}
-                disabled={isPending}
-                aria-label="Remove item"
-                className="ml-1 text-xs text-zinc-400 underline transition hover:text-zinc-700 disabled:opacity-50"
-            >
-                Remove
-            </button>
+            {error ? <div className="text-[12px] text-red-600">{error}</div> : null}
         </div>
     );
 }

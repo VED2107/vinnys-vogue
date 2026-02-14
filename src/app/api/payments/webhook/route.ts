@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 const supabase = createClient(
     process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,6 +17,12 @@ const supabase = createClient(
 
 export async function POST(req: Request) {
     try {
+        // Rate limit: 30 per minute (Razorpay may send bursts)
+        const ip = getClientIp(req);
+        const rl = rateLimit(`webhook:${ip}`, 30, 60_000);
+        if (!rl.success) {
+            return new NextResponse("Too many requests", { status: 429 });
+        }
         const body = await req.text();
         const signature = req.headers.get("x-razorpay-signature");
 

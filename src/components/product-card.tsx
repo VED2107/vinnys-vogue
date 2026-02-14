@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { formatMoneyFromCents } from "@/lib/format";
 import WishlistToggle from "@/components/wishlist-toggle";
 
@@ -21,27 +22,30 @@ export function ProductCard({
   return (
     <a
       href={`/product/${product.id}`}
-      className="group relative block overflow-hidden rounded-2xl border border-zinc-200/60 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+      className="group relative block overflow-hidden rounded-[20px] bg-bg-card transition-all duration-500 hover:shadow-xl"
     >
       {typeof initialInWishlist === "boolean" ? (
         <WishlistToggle productId={product.id} initialInWishlist={initialInWishlist} />
       ) : null}
-      <div className="aspect-[4/5] w-full overflow-hidden bg-cream">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-t-[20px] bg-[#EDE8E0]">
+        <Image
           src={imageUrl}
           alt={product.title}
-          className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+          fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          className="img-matte object-cover"
         />
+        <div className="glass-overlay pointer-events-none" />
       </div>
-      <div className="space-y-1.5 p-5">
-        <div className="text-sm font-medium tracking-tight text-zinc-900 line-clamp-1">
+      <div className="p-5 text-center space-y-3">
+        <div className="font-serif text-lg font-medium text-heading line-clamp-1">
           {product.title}
         </div>
-        <div className="text-sm text-warm-gray">
+        <div className="gold-divider-gradient mx-auto" />
+        <div className="font-serif text-[16px] font-light text-gold">
           {formatMoneyFromCents(product.price_cents, product.currency)}
         </div>
       </div>
-    </a>
+    </a >
   );
 }

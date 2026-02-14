@@ -1,55 +1,48 @@
 "use client";
 
-import { useCallback, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 
-type Props = {
-  orderId: string;
-};
-
-export default function DownloadInvoiceButton({ orderId }: Props) {
-  const [error, setError] = useState<string | null>(null);
+export default function DownloadInvoiceButton({ orderId }: { orderId: string }) {
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
-  const onClick = useCallback(() => {
+  function onClick() {
     setError(null);
     startTransition(async () => {
       try {
-        const res = await fetch("/api/invoice/generate", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({ orderId }),
-        });
-
-        const json = (await res.json()) as { url?: string; error?: string };
-
-        if (!res.ok || !json.url) {
-          setError(json.error ?? "Failed to generate invoice.");
+        const res = await fetch(`/api/invoices/${orderId}`);
+        if (!res.ok) {
+          const json = await res.json().catch(() => ({ error: "Download failed" }));
+          setError(json.error || "Download failed");
           return;
         }
-
-        globalThis.location.href = json.url;
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `invoice-${orderId.slice(0, 8)}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
       } catch {
-        setError("Failed to generate invoice.");
+        setError("Something went wrong.");
       }
     });
-  }, [orderId]);
+  }
 
   return (
-    <div className="space-y-2">
+    <div className="inline-flex flex-col items-start gap-1">
       <button
         type="button"
         onClick={onClick}
         disabled={isPending}
-        className={`inline-flex h-11 items-center rounded-2xl px-6 text-sm font-medium text-white shadow-sm transition ${
-          isPending ? "bg-zinc-400" : "bg-zinc-900 hover:bg-zinc-800"
-        }`}
+        className={`inline-flex h-12 items-center rounded-full px-8 text-[14px] font-medium tracking-wide transition-all duration-400 ${isPending ? "border border-[rgba(0,0,0,0.08)] bg-bg-card text-muted opacity-60" : "border border-gold text-gold hover:bg-gold hover:text-white"
+          }`}
       >
         Download Invoice
       </button>
-      {error ? <div className="text-sm text-red-700">{error}</div> : null}
+      {error ? <div className="text-[13px] text-red-700">{error}</div> : null}
     </div>
   );
 }

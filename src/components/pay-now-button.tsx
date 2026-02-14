@@ -90,7 +90,7 @@ export default function PayNowButton({
                     // Just redirect to order page.
                     window.location.href = `/order/${orderId}`;
                 },
-                theme: { color: "#18181b" },
+                theme: { color: "#1C1A18" },
                 prefill: userEmail ? { email: userEmail } : undefined,
             };
 
@@ -106,7 +106,7 @@ export default function PayNowButton({
         <button
             onClick={handlePay}
             disabled={loading || !scriptReady}
-            className="inline-flex h-11 items-center justify-center rounded-2xl bg-zinc-900 px-8 text-sm font-medium text-white shadow-sm transition hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex h-12 items-center justify-center rounded-full bg-accent px-8 text-[14px] font-medium tracking-wide text-white hover-lift hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
         >
             {loading ? (
                 <span className="flex items-center gap-2">

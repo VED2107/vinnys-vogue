@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -54,6 +56,15 @@ export async function POST(
     });
 
     if (error) {
+      if (
+        error.code === "23514" ||
+        error.message.includes("stock_non_negative")
+      ) {
+        return NextResponse.json(
+          { error: "Insufficient stock: adjustment would result in negative stock" },
+          { status: 409 },
+        );
+      }
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 

@@ -1,76 +1,64 @@
 "use client";
 
-import { useCallback, useMemo, useState, useTransition } from "react";
-
-type Props = {
-  productId: string;
-  initialInWishlist: boolean;
-  onCountChange?: (delta: number) => void;
-};
+import { useState, useCallback, useOptimistic } from "react";
 
 export default function WishlistToggle({
   productId,
   initialInWishlist,
-  onCountChange,
-}: Props) {
-  const [inWishlist, setInWishlist] = useState(initialInWishlist);
-  const [isPending, startTransition] = useTransition();
+}: {
+  productId: string;
+  initialInWishlist: boolean;
+}) {
+  const [inWishlist, setInWishlist] = useOptimistic(initialInWishlist);
+  const [pending, setPending] = useState(false);
 
-  const ariaLabel = useMemo(
-    () => (inWishlist ? "Remove from wishlist" : "Add to wishlist"),
-    [inWishlist],
-  );
-
-  const toggle = useCallback(() => {
+  const toggle = useCallback(async () => {
+    if (pending) return;
+    setPending(true);
     const next = !inWishlist;
-
     setInWishlist(next);
-    onCountChange?.(next ? 1 : -1);
 
-    startTransition(async () => {
-      try {
-        const res = await fetch(`/api/wishlist/${next ? "add" : "remove"}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ productId }),
-        });
-
-        if (!res.ok) {
-          setInWishlist(!next);
-          onCountChange?.(next ? -1 : 1);
-        }
-      } catch {
+    try {
+      const endpoint = next ? "/api/wishlist/add" : "/api/wishlist/remove";
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId }),
+      });
+      if (!res.ok) {
         setInWishlist(!next);
-        onCountChange?.(next ? -1 : 1);
+        console.error("[WishlistToggle] Non-OK response:", res.status);
       }
-    });
-  }, [inWishlist, onCountChange, productId]);
+    } catch (err) {
+      setInWishlist(!next);
+      console.error("[WishlistToggle] Network error:", err);
+    } finally {
+      setPending(false);
+    }
+  }, [productId, inWishlist, pending, setInWishlist]);
 
   return (
     <button
-      type="button"
       onClick={(e) => {
         e.preventDefault();
+        e.stopPropagation();
         toggle();
       }}
-      aria-label={ariaLabel}
-      className={`absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200/60 bg-white/90 text-zinc-700 shadow-sm backdrop-blur transition hover:bg-white ${
-        isPending ? "opacity-80" : "opacity-100"
-      }`}
+      disabled={pending}
+      aria-label={inWishlist ? "Remove from wishlist" : "Add to wishlist"}
+      className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm text-muted transition-all duration-300 hover:text-gold"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="18"
         height="18"
         viewBox="0 0 24 24"
-        fill={inWishlist ? "currentColor" : "none"}
-        stroke="currentColor"
-        strokeWidth="1.7"
+        fill={inWishlist ? "#C6A756" : "none"}
+        stroke={inWishlist ? "#C6A756" : "currentColor"}
+        strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className={inWishlist ? "text-rose-600" : "text-zinc-700"}
+        className="transition-all duration-300"
       >
         <path d="M20.8 4.6c-1.6-1.6-4.2-1.6-5.8 0L12 7.6l-3-3c-1.6-1.6-4.2-1.6-5.8 0s-1.6 4.2 0 5.8l3 3L12 21l5.8-7.6 3-3c1.6-1.6 1.6-4.2 0-5.8Z" />
       </svg>

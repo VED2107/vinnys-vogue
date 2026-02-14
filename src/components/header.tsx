@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { MobileNav } from "@/components/mobile-nav";
 
 export async function Header() {
     const supabase = createSupabaseServerClient();
@@ -18,7 +19,6 @@ export async function Header() {
 
     const isAdmin = profile?.role === "admin";
 
-    // Lightweight cart count query — sum of quantities, RLS-safe
     let cartCount = 0;
     let wishlistCount = 0;
     if (user) {
@@ -46,22 +46,43 @@ export async function Header() {
     }
 
     return (
-        <header className="border-b border-zinc-200 bg-white">
-            <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5">
-                <a href="/" className="space-y-0.5">
-                    <div className="text-sm tracking-[0.22em] text-zinc-500">
-                        VINNYS VOGUE
-                    </div>
-                    <div className="text-lg font-medium tracking-tight text-zinc-900">
-                        Luxury Wedding Boutique
+        <header className="sticky top-0 z-50 glass">
+            <div className="mx-auto flex w-full max-w-[1280px] items-center px-6 py-4">
+                {/* Left — Logo */}
+                <a href="/" className="group flex-shrink-0">
+                    <div className="font-serif text-xl font-light tracking-[-0.02em] text-heading transition-colors group-hover:text-gold">
+                        Vinnys <span className="text-gold italic">Vogue</span>
                     </div>
                 </a>
 
-                <nav className="flex items-center gap-3">
+                {/* Center — Nav Links (desktop) */}
+                <nav className="hidden sm:flex items-center justify-center gap-8 flex-1">
+                    <a
+                        href="/"
+                        className="text-[14px] font-medium text-muted tracking-wide transition-colors hover:text-heading"
+                    >
+                        Home
+                    </a>
+                    <a
+                        href="/products"
+                        className="text-[14px] font-medium text-muted tracking-wide transition-colors hover:text-heading"
+                    >
+                        Collections
+                    </a>
+                    <a
+                        href="/about"
+                        className="text-[14px] font-medium text-muted tracking-wide transition-colors hover:text-heading"
+                    >
+                        About
+                    </a>
+                </nav>
+
+                {/* Right — Icons (desktop) */}
+                <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
                     {isAdmin ? (
                         <a
                             href="/admin"
-                            className="rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50"
+                            className="inline-flex h-9 items-center rounded-full border border-[rgba(0,0,0,0.08)] px-4 text-[13px] font-medium text-heading transition hover:border-gold hover:text-gold"
                         >
                             Admin
                         </a>
@@ -70,25 +91,14 @@ export async function Header() {
                     {user ? (
                         <a
                             href="/wishlist"
-                            className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-700 transition hover:bg-zinc-50"
+                            className="relative flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(0,0,0,0.08)] text-muted transition hover:border-gold hover:text-gold"
                             aria-label="Wishlist"
                         >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="1.5"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M20.8 4.6c-1.6-1.6-4.2-1.6-5.8 0L12 7.6l-3-3c-1.6-1.6-4.2-1.6-5.8 0s-1.6 4.2 0 5.8l3 3L12 21l5.8-7.6 3-3c1.6-1.6 1.6-4.2 0-5.8Z" />
                             </svg>
-
                             {wishlistCount > 0 ? (
-                                <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-zinc-900 px-1 text-[10px] font-semibold text-white">
+                                <span className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-accent px-1 text-[9px] font-medium text-white">
                                     {wishlistCount > 99 ? "99+" : wishlistCount}
                                 </span>
                             ) : null}
@@ -98,28 +108,16 @@ export async function Header() {
                     {user ? (
                         <a
                             href="/cart"
-                            className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-700 transition hover:bg-zinc-50"
+                            className="relative flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(0,0,0,0.08)] text-muted transition hover:border-gold hover:text-gold"
                             aria-label="Cart"
                         >
-                            {/* Shopping bag SVG icon */}
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="1.5"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
                                 <line x1="3" x2="21" y1="6" y2="6" />
                                 <path d="M16 10a4 4 0 0 1-8 0" />
                             </svg>
-
                             {cartCount > 0 ? (
-                                <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-zinc-900 px-1 text-[10px] font-semibold text-white">
+                                <span className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-accent px-1 text-[9px] font-medium text-white">
                                     {cartCount > 99 ? "99+" : cartCount}
                                 </span>
                             ) : null}
@@ -128,20 +126,31 @@ export async function Header() {
 
                     {user ? (
                         <form action="/logout" method="post">
-                            <button className="rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-50 transition hover:bg-zinc-800">
+                            <button className="ml-1 rounded-full bg-accent px-5 py-2 text-[13px] font-medium text-white hover-lift hover:bg-accent-hover">
                                 Sign out
                             </button>
                         </form>
                     ) : (
                         <a
                             href="/login"
-                            className="rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-50 transition hover:bg-zinc-800"
+                            className="ml-1 rounded-full bg-accent px-5 py-2 text-[13px] font-medium text-white hover-lift hover:bg-accent-hover"
                         >
                             Sign in
                         </a>
                     )}
-                </nav>
+                </div>
+
+                {/* Mobile — Hamburger + Drawer */}
+                <div className="ml-auto sm:hidden">
+                    <MobileNav
+                        isLoggedIn={!!user}
+                        isAdmin={isAdmin}
+                        cartCount={cartCount}
+                        wishlistCount={wishlistCount}
+                    />
+                </div>
             </div>
         </header>
     );
 }
+

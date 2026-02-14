@@ -1,18 +1,17 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ProductCard } from "@/components/product-card";
 import { getProductImagePublicUrl } from "@/lib/product-images";
-import { PRODUCT_CATEGORIES, getCategoryLabel } from "@/lib/categories";
+import { PRODUCT_CATEGORIES } from "@/lib/categories";
+import { SectionTitle } from "@/components/ui";
+import { FadeIn, StaggerGrid, StaggerItem } from "@/components/fade-in";
 
 type ProductRow = {
   id: string;
   title: string;
-  description: string | null;
-  category: string | null;
   price_cents: number;
   currency: string;
   image_path: string | null;
   active: boolean;
-  created_at: string;
 };
 
 export default async function ProductsPage({
@@ -20,13 +19,26 @@ export default async function ProductsPage({
 }: {
   searchParams?: { category?: string };
 }) {
-  const category = searchParams?.category;
-
   const supabase = createSupabaseServerClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  const filterCategory = searchParams?.category;
+
+  let query = supabase
+    .from("products")
+    .select("id,title,price_cents,currency,image_path,active")
+    .eq("active", true)
+    .order("created_at", { ascending: false });
+
+  if (filterCategory) {
+    query = query.eq("category", filterCategory);
+  }
+
+  const { data } = await query;
+  const products = (data ?? []) as ProductRow[];
 
   const wishlistProductIds = new Set<string>();
   if (user) {
@@ -41,89 +53,95 @@ export default async function ProductsPage({
     }
   }
 
-  let query = supabase
-    .from("products")
-    .select(
-      "id,title,description,category,price_cents,currency,image_path,active,created_at",
-    )
-    .eq("active", true)
-    .order("created_at", { ascending: false });
-
-  if (category) {
-    query = query.eq("category", category);
-  }
-
-  const { data, error } = await query;
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-ivory text-foreground">
-        <div className="mx-auto w-full max-w-6xl px-6 py-12">
-          <div className="rounded-2xl border border-zinc-200/60 bg-white p-6 text-sm text-warm-gray">
-            {error.message}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const products = (data ?? []) as ProductRow[];
-
   return (
-    <div className="min-h-screen bg-ivory text-foreground">
-      <div className="mx-auto w-full max-w-6xl px-6 py-12">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-          <div className="space-y-1">
-            <h1 className="font-serif text-2xl font-light tracking-tight">
-              {category ? getCategoryLabel(category) : "Collection"}
-            </h1>
-            <p className="text-sm text-warm-gray">
-              {category ? "Filtered selection" : "Browse our signature pieces"}
-            </p>
-          </div>
+    <div className="min-h-screen bg-bg-primary">
+      <div className="mx-auto w-full max-w-[1280px] px-6 py-16">
+        <FadeIn>
+          <SectionTitle
+            subtitle="Browse"
+            title="Our Collection"
+            description="Handcrafted couture for every moment."
+          />
+        </FadeIn>
 
-          {/* Category filter */}
-          <div className="flex flex-wrap items-center gap-2">
-            <a
-              href="/products"
-              className={`inline-flex h-9 items-center rounded-xl px-4 text-sm font-medium transition ${!category
-                  ? "bg-zinc-900 text-zinc-50"
-                  : "border border-zinc-200/60 bg-white text-zinc-700 hover:bg-zinc-50"
-                }`}
-            >
-              All
-            </a>
-            {PRODUCT_CATEGORIES.map((c) => (
+        <div className="mt-16 flex gap-12">
+          {/* Filter Sidebar */}
+          <aside className="hidden md:block w-56 flex-shrink-0">
+            <div className="sticky top-24 glass rounded-[20px] p-6">
+              <div className="text-[11px] font-medium tracking-[0.2em] text-gold uppercase">Categories</div>
+              <div className="mt-5 space-y-1">
+                <a
+                  href="/products"
+                  className={`block rounded-full px-4 py-2.5 text-[14px] transition ${!filterCategory
+                    ? "bg-accent text-white font-medium"
+                    : "text-muted hover:text-heading"
+                    }`}
+                >
+                  All
+                </a>
+                {PRODUCT_CATEGORIES.map((c) => (
+                  <a
+                    key={c.value}
+                    href={`/products?category=${encodeURIComponent(c.value)}`}
+                    className={`block rounded-full px-4 py-2.5 text-[14px] transition ${filterCategory === c.value
+                      ? "bg-accent text-white font-medium"
+                      : "text-muted hover:text-heading"
+                      }`}
+                  >
+                    {c.label}
+                  </a>
+                ))}
+              </div>
+            </div>
+          </aside>
+
+          <div className="flex-1">
+            {/* Mobile pills */}
+            <div className="flex flex-wrap gap-2 md:hidden mb-10">
               <a
-                key={c.value}
-                href={`/products?category=${encodeURIComponent(c.value)}`}
-                className={`inline-flex h-9 items-center rounded-xl px-4 text-sm font-medium transition ${category === c.value
-                    ? "bg-zinc-900 text-zinc-50"
-                    : "border border-zinc-200/60 bg-white text-zinc-700 hover:bg-zinc-50"
+                href="/products"
+                className={`inline-flex h-10 items-center rounded-full px-5 text-[14px] transition ${!filterCategory
+                  ? "bg-accent text-white font-medium"
+                  : "border border-[rgba(0,0,0,0.08)] text-muted hover:border-[rgba(0,0,0,0.15)]"
                   }`}
               >
-                {c.label}
+                All
               </a>
-            ))}
+              {PRODUCT_CATEGORIES.map((c) => (
+                <a
+                  key={c.value}
+                  href={`/products?category=${encodeURIComponent(c.value)}`}
+                  className={`inline-flex h-10 items-center rounded-full px-5 text-[14px] transition ${filterCategory === c.value
+                    ? "bg-accent text-white font-medium"
+                    : "border border-[rgba(0,0,0,0.08)] text-muted hover:border-[rgba(0,0,0,0.15)]"
+                    }`}
+                >
+                  {c.label}
+                </a>
+              ))}
+            </div>
+
+            {products.length === 0 ? (
+              <FadeIn>
+                <div className="rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-bg-card p-12 text-center text-[15px] text-muted">
+                  No products found{filterCategory ? " in this category" : ""}.
+                </div>
+              </FadeIn>
+            ) : (
+              <StaggerGrid className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3" stagger={0.08}>
+                {products.map((p) => (
+                  <StaggerItem key={p.id}>
+                    <ProductCard
+                      product={p}
+                      imageUrl={getProductImagePublicUrl(supabase, p.image_path)}
+                      initialInWishlist={user ? wishlistProductIds.has(p.id) : undefined}
+                    />
+                  </StaggerItem>
+                ))}
+              </StaggerGrid>
+            )}
           </div>
         </div>
-
-        {products.length === 0 ? (
-          <div className="mt-10 rounded-2xl border border-zinc-200/60 bg-white p-10 text-center text-sm text-warm-gray shadow-sm">
-            No products found{category ? ` in ${getCategoryLabel(category)}` : ""}.
-          </div>
-        ) : (
-          <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {products.map((p) => (
-              <ProductCard
-                key={p.id}
-                product={p}
-                imageUrl={getProductImagePublicUrl(supabase, p.image_path)}
-                initialInWishlist={user ? wishlistProductIds.has(p.id) : undefined}
-              />
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

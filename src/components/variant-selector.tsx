@@ -1,88 +1,86 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { addToCart } from "@/app/cart/actions";
+import AddToCartButton from "@/components/add-to-cart-button";
 
-type Variant = {
-    id: string;
-    size: string;
-    stock: number;
-};
+type Variant = { id: string; size: string; stock: number };
 
 export default function VariantSelector({
     productId,
     variants,
+    productStock = 0,
 }: {
     productId: string;
     variants: Variant[];
+    productStock?: number;
 }) {
-    const [selectedId, setSelectedId] = useState<string | null>(null);
-    const [isPending, startTransition] = useTransition();
+    const [selectedId, setSelectedId] = useState<string | null>(
+        variants.length > 0 ? variants[0].id : null,
+    );
 
-    const selected = variants.find((v) => v.id === selectedId);
-    const outOfStock = selected ? selected.stock <= 0 : false;
+    const selected = variants.find((v) => v.id === selectedId) ?? null;
+    const outOfStock = selected ? selected.stock <= 0 : true;
 
-    function handleAddToCart() {
-        if (!selectedId || outOfStock) return;
+    async function handleAddToCart() {
+        if (!selectedId) return;
+        try {
+            await addToCart(productId, selectedId);
+        } catch (err) {
+            console.error("[VariantSelector] addToCart failed:", err);
+            throw err; // re-throw so AddToCartButton's catch handles UI feedback
+        }
+    }
 
-        startTransition(async () => {
-            const result = await addToCart(productId, selectedId);
-            if (result.error) {
-                alert(result.error);
-            }
-        });
+    if (variants.length === 0) {
+        return (
+            <div className="space-y-4">
+                <AddToCartButton
+                    onClick={async () => {
+                        try {
+                            await addToCart(productId);
+                        } catch (err) {
+                            console.error("[VariantSelector] addToCart failed:", err);
+                            throw err;
+                        }
+                    }}
+                    disabled={productStock <= 0}
+                />
+            </div>
+        );
     }
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-6">
             <div>
-                <div className="text-xs font-medium text-zinc-600 mb-2">Select Size</div>
-                <div className="flex flex-wrap gap-2">
-                    {variants.map((v) => {
-                        const isSelected = selectedId === v.id;
-                        const isOutOfStock = v.stock <= 0;
-
-                        return (
-                            <button
-                                key={v.id}
-                                onClick={() => setSelectedId(v.id)}
-                                disabled={isOutOfStock}
-                                className={`h-10 min-w-[3rem] rounded-xl border px-4 text-sm font-medium transition
-                                    ${isSelected
-                                        ? "border-zinc-900 bg-zinc-900 text-zinc-50"
-                                        : isOutOfStock
-                                            ? "border-zinc-200 bg-zinc-50 text-zinc-400 cursor-not-allowed line-through"
-                                            : "border-zinc-200 bg-white text-zinc-900 hover:border-zinc-400"
-                                    }`}
-                            >
-                                {v.size}
-                            </button>
-                        );
-                    })}
+                <div className="text-[11px] font-medium tracking-[0.2em] text-muted uppercase">
+                    Size
                 </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                    {variants.map((v) => (
+                        <button
+                            key={v.id}
+                            onClick={() => setSelectedId(v.id)}
+                            disabled={v.stock <= 0}
+                            className={`h-10 rounded-full px-5 text-[14px] transition-all duration-300 ${v.id === selectedId
+                                ? "bg-accent text-white font-medium"
+                                : v.stock > 0
+                                    ? "border border-[rgba(0,0,0,0.1)] text-heading hover:border-[rgba(0,0,0,0.2)]"
+                                    : "border border-[rgba(0,0,0,0.04)] text-[rgba(0,0,0,0.2)] cursor-not-allowed"
+                                }`}
+                        >
+                            {v.size}
+                        </button>
+                    ))}
+                </div>
+                {selected && selected.stock > 0 && selected.stock < 5 ? (
+                    <div className="mt-3 text-[13px] text-gold">
+                        Only {selected.stock} left in stock
+                    </div>
+                ) : null}
             </div>
 
-            {selected && (
-                <div className="text-xs text-zinc-500">
-                    {outOfStock
-                        ? "This size is out of stock"
-                        : `${selected.stock} in stock`}
-                </div>
-            )}
-
-            <button
-                onClick={handleAddToCart}
-                disabled={!selectedId || outOfStock || isPending}
-                className="h-11 w-full rounded-xl bg-zinc-900 px-5 text-sm font-medium text-zinc-50 transition hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed md:w-56"
-            >
-                {!selectedId
-                    ? "Select a Size"
-                    : isPending
-                        ? "Adding…"
-                        : outOfStock
-                            ? "Out of Stock"
-                            : "Add to Cart"}
-            </button>
+            <AddToCartButton onClick={handleAddToCart} disabled={outOfStock} />
         </div>
     );
 }

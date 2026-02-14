@@ -1,28 +1,54 @@
 "use client";
 
-import { useTransition } from "react";
-import { addToCart } from "@/app/cart/actions";
+import { useState, useTransition, useRef, useEffect } from "react";
 
-export function AddToCartButton({ productId, variantId }: { productId: string; variantId?: string }) {
+export default function AddToCartButton({
+    onClick,
+    disabled,
+}: {
+    onClick: () => Promise<void>;
+    disabled: boolean;
+}) {
     const [isPending, startTransition] = useTransition();
+    const [added, setAdded] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        };
+    }, []);
 
     function handleClick() {
+        setError(null);
         startTransition(async () => {
-            const result = await addToCart(productId, variantId);
-            if (result.error) {
-                // Basic alert — can be upgraded to a toast later
-                alert(result.error);
+            try {
+                await onClick();
+                setAdded(true);
+                timeoutRef.current = setTimeout(() => setAdded(false), 2000);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : "Failed to add to cart");
             }
         });
     }
 
     return (
-        <button
-            onClick={handleClick}
-            disabled={isPending}
-            className="h-11 w-full rounded-xl bg-zinc-900 px-5 text-sm font-medium text-zinc-50 transition hover:bg-zinc-800 disabled:opacity-50 md:w-56"
-        >
-            {isPending ? "Adding…" : "Add to Cart"}
-        </button>
+        <div className="space-y-2">
+            <button
+                onClick={handleClick}
+                disabled={disabled || isPending}
+                className="h-12 w-full rounded-full bg-accent text-[14px] font-medium tracking-wide text-white hover-lift hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+            >
+                {isPending
+                    ? "Adding…"
+                    : added
+                        ? "Added ✓"
+                        : disabled
+                            ? "Out of Stock"
+                            : "Add to Cart"}
+            </button>
+            {error ? <div className="text-[13px] text-red-700">{error}</div> : null}
+        </div>
     );
 }

@@ -1,37 +1,34 @@
-export const dynamic = "force-dynamic";
-
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatMoney } from "@/lib/format";
-import { getProductImagePublicUrl } from "@/lib/product-images";
-import { getPaymentStatusStyles } from "@/lib/payment-status";
+import { SectionTitle } from "@/components/ui";
 import PayNowButton from "@/components/pay-now-button";
 import DownloadInvoiceButton from "@/components/download-invoice-button";
+import { FadeIn } from "@/components/fade-in";
 
-type OrderItemProduct = {
+export const dynamic = "force-dynamic";
+
+type OrderRow = {
     id: string;
-    title: string;
-    image_path: string | null;
+    created_at: string;
+    total_amount: number;
+    status: string;
+    payment_status: string;
+    full_name: string | null;
+    email: string | null;
+    phone: string | null;
+    address_line1: string | null;
+    razorpay_order_id: string | null;
 };
 
 type OrderItemRow = {
     id: string;
     quantity: number;
-    price: number;
-    products: OrderItemProduct;
+    unit_price: number;
+    products: { title: string } | null;
 };
 
-type OrderRow = {
-    id: string;
-    user_id: string;
-    status: string;
-    payment_status: string;
-    total_amount: number;
-    created_at: string;
-    order_items: OrderItemRow[];
-};
-
-export default async function OrderConfirmationPage({
+export default async function OrderPage({
     params,
 }: {
     params: { id: string };
@@ -43,173 +40,110 @@ export default async function OrderConfirmationPage({
     } = await supabase.auth.getUser();
 
     if (!user) {
-        redirect("/login");
+        redirect(`/login?redirect=/order/${params.id}`);
     }
 
-    const { data, error } = await supabase
+    const { data: order, error: orderError } = await supabase
         .from("orders")
         .select(
-            "id, user_id, status, payment_status, total_amount, created_at, order_items(id, quantity, price, products(id, title, image_path))",
+            "id,created_at,total_amount,status,payment_status,full_name,email,phone,address_line1,razorpay_order_id",
         )
         .eq("id", params.id)
+        .eq("user_id", user.id)
         .maybeSingle();
 
-    if (error) {
-        throw new Error(error.message);
+    if (orderError) {
+        console.error("[OrderPage] Supabase query error:", orderError);
+        throw new Error("Failed to load order. Please try again.");
     }
 
-    if (!data) {
-        redirect("/");
-    }
+    if (!order) notFound();
 
-    const order: OrderRow = JSON.parse(JSON.stringify(data));
+    const o = order as OrderRow;
 
-    if (order.user_id !== user.id) {
-        redirect("/");
-    }
+    const { data: orderItems } = await supabase
+        .from("order_items")
+        .select("id,quantity,unit_price,products(title)")
+        .eq("order_id", o.id);
 
-    const orderDate = new Date(order.created_at).toLocaleDateString("en-IN", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-    });
+    const items = (orderItems ?? []) as unknown as OrderItemRow[];
+
+    const isPaid = o.payment_status === "paid";
 
     return (
-        <div className="min-h-screen bg-ivory text-foreground">
-            <div className="mx-auto w-full max-w-3xl px-6 py-12">
-                {/* Thank you header */}
-                <div className="text-center animate-fade-in">
-                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="28"
-                            height="28"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="text-emerald-600"
-                        >
-                            <polyline points="20 6 9 17 4 12" />
-                        </svg>
+        <div className="min-h-screen bg-bg-primary">
+            <div className="mx-auto w-full max-w-3xl px-6 py-16">
+                <FadeIn>
+                    <div className="flex flex-col items-center text-center">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gold/10">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C6A756" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                        </div>
+                        <div className="mt-6">
+                            <SectionTitle
+                                subtitle={`#${o.id.slice(0, 8).toUpperCase()}`}
+                                title="Order Placed"
+                            />
+                        </div>
                     </div>
-                    <h1 className="mt-5 font-serif text-3xl font-light tracking-tight">
-                        Thank you for your order
-                    </h1>
-                    <p className="mt-2 text-sm text-warm-gray">
-                        Your order has been placed successfully.
-                    </p>
-                </div>
 
-                {/* Order details */}
-                <div className="mt-10 rounded-2xl border border-zinc-200/60 bg-white p-6 shadow-sm animate-fade-in">
-                    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200/60 pb-4">
-                        <div>
-                            <div className="text-xs text-warm-gray">Order ID</div>
-                            <div className="mt-0.5 text-sm font-medium text-zinc-900 font-mono">
-                                {order.id.slice(0, 8).toUpperCase()}
+                    <div className="mt-14 rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-bg-card p-8">
+                        <div className="space-y-4 text-[15px]">
+                            <div className="flex justify-between">
+                                <span className="text-muted">Name</span>
+                                <span className="text-heading">{o.full_name ?? "—"}</span>
                             </div>
-                        </div>
-                        <div>
-                            <div className="text-xs text-warm-gray">Date</div>
-                            <div className="mt-0.5 text-sm font-medium text-zinc-900">
-                                {orderDate}
+                            <div className="flex justify-between">
+                                <span className="text-muted">Phone</span>
+                                <span className="text-heading">{o.phone ?? "—"}</span>
                             </div>
-                        </div>
-                        <div>
-                            <div className="text-xs text-warm-gray">Status</div>
-                            <div className="mt-0.5">
-                                <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 capitalize">
-                                    {order.status}
+                            <div className="flex justify-between">
+                                <span className="text-muted">Status</span>
+                                <span className="font-medium capitalize text-heading">{o.status}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted">Payment</span>
+                                <span className={`font-medium capitalize ${isPaid ? "text-heading" : "text-gold"}`}>
+                                    {o.payment_status}
                                 </span>
                             </div>
                         </div>
-                        <div>
-                            <div className="text-xs text-warm-gray">Payment</div>
-                            <div className="mt-0.5">
-                                {(() => {
-                                    const ps = getPaymentStatusStyles(order.payment_status); return (
-                                        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium capitalize ${ps.bg} ${ps.text}`}>
-                                            {order.payment_status}
-                                        </span>
-                                    );
-                                })()}
-                            </div>
+
+                        <div className="mt-6 gold-divider-gradient" />
+
+                        <div className="mt-6 space-y-3">
+                            {items.map((item) => (
+                                <div key={item.id} className="flex items-center justify-between text-[15px]">
+                                    <div className="text-heading">
+                                        {(item.products as { title: string } | null)?.title ?? "Product"} × {item.quantity}
+                                    </div>
+                                    <div className="font-serif font-light text-gold">{formatMoney(Number(item.unit_price) * item.quantity)}</div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="mt-6 gold-divider-gradient" />
+
+                        <div className="mt-5 flex items-center justify-between">
+                            <div className="text-[15px] text-muted">Total</div>
+                            <div className="font-serif text-xl font-light text-gold">{formatMoney(Number(o.total_amount))}</div>
                         </div>
                     </div>
 
-                    {/* Items */}
-                    <div className="mt-4 divide-y divide-zinc-200/60">
-                        {order.order_items.map((item) => {
-                            const prod = item.products;
-                            const lineTotal = item.quantity * item.price;
-                            const imageUrl = getProductImagePublicUrl(
-                                supabase,
-                                prod.image_path,
-                            );
-
-                            return (
-                                <div key={item.id} className="flex items-center gap-4 py-4">
-                                    <div className="h-16 w-14 flex-shrink-0 overflow-hidden rounded-xl bg-cream">
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img
-                                            src={imageUrl}
-                                            alt={prod.title}
-                                            className="h-full w-full object-cover"
-                                        />
-                                    </div>
-                                    <div className="flex flex-1 items-center justify-between gap-4">
-                                        <div>
-                                            <div className="text-sm font-medium text-zinc-900">
-                                                {prod.title}
-                                            </div>
-                                            <div className="mt-0.5 text-xs text-warm-gray">
-                                                {formatMoney(item.price)} &times; {item.quantity}
-                                            </div>
-                                        </div>
-                                        <div className="text-sm font-medium text-zinc-900">
-                                            {formatMoney(lineTotal)}
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
+                    <div className="mt-8 flex flex-wrap gap-3 justify-center">
+                        {o.payment_status === "unpaid" ? (
+                            <PayNowButton orderId={o.id} userEmail={o.email ?? undefined} />
+                        ) : null}
+                        {isPaid ? <DownloadInvoiceButton orderId={o.id} /> : null}
+                        <a
+                            href="/products"
+                            className="inline-flex h-12 items-center rounded-full border border-[rgba(0,0,0,0.1)] px-8 text-[14px] text-heading transition-all duration-400 hover:border-[rgba(0,0,0,0.2)]"
+                        >
+                            Continue Shopping
+                        </a>
                     </div>
-
-                    {/* Order total */}
-                    <div className="mt-4 flex items-center justify-between border-t border-zinc-200/60 pt-4">
-                        <span className="text-sm font-medium text-zinc-900">Order Total</span>
-                        <span className="text-lg font-medium text-zinc-900">
-                            {formatMoney(order.total_amount)}
-                        </span>
-                    </div>
-                </div>
-
-                {/* Pay Now (only for unpaid orders) */}
-                {order.payment_status === "unpaid" && (
-                    <div className="mt-8 text-center animate-fade-in">
-                        <PayNowButton orderId={order.id} userEmail={user.email} />
-                    </div>
-                )}
-
-                {/* Invoice download (available after payment) */}
-                {order.payment_status === "paid" ? (
-                    <div className="mt-6 text-center animate-fade-in">
-                        <DownloadInvoiceButton orderId={order.id} />
-                    </div>
-                ) : null}
-
-                {/* Continue shopping */}
-                <div className="mt-8 text-center animate-fade-in">
-                    <a
-                        href="/products"
-                        className="inline-flex h-11 items-center rounded-2xl border border-zinc-200/60 bg-white px-6 text-sm font-medium text-zinc-900 shadow-sm transition hover:bg-zinc-50"
-                    >
-                        Continue Shopping
-                    </a>
-                </div>
+                </FadeIn>
             </div>
         </div>
     );

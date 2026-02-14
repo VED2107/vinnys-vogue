@@ -1,30 +1,80 @@
-import { notFound } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
+import type { Metadata } from "next";
+import Image from "next/image";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { formatMoneyFromCents } from "@/lib/format";
 import { getProductImagePublicUrl } from "@/lib/product-images";
-import { AddToCartButton } from "@/components/add-to-cart-button";
-import VariantSelector from "@/components/variant-selector";
+import { formatMoneyFromCents } from "@/lib/format";
 import { getCategoryLabel } from "@/lib/categories";
+import VariantSelector from "@/components/variant-selector";
+import { FadeIn } from "@/components/fade-in";
 
-type VariantRow = {
-  id: string;
-  size: string;
-  stock: number;
-};
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { id: string };
+}): Promise<Metadata> {
+  const supabase = createSupabaseServerClient();
+  const { data: product } = await supabase
+    .from("products")
+    .select("title, description, price_cents, currency, image_path")
+    .eq("id", params.id)
+    .eq("active", true)
+    .maybeSingle();
+
+  if (!product) {
+    return { title: "Product Not Found" };
+  }
+
+  const p = product as {
+    title: string;
+    description: string | null;
+    price_cents: number;
+    currency: string;
+    image_path: string | null;
+  };
+
+  const imageUrl = p.image_path
+    ? getProductImagePublicUrl(supabase, p.image_path)
+    : undefined;
+
+  const price = formatMoneyFromCents(p.price_cents, p.currency);
+  const desc = p.description
+    ? `${p.description.slice(0, 150)}…`
+    : `Shop ${p.title} — ${price} at Vinnys Vogue.`;
+
+  return {
+    title: p.title,
+    description: desc,
+    openGraph: {
+      title: `${p.title} — Vinnys Vogue`,
+      description: desc,
+      ...(imageUrl && {
+        images: [{ url: imageUrl, width: 800, height: 1000, alt: p.title }],
+      }),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${p.title} — Vinnys Vogue`,
+      description: desc,
+      ...(imageUrl && { images: [imageUrl] }),
+    },
+  };
+}
 
 type ProductRow = {
   id: string;
   title: string;
   description: string | null;
-  category: string | null;
   price_cents: number;
   currency: string;
   image_path: string | null;
   active: boolean;
-  has_variants: boolean;
-  stock: number;
-  product_variants: VariantRow[];
+  category: string | null;
 };
+
+type VariantRow = { id: string; size: string; stock: number };
 
 export default async function ProductDetailPage({
   params,
@@ -33,83 +83,80 @@ export default async function ProductDetailPage({
 }) {
   const supabase = createSupabaseServerClient();
 
-  const { data, error } = await supabase
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect(`/login?redirect=/product/${params.id}`);
+  }
+
+  const { data: product } = await supabase
     .from("products")
-    .select(
-      "id,title,description,category,price_cents,currency,image_path,active,has_variants,stock,product_variants(id,size,stock)",
-    )
+    .select("id,title,description,price_cents,currency,image_path,active,category")
     .eq("id", params.id)
     .maybeSingle();
 
-  if (error) {
-    throw new Error(error.message);
-  }
+  if (!product) notFound();
+  if (!(product as { active: boolean }).active) notFound();
 
-  if (!data) {
-    notFound();
-  }
+  const p = product as ProductRow;
+  const imageUrl = getProductImagePublicUrl(supabase, p.image_path);
 
-  const product: ProductRow = JSON.parse(JSON.stringify(data));
-  const imageUrl = getProductImagePublicUrl(supabase, product.image_path);
+  const { data: variants } = await supabase
+    .from("product_variants")
+    .select("id,size,stock")
+    .eq("product_id", p.id)
+    .order("size", { ascending: true });
+
+  const variantRows = (variants ?? []) as VariantRow[];
 
   return (
-    <div className="min-h-screen bg-ivory text-foreground">
-      <div className="mx-auto w-full max-w-6xl px-6 py-12">
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
-          <div className="overflow-hidden rounded-2xl border border-zinc-200/60 bg-white shadow-sm">
-            <div className="aspect-[4/5] w-full bg-cream">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+    <div className="min-h-screen bg-bg-primary">
+      <div className="mx-auto w-full max-w-[1280px] px-6 py-16">
+        <FadeIn>
+          <div className="grid grid-cols-1 gap-20 md:grid-cols-2">
+            <div className="relative overflow-hidden rounded-[20px] bg-[#EDE8E0] aspect-[3/4]">
+              <Image
                 src={imageUrl}
-                alt={product.title}
-                className="h-full w-full object-cover"
+                alt={p.title}
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="img-matte object-cover"
+                priority
               />
             </div>
-          </div>
 
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <h1 className="font-serif text-3xl font-light tracking-tight">
-                {product.title}
-              </h1>
-              {product.category ? (
-                <div className="text-xs tracking-[0.22em] text-gold uppercase">
-                  {getCategoryLabel(product.category)}
+            <div className="flex flex-col justify-center space-y-8">
+              {p.category ? (
+                <div className="text-[11px] font-medium tracking-[0.25em] text-gold uppercase">
+                  {getCategoryLabel(p.category)}
                 </div>
               ) : null}
-              <div className="text-lg text-warm-gray">
-                {formatMoneyFromCents(product.price_cents, product.currency)}
+
+              <h1 className="font-serif text-[clamp(28px,4vw,42px)] font-light tracking-[-0.02em] leading-[1.15] text-heading">
+                {p.title}
+              </h1>
+
+              <div className="gold-divider" />
+
+              <div className="font-serif text-[24px] font-light text-gold">
+                {formatMoneyFromCents(p.price_cents, p.currency)}
               </div>
-            </div>
 
-            <div className="rounded-2xl border border-zinc-200/60 bg-white p-6 text-sm leading-7 text-warm-gray shadow-sm">
-              {product.description ? product.description : "Details available on request."}
-            </div>
+              {p.description ? (
+                <p className="text-[15px] leading-[1.7] text-muted whitespace-pre-line">
+                  {p.description}
+                </p>
+              ) : null}
 
-            {product.has_variants && product.product_variants.length > 0 ? (
               <VariantSelector
-                productId={product.id}
-                variants={product.product_variants}
+                productId={p.id}
+                variants={variantRows}
               />
-            ) : (
-              <div className="space-y-2">
-                {!product.has_variants && product.stock > 0 && (
-                  <div className="text-xs text-zinc-500">{product.stock} in stock</div>
-                )}
-                {!product.has_variants && product.stock <= 0 ? (
-                  <button
-                    disabled
-                    className="h-11 w-full rounded-xl bg-zinc-900 px-5 text-sm font-medium text-zinc-50 opacity-50 cursor-not-allowed md:w-56"
-                  >
-                    Out of Stock
-                  </button>
-                ) : (
-                  <AddToCartButton productId={product.id} />
-                )}
-              </div>
-            )}
+            </div>
           </div>
-        </div>
+        </FadeIn>
       </div>
     </div>
   );

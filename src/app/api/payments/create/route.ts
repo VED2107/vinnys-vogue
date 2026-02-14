@@ -1,6 +1,9 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import Razorpay from "razorpay";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID!,
@@ -9,6 +12,15 @@ const razorpay = new Razorpay({
 
 export async function POST(request: Request) {
     try {
+        // Rate limit: 5 requests per minute
+        const ip = getClientIp(request);
+        const rl = rateLimit(`payments-create:${ip}`, 5, 60_000);
+        if (!rl.success) {
+            return NextResponse.json(
+                { error: "Too many requests. Please try again later." },
+                { status: 429 },
+            );
+        }
         const supabase = createSupabaseServerClient();
 
         const {
