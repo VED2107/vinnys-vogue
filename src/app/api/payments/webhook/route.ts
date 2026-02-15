@@ -94,7 +94,7 @@ export async function POST(req: Request) {
                 return new NextResponse("OK", { status: 200 });
             }
 
-            // Send confirmation email (best-effort)
+            // Send confirmation email (best-effort — never blocks payment confirmation)
             try {
                 await sendOrderConfirmation(order.id);
                 await supabase.from("order_email_logs").insert({
@@ -102,11 +102,16 @@ export async function POST(req: Request) {
                     status: "sent",
                 });
             } catch (emailErr) {
-                await supabase.from("order_email_logs").insert({
-                    order_id: order.id,
-                    status: "failed",
-                    error: emailErr instanceof Error ? emailErr.message : String(emailErr),
-                });
+                console.error("Webhook email sending failed:", emailErr);
+                try {
+                    await supabase.from("order_email_logs").insert({
+                        order_id: order.id,
+                        status: "failed",
+                        error: emailErr instanceof Error ? emailErr.message : String(emailErr),
+                    });
+                } catch (logErr) {
+                    console.error("Failed to log email error:", logErr);
+                }
             }
 
             return NextResponse.json({ success: true });

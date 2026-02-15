@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { ScrollHeader } from "@/components/scroll-header";
 import "./globals.css";
 
 const inter = Inter({
@@ -67,7 +68,9 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${playfair.variable} antialiased`}
       >
-        <Header />
+        <ScrollHeader>
+          <Header />
+        </ScrollHeader>
         <div className="animate-fadeIn">
           {children}
         </div>

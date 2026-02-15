@@ -9,6 +9,7 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: { id: string } },
 ) {
+  try {
   const supabase = createSupabaseServerClient();
 
   const {
@@ -92,9 +93,13 @@ export async function GET(
   return new NextResponse(body, {
     status: 200,
     headers: {
-      "content-type": "application/pdf",
-      "content-disposition": `attachment; filename=invoice-${orderId.slice(0, 8)}.pdf`,
-      "cache-control": "no-store",
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="invoice-${orderId.slice(0, 8)}.pdf"`,
+      "Cache-Control": "no-store",
     },
   });
+  } catch (err) {
+    console.error("/api/admin/orders/[id]/invoice error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }

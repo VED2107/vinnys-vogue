@@ -88,6 +88,15 @@ export async function Header() {
 
                     {user ? (
                         <Link
+                            href="/account/orders"
+                            className="nav-link-editorial text-[12px] tracking-[0.2em] uppercase font-light text-[#1C1A18] leading-none py-2"
+                        >
+                            My Orders
+                        </Link>
+                    ) : null}
+
+                    {user ? (
+                        <Link
                             href="/wishlist"
                             className="nav-link-editorial relative inline-flex items-center justify-center text-[#1C1A18] py-1"
                             aria-label="Wishlist"

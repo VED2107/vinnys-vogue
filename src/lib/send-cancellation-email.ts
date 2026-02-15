@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { transporter } from "@/lib/email";
+import { transporter, smtpConfigured, FROM_EMAIL } from "@/lib/email";
 
 function getServiceRoleSupabase() {
   return createClient(
@@ -52,18 +52,27 @@ export async function sendOrderCancellationEmail(orderId: string) {
     return;
   }
 
-  await transporter.sendMail({
-    to,
-    from: process.env.FROM_EMAIL!,
-    subject: "Your Order Has Been Cancelled — Vinnys Vogue",
-    html: `
-      <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111">
-        <h2 style="margin:0 0 8px 0;">Your order has been cancelled</h2>
-        <p style="margin:0 0 10px 0;">Order #${escapeHtml(order.id)}</p>
-        <p style="margin:0 0 16px 0;">No refund was initiated automatically. If you need assistance, please contact support.</p>
-        <hr style="border:none;border-top:1px solid #eee;margin:16px 0;"/>
-        <p style="margin:0;color:#666;font-size:12px;">© Vinnys Vogue — Where fashion meets elegance</p>
-      </div>
-    `,
-  });
+  if (!transporter || !smtpConfigured) {
+    console.warn("[sendOrderCancellationEmail] SMTP not configured, skipping email for order:", orderId);
+    return;
+  }
+
+  try {
+    await transporter.sendMail({
+      to,
+      from: FROM_EMAIL,
+      subject: "Your Order Has Been Cancelled — Vinnys Vogue",
+      html: `
+        <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111">
+          <h2 style="margin:0 0 8px 0;">Your order has been cancelled</h2>
+          <p style="margin:0 0 10px 0;">Order #${escapeHtml(order.id)}</p>
+          <p style="margin:0 0 16px 0;">No refund was initiated automatically. If you need assistance, please contact support.</p>
+          <hr style="border:none;border-top:1px solid #eee;margin:16px 0;"/>
+          <p style="margin:0;color:#666;font-size:12px;">© Vinnys Vogue — Where fashion meets elegance</p>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error("[sendOrderCancellationEmail] SMTP error:", err);
+  }
 }

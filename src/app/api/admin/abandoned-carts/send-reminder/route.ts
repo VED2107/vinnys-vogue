@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createClient } from "@supabase/supabase-js";
-import { transporter } from "@/lib/email";
+import { transporter, smtpConfigured, FROM_EMAIL } from "@/lib/email";
 
 function getServiceRoleSupabase() {
   return createClient(
@@ -80,10 +80,14 @@ export async function POST(request: Request) {
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://vinnysvogue.com";
 
+    if (!transporter || !smtpConfigured) {
+      return NextResponse.json({ error: "SMTP not configured" }, { status: 500 });
+    }
+
     try {
       await transporter.sendMail({
         to: email,
-        from: process.env.FROM_EMAIL!,
+        from: FROM_EMAIL,
         subject: "You left something behind — Vinnys Vogue",
         html: `
           <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111;max-width:560px">

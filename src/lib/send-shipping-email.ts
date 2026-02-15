@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { transporter } from "@/lib/email";
+import { transporter, smtpConfigured, FROM_EMAIL } from "@/lib/email";
 
 function getServiceRoleSupabase() {
   return createClient(
@@ -66,10 +66,15 @@ export async function sendShippingConfirmation(orderId: string) {
     return;
   }
 
+  if (!transporter || !smtpConfigured) {
+    console.warn("[sendShippingConfirmation] SMTP not configured, skipping email for order:", orderId);
+    return;
+  }
+
   try {
     await transporter.sendMail({
       to,
-      from: process.env.FROM_EMAIL!,
+      from: FROM_EMAIL,
       subject: "Your Order Has Been Shipped — Vinnys Vogue",
       html: `
         <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111">

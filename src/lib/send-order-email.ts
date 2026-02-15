@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { transporter } from "@/lib/email";
+import { transporter, smtpConfigured, FROM_EMAIL } from "@/lib/email";
 import { generateInvoiceNumber, renderInvoicePdfBuffer, type InvoiceOrderRow } from "@/lib/invoice-pdf";
 
 function getServiceRoleSupabase() {
@@ -150,17 +150,27 @@ export async function sendOrderConfirmation(orderId: string) {
   </div>
   `;
 
-  await transporter.sendMail({
-    to: toEmail,
-    from: process.env.FROM_EMAIL ?? process.env.SMTP_USER ?? toEmail,
-    subject: "Your Order is Confirmed — Vinnys Vogue",
-    html,
-    attachments: [
-      {
-        filename: `invoice-${order.id.slice(0, 8)}.pdf`,
-        content: pdfBuffer,
-        contentType: "application/pdf",
-      },
-    ],
-  });
+  if (!transporter || !smtpConfigured) {
+    console.warn("[sendOrderConfirmation] SMTP not configured, skipping email for order:", orderId);
+    return;
+  }
+
+  try {
+    await transporter.sendMail({
+      to: toEmail,
+      from: FROM_EMAIL || process.env.SMTP_USER || toEmail,
+      subject: "Your Order is Confirmed — Vinnys Vogue",
+      html,
+      attachments: [
+        {
+          filename: `invoice-${order.id.slice(0, 8)}.pdf`,
+          content: pdfBuffer,
+          contentType: "application/pdf",
+        },
+      ],
+    });
+  } catch (err) {
+    console.error("[sendOrderConfirmation] SMTP error:", err);
+    throw err;
+  }
 }
