@@ -48,85 +48,74 @@ export async function POST(req: Request) {
             return new NextResponse("Invalid signature", { status: 400 });
         }
 
-        let event: unknown;
+        let parsedBody: any;
         try {
-            event = JSON.parse(body) as unknown;
+            parsedBody = JSON.parse(body);
         } catch {
             console.error("Webhook received invalid JSON");
             return new NextResponse("OK", { status: 200 });
         }
 
-        const evt = event as {
-            event?: unknown;
-            payload?: { payment?: { entity?: { order_id?: unknown } } };
-        };
+        const eventName = typeof parsedBody?.event === "string" ? parsedBody.event : "";
 
-        const eventName = typeof evt.event === "string" ? evt.event : "";
-        const razorpayOrderId = (() => {
-            const raw = evt.payload?.payment?.entity?.order_id;
-            return typeof raw === "string" ? raw : null;
-        })();
+        if (eventName !== "payment.captured") {
+            return new NextResponse("OK", { status: 200 });
+        }
+
+        const payment = parsedBody?.payload?.payment?.entity;
+        const razorpayOrderId = typeof payment?.order_id === "string" ? payment.order_id : null;
+
+        console.log("Captured order id:", razorpayOrderId);
 
         if (!razorpayOrderId) {
             console.error("Webhook missing razorpay_order_id");
             return new NextResponse("OK", { status: 200 });
         }
 
-        // Look up internal order
         const { data: order, error: orderError } = await supabase
             .from("orders")
-            .select("id, payment_status")
+            .select("id")
             .eq("razorpay_order_id", razorpayOrderId)
-            .maybeSingle<{ id: string; payment_status: string }>();
+            .single<{ id: string }>();
 
         if (orderError || !order) {
-            console.error("Webhook: order not found for", razorpayOrderId, orderError);
-            return new NextResponse("OK", { status: 200 });
+            console.error("Order lookup failed:", orderError);
+            console.error("Order not found for:", razorpayOrderId);
+            return new Response("Order not found", { status: 200 });
         }
 
-        // Idempotency: already paid, nothing to do
-        if (order.payment_status === "paid") {
-            return new NextResponse("OK", { status: 200 });
-        }
+        try {
+            const { error: rpcError } = await supabase.rpc("confirm_order_payment", {
+                p_order_id: order.id,
+            });
 
-        if (eventName === "payment.captured") {
-            try {
-                await supabase.rpc("confirm_order_payment", {
-                    p_order_id: order.id,
-                });
-
-                // Send confirmation email (best-effort)
-                try {
-                    await sendOrderConfirmation(order.id);
-                    await supabase.from("order_email_logs").insert({
-                        order_id: order.id,
-                        status: "sent",
-                    });
-                } catch (emailErr) {
-                    await supabase.from("order_email_logs").insert({
-                        order_id: order.id,
-                        status: "failed",
-                        error: emailErr instanceof Error ? emailErr.message : String(emailErr),
-                    });
-                }
-
-                return NextResponse.json({ success: true });
-            } catch (error) {
-                console.error("Payment confirmation failed:", error);
-                return NextResponse.json(
-                    { error: "Confirmation failed" },
-                    { status: 500 },
-                );
+            if (rpcError) {
+                console.error("RPC error:", rpcError);
+                return new NextResponse("OK", { status: 200 });
             }
-        }
 
-        if (eventName === "payment.failed") {
-            await supabase
-                .from("orders")
-                .update({ payment_status: "failed" })
-                .eq("id", order.id);
+            // Send confirmation email (best-effort)
+            try {
+                await sendOrderConfirmation(order.id);
+                await supabase.from("order_email_logs").insert({
+                    order_id: order.id,
+                    status: "sent",
+                });
+            } catch (emailErr) {
+                await supabase.from("order_email_logs").insert({
+                    order_id: order.id,
+                    status: "failed",
+                    error: emailErr instanceof Error ? emailErr.message : String(emailErr),
+                });
+            }
 
-            return new NextResponse("OK", { status: 200 });
+            return NextResponse.json({ success: true });
+        } catch (error) {
+            console.error("Payment confirmation failed:", error);
+            return NextResponse.json(
+                { error: "Confirmation failed" },
+                { status: 500 },
+            );
         }
 
         return new NextResponse("OK", { status: 200 });

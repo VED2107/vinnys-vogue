@@ -120,7 +120,7 @@ export default async function OrderPage({
                         <div className="mt-6">
                             <SectionTitle
                                 subtitle={`#${o.id.slice(0, 8).toUpperCase()}`}
-                                title="Order Placed"
+                                title={isPaid ? "Order Placed" : "Order Created"}
                             />
                         </div>
                     </div>
@@ -137,7 +137,9 @@ export default async function OrderPage({
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-muted">Status</span>
-                                <span className="font-medium capitalize text-heading">{o.status}</span>
+                                <span className={`font-medium ${isPaid ? "text-heading" : "text-gold"}`}>
+                                    {isPaid ? "Confirmed" : "Awaiting Payment"}
+                                </span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-muted">Payment</span>
