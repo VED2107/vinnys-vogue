@@ -145,6 +145,18 @@ export async function removeCartItem(cartItemId: string) {
 }
 
 // ---------------------------------------------------------------------------
+// buyNow — add to cart + redirect to checkout in one action
+// ---------------------------------------------------------------------------
+
+export async function buyNow(productId: string, variantId?: string) {
+  const result = await addToCart(productId, variantId);
+  if (result?.error) {
+    return result;
+  }
+  redirect("/checkout");
+}
+
+// ---------------------------------------------------------------------------
 // checkout
 // ---------------------------------------------------------------------------
 

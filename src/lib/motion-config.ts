@@ -11,9 +11,9 @@ export const MOTION = {
 
     /** Duration presets (seconds) */
     duration: {
-        fast: 0.3,
-        normal: 0.6,
-        slow: 0.8,
+        fast: 0.2,
+        normal: 0.4,
+        slow: 0.55,
     },
 
     /** Stagger delay between sibling elements (seconds) */
@@ -29,5 +29,5 @@ export const MOTION = {
     image: { scale: 1.05, duration: 0.5 },
 
     /** Default enter state (before reveal) */
-    enter: { y: 40, opacity: 0 },
+    enter: { y: 24, opacity: 0 },
 } as const;

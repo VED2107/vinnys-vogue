@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { addToCart } from "@/app/cart/actions";
+import { addToCart, buyNow } from "@/app/cart/actions";
 import AddToCartButton from "@/components/add-to-cart-button";
 
 type Variant = { id: string; size: string; stock: number };
@@ -24,25 +24,25 @@ export default function VariantSelector({
 
     async function handleAddToCart() {
         if (!selectedId) return;
-        try {
-            await addToCart(productId, selectedId);
-        } catch (err) {
-            console.error("[VariantSelector] addToCart failed:", err);
-            throw err; // re-throw so AddToCartButton's catch handles UI feedback
-        }
+        const result = await addToCart(productId, selectedId);
+        if (result?.error) throw new Error(result.error);
+    }
+
+    async function handleBuyNow() {
+        if (!selectedId) return;
+        await buyNow(productId, selectedId);
     }
 
     if (variants.length === 0) {
         return (
             <div className="space-y-4">
                 <AddToCartButton
-                    onClick={async () => {
-                        try {
-                            await addToCart(productId);
-                        } catch (err) {
-                            console.error("[VariantSelector] addToCart failed:", err);
-                            throw err;
-                        }
+                    onAddToCart={async () => {
+                        const result = await addToCart(productId);
+                        if (result?.error) throw new Error(result.error);
+                    }}
+                    onBuyNow={async () => {
+                        await buyNow(productId);
                     }}
                     disabled={productStock <= 0}
                 />
@@ -62,7 +62,7 @@ export default function VariantSelector({
                             key={v.id}
                             onClick={() => setSelectedId(v.id)}
                             disabled={v.stock <= 0}
-                            className={`h-10 rounded-full px-5 text-[14px] transition-all duration-300 ${v.id === selectedId
+                            className={`h-10 rounded-full px-5 text-[14px] transition-colors duration-200 ${v.id === selectedId
                                 ? "bg-accent text-white font-medium"
                                 : v.stock > 0
                                     ? "border border-[rgba(0,0,0,0.1)] text-heading hover:border-[rgba(0,0,0,0.2)]"
@@ -80,7 +80,11 @@ export default function VariantSelector({
                 ) : null}
             </div>
 
-            <AddToCartButton onClick={handleAddToCart} disabled={outOfStock} />
+            <AddToCartButton
+                onAddToCart={handleAddToCart}
+                onBuyNow={handleBuyNow}
+                disabled={outOfStock}
+            />
         </div>
     );
 }

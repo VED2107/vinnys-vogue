@@ -97,7 +97,8 @@ h2 {
 /* ——— Subtle Image Treatment ——— */
 .img-matte {
   filter: saturate(90%) contrast(95%);
-  transition: transform 600ms ease, filter 600ms ease;
+  transition: transform 400ms ease, filter 400ms ease;
+  will-change: transform;
 }
 
 .img-matte:hover {
@@ -108,8 +109,9 @@ h2 {
 /* ——— Scroll Reveal ——— */
 .reveal {
   opacity: 0;
-  transform: translateY(40px);
-  transition: opacity 800ms ease, transform 800ms ease;
+  transform: translateY(24px);
+  transition: opacity 500ms ease, transform 500ms ease;
+  will-change: opacity, transform;
 }
 
 .reveal.active {
@@ -136,7 +138,8 @@ h2 {
       rgba(255, 255, 255, 0.25) 50%,
       rgba(255, 255, 255, 0) 60%);
   transform: translateX(-100%);
-  transition: transform 1s ease;
+  transition: transform 700ms ease;
+  will-change: transform;
 }
 
 .group:hover .glass-overlay {
@@ -157,7 +160,7 @@ h2 {
 @keyframes fadeInLuxury {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(6px);
   }
 
   to {
@@ -167,5 +170,5 @@ h2 {
 }
 
 .animate-fadeIn {
-  animation: fadeInLuxury 500ms ease forwards;
+  animation: fadeInLuxury 350ms ease forwards;
 }

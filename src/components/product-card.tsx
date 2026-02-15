@@ -1,9 +1,8 @@
-"use client";
-
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import WishlistToggle from "./wishlist-toggle";
 import { ProductCardBadges } from "./product-badges";
+import { formatMoneyFromCents } from "@/lib/format";
 
 interface ProductCardProps {
   product: {
@@ -20,21 +19,8 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, imageUrl, initialInWishlist }: ProductCardProps) {
-  const router = useRouter();
-  const price = new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: product.currency || "INR",
-    maximumFractionDigits: 0,
-  }).format(product.price_cents / 100);
-
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={() => router.push(`/product/${product.id}`)}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") router.push(`/product/${product.id}`); }}
-      className="group cursor-pointer"
-    >
+    <Link href={`/product/${product.id}`} className="group block" prefetch={true}>
       <div className="relative overflow-hidden rounded-xl bg-[#EDE8E0] aspect-[4/5]">
         <Image
           src={imageUrl}
@@ -52,9 +38,7 @@ export function ProductCard({ product, imageUrl, initialInWishlist }: ProductCar
         />
 
         {initialInWishlist !== undefined ? (
-          <div className="absolute right-3 top-3 z-10">
-            <WishlistToggle productId={product.id} initialInWishlist={initialInWishlist} />
-          </div>
+          <WishlistToggle productId={product.id} initialInWishlist={initialInWishlist} />
         ) : null}
       </div>
 
@@ -63,9 +47,9 @@ export function ProductCard({ product, imageUrl, initialInWishlist }: ProductCar
           {product.title}
         </div>
         <div className="text-[13px] text-gold">
-          {price}
+          {formatMoneyFromCents(product.price_cents, product.currency)}
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

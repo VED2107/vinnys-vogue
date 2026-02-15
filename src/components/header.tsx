@@ -1,6 +1,6 @@
+import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { MobileNav } from "@/components/mobile-nav";
-import Link from "next/link";
 
 export async function Header() {
     const supabase = createSupabaseServerClient();
@@ -64,30 +64,30 @@ export async function Header() {
 
                 {/* Center — Nav Links (desktop) */}
                 <nav className="hidden sm:flex items-center gap-8">
-                    <a href="/" className="nav-link-editorial text-[12px] tracking-[0.25em] uppercase font-light text-[#1C1A18]">
+                    <Link href="/" className="nav-link-editorial text-[12px] tracking-[0.25em] uppercase font-light text-[#1C1A18]">
                         Home
-                    </a>
-                    <a href="/products" className="nav-link-editorial text-[12px] tracking-[0.25em] uppercase font-light text-[#1C1A18]">
+                    </Link>
+                    <Link href="/products" className="nav-link-editorial text-[12px] tracking-[0.25em] uppercase font-light text-[#1C1A18]">
                         Collections
-                    </a>
-                    <a href="/about" className="nav-link-editorial text-[12px] tracking-[0.25em] uppercase font-light text-[#1C1A18]">
+                    </Link>
+                    <Link href="/about" className="nav-link-editorial text-[12px] tracking-[0.25em] uppercase font-light text-[#1C1A18]">
                         About
-                    </a>
+                    </Link>
                 </nav>
 
                 {/* Right — Icons (desktop) */}
                 <div className="hidden sm:flex items-center gap-4">
                     {isAdmin ? (
-                        <a
+                        <Link
                             href="/admin"
                             className="nav-link-editorial text-[12px] tracking-[0.2em] uppercase font-light text-[#1C1A18] leading-none py-2"
                         >
                             Admin
-                        </a>
+                        </Link>
                     ) : null}
 
                     {user ? (
-                        <a
+                        <Link
                             href="/wishlist"
                             className="nav-link-editorial relative inline-flex items-center justify-center text-[#1C1A18] py-1"
                             aria-label="Wishlist"
@@ -100,11 +100,11 @@ export async function Header() {
                                     {wishlistCount > 99 ? "99+" : wishlistCount}
                                 </span>
                             ) : null}
-                        </a>
+                        </Link>
                     ) : null}
 
                     {user ? (
-                        <a
+                        <Link
                             href="/cart"
                             className="nav-link-editorial relative inline-flex items-center justify-center text-[#1C1A18] py-1"
                             aria-label="Cart"
@@ -119,7 +119,7 @@ export async function Header() {
                                     {cartCount > 99 ? "99+" : cartCount}
                                 </span>
                             ) : null}
-                        </a>
+                        </Link>
                     ) : null}
 
                     {user ? (
@@ -129,12 +129,12 @@ export async function Header() {
                             </button>
                         </form>
                     ) : (
-                        <a
+                        <Link
                             href="/login"
                             className="nav-link-editorial text-[12px] tracking-[0.15em] uppercase font-light text-[#1C1A18] leading-none py-2"
                         >
                             Sign in
-                        </a>
+                        </Link>
                     )}
                 </div>
 

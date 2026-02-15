@@ -27,11 +27,9 @@ export default function WishlistToggle({
       });
       if (!res.ok) {
         setInWishlist(!next);
-        console.error("[WishlistToggle] Non-OK response:", res.status);
       }
     } catch (err) {
       setInWishlist(!next);
-      console.error("[WishlistToggle] Network error:", err);
     } finally {
       setPending(false);
     }

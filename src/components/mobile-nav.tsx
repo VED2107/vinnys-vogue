@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 interface MobileNavProps {
     isLoggedIn: boolean;
@@ -82,7 +83,7 @@ export function MobileNav({ isLoggedIn, isAdmin, cartCount, wishlistCount }: Mob
 
                     <nav className="flex flex-col gap-0 mt-16">
                         {navLinks.map((link) => (
-                            <a
+                            <Link
                                 key={link.href}
                                 href={link.href}
                                 className={`text-[20px] font-light tracking-wide py-4 border-b border-neutral-200 transition-opacity ${pathname === link.href
@@ -91,14 +92,14 @@ export function MobileNav({ isLoggedIn, isAdmin, cartCount, wishlistCount }: Mob
                                     }`}
                             >
                                 {link.label}
-                            </a>
+                            </Link>
                         ))}
                     </nav>
 
                     {userLinks.length > 0 && (
                         <div className="flex flex-col gap-0 mt-6">
                             {userLinks.map((link) => (
-                                <a
+                                <Link
                                     key={link.href}
                                     href={link.href}
                                     className="flex items-center justify-between text-[16px] font-light tracking-wide text-neutral-600 py-3 transition-opacity hover:opacity-70"
@@ -109,7 +110,7 @@ export function MobileNav({ isLoggedIn, isAdmin, cartCount, wishlistCount }: Mob
                                             {link.count > 99 ? "99+" : link.count}
                                         </span>
                                     )}
-                                </a>
+                                </Link>
                             ))}
                         </div>
                     )}
@@ -122,9 +123,9 @@ export function MobileNav({ isLoggedIn, isAdmin, cartCount, wishlistCount }: Mob
                                 </button>
                             </form>
                         ) : (
-                            <a href="/login" className="block w-full rounded-full bg-[#1C3A2A] px-5 py-3 text-center text-[12px] tracking-[0.15em] uppercase font-light text-white transition-all duration-300 btn-luxury">
+                            <Link href="/login" className="block w-full rounded-full bg-[#1C3A2A] px-5 py-3 text-center text-[12px] tracking-[0.15em] uppercase font-light text-white transition-all duration-300 btn-luxury">
                                 Sign in
-                            </a>
+                            </Link>
                         )}
                     </div>
                 </div>

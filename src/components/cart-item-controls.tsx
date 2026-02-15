@@ -22,7 +22,6 @@ export default function CartItemControls({
                 await updateCartItemQuantity(cartItemId, currentQty + delta);
                 router.refresh();
             } catch (err) {
-                console.error("[CartItemControls] qty update failed", err);
                 setError("Failed to update quantity.");
             }
         });
@@ -35,7 +34,6 @@ export default function CartItemControls({
                 await removeCartItem(cartItemId);
                 router.refresh();
             } catch (err) {
-                console.error("[CartItemControls] remove failed", err);
                 setError("Failed to remove item.");
             }
         });

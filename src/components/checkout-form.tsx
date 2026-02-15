@@ -22,7 +22,7 @@ export default function CheckoutForm() {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         full_name: String(formData.get("full_name") || "").trim(),
-                        email: String(formData.get("email") || "").trim(),
+                        email: String(formData.get("email") || "").trim().toLowerCase(),
                         phone: String(formData.get("phone") || "").trim(),
                         address_line1: String(formData.get("address_line1") || "").trim(),
                         address_line2: String(formData.get("address_line2") || "").trim(),
@@ -104,9 +104,17 @@ export default function CheckoutForm() {
             <button
                 type="submit"
                 disabled={isPending}
-                className="h-12 w-full rounded-full bg-accent text-[14px] font-medium tracking-wide text-white hover-lift hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
+                className="h-12 w-full rounded-full bg-accent text-[14px] font-medium tracking-wide text-white hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center gap-2"
             >
-                {isPending ? "Placing Order…" : "Place Order"}
+                {isPending ? (
+                    <>
+                        <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                        </svg>
+                        Placing Order…
+                    </>
+                ) : "Place Order"}
             </button>
         </form>
     );

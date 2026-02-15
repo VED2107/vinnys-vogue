@@ -43,7 +43,7 @@ export async function POST(request: Request) {
         }
 
         const fullName = String(body.full_name || "").trim();
-        const email = String(body.email || "").trim();
+        const email = String(body.email || "").trim().toLowerCase();
         const phone = String(body.phone || "").trim();
         const addressLine1 = String(body.address_line1 || "").trim();
         const addressLine2 = String(body.address_line2 || "").trim();

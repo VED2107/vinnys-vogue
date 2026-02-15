@@ -43,7 +43,7 @@ export default function SignupPage() {
         );
 
         if (profileError) {
-          console.error("[Signup] Profile upsert failed:", profileError);
+
           setError("Account created but profile setup failed. Please try signing in.");
           return;
         }
