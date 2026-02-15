@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatMoney } from "@/lib/format";
 import { getProductImagePublicUrl } from "@/lib/product-images";
@@ -27,6 +28,7 @@ type OrderRow = {
     payment_status: string;
     total_amount: number;
     created_at: string;
+    delivered_at: string | null;
     full_name: string | null;
     phone: string | null;
     address_line1: string | null;
@@ -44,6 +46,50 @@ export default async function AdminOrderDetailPage({
     params: { id: string };
 }) {
     const supabase = createSupabaseServerClient();
+
+    async function markDelivered() {
+        "use server";
+
+        const supabase = createSupabaseServerClient();
+        const orderId = params.id;
+
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+            throw new Error("Unauthorized");
+        }
+
+        const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", user.id)
+            .maybeSingle();
+
+        if (!profile || profile.role !== "admin") {
+            throw new Error("Forbidden");
+        }
+
+        const { error } = await supabase
+            .from("orders")
+            .update({
+                status: "delivered",
+                delivered_at: new Date().toISOString(),
+            })
+            .eq("id", orderId);
+
+        if (error) throw new Error("Failed to mark delivered");
+
+        const { error: eventError } = await supabase.from("order_events").insert({
+            order_id: orderId,
+            event_type: "DELIVERED",
+        });
+
+        if (eventError) throw new Error("Failed to write delivered event");
+
+        revalidatePath(`/admin/orders/${orderId}`);
+    }
 
     const {
         data: { user },
@@ -66,7 +112,7 @@ export default async function AdminOrderDetailPage({
     const { data, error } = await supabase
         .from("orders")
         .select(
-            "id, user_id, status, payment_status, total_amount, created_at, full_name, phone, address_line1, address_line2, city, state, postal_code, country, order_items(id, quantity, price, products(id, title, image_path))",
+            "id, user_id, status, payment_status, total_amount, created_at, delivered_at, full_name, phone, address_line1, address_line2, city, state, postal_code, country, order_items(id, quantity, price, products(id, title, image_path))",
         )
         .eq("id", params.id)
         .maybeSingle();
@@ -118,6 +164,23 @@ export default async function AdminOrderDetailPage({
                     >
                         Back to Orders
                     </a>
+                </div>
+
+                <div className="mt-4">
+                    <a
+                        href={`/api/admin/orders/${order.id}/invoice`}
+                        className="inline-flex h-10 items-center rounded-xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50"
+                    >
+                        Download Invoice
+                    </a>
+                </div>
+
+                <div className="mt-3">
+                    <form action={markDelivered}>
+                        <button className="px-4 py-2 bg-black text-white rounded-xl">
+                            Mark as Delivered
+                        </button>
+                    </form>
                 </div>
 
                 {/* Order meta */}

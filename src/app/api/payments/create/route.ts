@@ -41,7 +41,7 @@ export async function POST(request: Request) {
         // Fetch order
         const { data: order, error: orderError } = await supabase
             .from("orders")
-            .select("id, user_id, total_amount, payment_status")
+            .select("id, user_id, total_amount, payment_status, status, created_at, razorpay_order_id")
             .eq("id", orderId)
             .maybeSingle();
 
@@ -60,6 +60,57 @@ export async function POST(request: Request) {
                 { error: "Order is already paid" },
                 { status: 400 },
             );
+        }
+
+        // Fraud guard: only allow payment initiation for pending orders
+        if (order.status !== "pending") {
+            return NextResponse.json(
+                { error: "Order is not eligible for payment" },
+                { status: 400 },
+            );
+        }
+
+        // Fraud guard: block old orders (> 2 hours)
+        const createdAtMs = new Date(String(order.created_at ?? "")).getTime();
+        if (Number.isFinite(createdAtMs) && Date.now() - createdAtMs > 2 * 60 * 60 * 1000) {
+            return NextResponse.json(
+                { error: "Order has expired. Please checkout again." },
+                { status: 400 },
+            );
+        }
+
+        // Fraud guard: prevent multiple unpaid payment attempts for the same order
+        if (order.razorpay_order_id) {
+            return NextResponse.json(
+                { error: "Payment attempt already initiated" },
+                { status: 400 },
+            );
+        }
+
+        // Stock validation (no deduction)
+        const { data: items, error: itemsError } = await supabase
+            .from("order_items")
+            .select("quantity, products(id, stock)")
+            .eq("order_id", order.id);
+
+        if (itemsError) {
+            return NextResponse.json(
+                { error: "Failed to validate stock" },
+                { status: 500 },
+            );
+        }
+
+        for (const row of (items ?? []) as any[]) {
+            const qty = Number(row?.quantity ?? 0);
+            const prod = row?.products;
+            const stock = Number(prod?.stock ?? 0);
+
+            if (qty > 0 && stock < qty) {
+                return NextResponse.json(
+                    { error: "Item out of stock" },
+                    { status: 400 },
+                );
+            }
         }
 
         // Create Razorpay order — amount in paise (total_amount is in rupees)

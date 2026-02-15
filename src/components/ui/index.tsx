@@ -21,7 +21,7 @@ export function SectionTitle({
                     {subtitle}
                 </div>
             ) : null}
-            <h2 className="mt-3 font-serif text-[clamp(28px,4vw,42px)] font-light tracking-[-0.02em] leading-[1.15] text-heading">
+            <h2 className="mt-3 font-serif text-[clamp(28px,4vw,42px)] font-light leading-[1.15] text-heading">
                 {title}
             </h2>
             {description ? (
@@ -33,7 +33,7 @@ export function SectionTitle({
     );
 }
 
-/* ——— Page Container ——— */
+/* ——— Editorial Page Container ——— */
 export function PageContainer({
     children,
     className = "",
@@ -43,7 +43,7 @@ export function PageContainer({
 }) {
     return (
         <div className="min-h-screen bg-bg-primary text-body">
-            <div className={`mx-auto w-full max-w-[1280px] px-6 py-16 ${className}`}>
+            <div className={`w-full px-6 lg:px-16 xl:px-24 py-16 ${className}`}>
                 {children}
             </div>
         </div>
@@ -67,7 +67,7 @@ export function PremiumButton({
     className?: string;
 }) {
     const base =
-        "group relative inline-flex h-12 items-center justify-center rounded-full bg-[#1C3A2A] px-8 text-[14px] font-medium tracking-wide text-white overflow-hidden transition-all duration-300 hover:bg-[#162E22] hover:shadow-[0_4px_16px_rgba(28,58,42,0.25)] disabled:opacity-50 disabled:cursor-not-allowed";
+        "group relative inline-flex items-center justify-center rounded-full bg-[#1C3A2A] px-8 py-3 text-sm font-medium tracking-wide text-white overflow-hidden transition-all duration-300 hover:bg-[#162E22] hover:shadow-[0_4px_16px_rgba(28,58,42,0.25)] disabled:opacity-50 disabled:cursor-not-allowed";
     const glassSpan = <span className="glass-overlay pointer-events-none" />;
     if (href) {
         const disabledClass = disabled ? "opacity-50 cursor-not-allowed pointer-events-none" : "";
@@ -120,7 +120,7 @@ export function GoldOutlineButton({
     className?: string;
 }) {
     const base =
-        "inline-flex h-12 items-center justify-center rounded-full border border-gold px-8 text-[14px] font-medium tracking-wide text-gold transition-all duration-300 ease-[cubic-bezier(.22,1,.36,1)] hover:bg-gold hover:text-white disabled:opacity-50 disabled:cursor-not-allowed";
+        "inline-flex items-center justify-center rounded-full border border-[#C6A756] px-8 py-3 text-sm font-medium tracking-wide text-[#C6A756] transition-all duration-300 ease-[cubic-bezier(.22,1,.36,1)] hover:bg-[#C6A756] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed";
     if (href) {
         const disabledClass = disabled ? "opacity-50 cursor-not-allowed pointer-events-none" : "";
         const needsHandler = !!(onClick || disabled);
@@ -137,6 +137,43 @@ export function GoldOutlineButton({
                 tabIndex={disabled ? -1 : undefined}
                 className={`${base} ${disabledClass} ${className}`}
             >
+                {children}
+            </a>
+        );
+    }
+    return (
+        <button
+            type={type || "button"}
+            disabled={disabled}
+            onClick={onClick}
+            className={`${base} ${className}`}
+        >
+            {children}
+        </button>
+    );
+}
+
+/* ——— Glass Button (Secondary CTA) ——— */
+export function GlassButton({
+    children,
+    href,
+    type,
+    disabled,
+    onClick,
+    className = "",
+}: {
+    children: React.ReactNode;
+    href?: string;
+    type?: "button" | "submit";
+    disabled?: boolean;
+    onClick?: (e?: React.MouseEvent) => void;
+    className?: string;
+}) {
+    const base =
+        "inline-flex items-center justify-center rounded-full backdrop-blur-md bg-white/20 border border-white/30 px-8 py-3 text-sm font-medium tracking-wide text-[#1C3A2A] shadow-lg transition-all duration-300 hover:bg-white/30 disabled:opacity-50 disabled:cursor-not-allowed";
+    if (href) {
+        return (
+            <a href={href} className={`${base} ${className}`}>
                 {children}
             </a>
         );

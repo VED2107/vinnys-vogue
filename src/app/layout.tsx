@@ -14,42 +14,44 @@ const playfair = Playfair_Display({
   subsets: ["latin"],
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://vinnysvogue.vercel.app";
+
 export const metadata: Metadata = {
-  title: {
-    default: "Vinnys Vogue — Luxury Bridal Couture",
-    template: "%s | Vinnys Vogue",
-  },
+  metadataBase: new URL(siteUrl),
+
+  title: "Vinnys Vogue — Luxury Bridal Couture in India",
   description:
-    "Premium Indian bridal couture. Hand-embroidered silhouettes crafted for the moments you will remember forever.",
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://vinnysvogue.com",
-  ),
+    "Discover handcrafted bridal lehengas and couture for modern Indian brides.",
+
   openGraph: {
-    type: "website",
-    locale: "en_IN",
-    siteName: "Vinnys Vogue",
     title: "Vinnys Vogue — Luxury Bridal Couture",
     description:
-      "Premium Indian bridal couture. Hand-embroidered silhouettes crafted for the moments you will remember forever.",
+      "Handcrafted bridal couture for modern Indian brides.",
+    url: siteUrl,
+    siteName: "Vinnys Vogue",
     images: [
       {
         url: "/og-banner.jpg",
         width: 1200,
         height: 630,
-        alt: "Vinnys Vogue — Luxury Bridal Couture",
+        alt: "Vinnys Vogue Bridal Couture",
       },
     ],
+    type: "website",
   },
+
   twitter: {
     card: "summary_large_image",
-    title: "Vinnys Vogue — Luxury Bridal Couture",
-    description:
-      "Premium Indian bridal couture. Hand-embroidered silhouettes crafted for the moments you will remember forever.",
     images: ["/og-banner.jpg"],
   },
-  robots: {
-    index: true,
-    follow: true,
+
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+    other: [
+      { rel: "icon", url: "/icon-192.png", sizes: "192x192" },
+      { rel: "icon", url: "/icon-512.png", sizes: "512x512" },
+    ],
   },
 };
 

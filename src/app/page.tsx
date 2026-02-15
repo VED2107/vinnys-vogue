@@ -1,4 +1,4 @@
-export const revalidate = 60; // ISR: re-generate every 60 seconds
+export const revalidate = 60;
 
 import { Suspense } from "react";
 import Image from "next/image";
@@ -71,7 +71,6 @@ export default async function Home() {
     .maybeSingle();
   const collections: CollectionsContent = { ...DEFAULT_COLLECTIONS, ...(collectionsRow?.value as Partial<CollectionsContent> | null) };
 
-  // Category image map for collection cards
   const categoryImages: Record<string, string> = {
     bridal: collections.bridal_image,
     festive: collections.festive_image,
@@ -81,7 +80,6 @@ export default async function Home() {
     sangeet: collections.sangeet_image,
   };
 
-  // ── Highlight word rendering ──
   const renderHighlight = (text: string, highlight: string) => {
     if (!highlight || !text.includes(highlight)) return text;
     const parts = text.split(highlight);
@@ -94,223 +92,220 @@ export default async function Home() {
     );
   };
 
-  // ── Image placeholder helper ──
-  const ImageOrPlaceholder = ({ src, alt, className }: { src: string; alt: string; className?: string }) =>
-    src ? (
-      <Image src={src} alt={alt} fill sizes="(max-width: 768px) 50vw, 33vw" className={`object-cover ${className ?? ""}`} />
-    ) : (
-      <div className="flex h-full items-center justify-center bg-[#EDE8E0]">
-        <div className="text-center opacity-30">
-          <div className="font-serif text-sm font-light text-heading">{alt}</div>
-        </div>
-      </div>
-    );
-
   return (
     <div className="min-h-screen bg-bg-primary">
-      {/* ——— 1. HERO ——— */}
-      <CinematicReveal delay={0}>
-        <section className="relative overflow-hidden">
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(180deg, rgba(198,167,86,0.06) 0%, rgba(220,160,140,0.10) 40%, rgba(244,239,232,0) 100%)",
-            }}
-          />
-          <div className="relative mx-auto w-full max-w-[1280px] px-6 py-32 md:py-40">
-            <HeroReveal className="mx-auto max-w-3xl text-center">
-              <HeroItem>
-                <h1
-                  className="font-serif font-light tracking-[-0.02em] leading-[1.1] text-heading"
-                  style={{ fontSize: "clamp(40px, 6vw, 72px)" }}
-                >
-                  {renderHighlight(hero.heading, hero.highlight)}
-                </h1>
-              </HeroItem>
-              <HeroItem>
-                <p className="mx-auto mt-6 max-w-lg text-[15px] leading-[1.7] text-muted">
-                  {hero.subtext}
-                </p>
-              </HeroItem>
-              <HeroItem>
-                <div className="mt-10 flex flex-wrap justify-center gap-4">
-                  <PremiumButton href="/products">
-                    {hero.cta_primary}
-                  </PremiumButton>
-                  <GoldOutlineButton href="/about">
-                    {hero.cta_secondary}
-                  </GoldOutlineButton>
+      {/* ——— 1. HERO — Balanced Split ——— */}
+      <section className="w-full py-28 lg:py-32 px-6 lg:px-16 xl:px-24">
+        <div className="grid lg:grid-cols-2 items-center gap-16 lg:gap-20">
+          {/* Left — Text */}
+          <div>
+            <div>
+              <h1 className="font-serif leading-[1.1] text-heading" style={{ fontSize: 'clamp(2rem, 3.5vw, 4.5rem)' }}>
+                {renderHighlight(hero.heading, hero.highlight)}
+              </h1>
+              <p className="mt-6 text-neutral-600 leading-relaxed" style={{ fontSize: 'clamp(0.85rem, 1.1vw, 1.125rem)' }}>
+                {hero.subtext}
+              </p>
+              <div className="mt-8 flex gap-4">
+                <PremiumButton href="/products">
+                  {hero.cta_primary}
+                </PremiumButton>
+                <GoldOutlineButton href="/about">
+                  {hero.cta_secondary}
+                </GoldOutlineButton>
+              </div>
+            </div>
+          </div>
+
+          {/* Right — Image */}
+          <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-[#EDE8E0]">
+            <Image
+              src={hero.image_url || "/og-banner.jpg"}
+              alt="Luxury couture"
+              fill
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              className="object-cover img-matte"
+              priority
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ——— 2. CURATED COLLECTIONS ——— */}
+      <CinematicReveal delay={100}>
+        <section className="w-full py-28 px-6 lg:px-16 xl:px-24">
+          <FadeIn>
+            <div className="mb-12">
+              <p className="text-[11px] tracking-[0.3em] uppercase text-gold font-medium">
+                Curated
+              </p>
+              <h2 className="mt-2 font-serif text-3xl lg:text-4xl font-light text-heading">
+                Collections
+              </h2>
+            </div>
+          </FadeIn>
+
+          <StaggerGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 lg:gap-12" stagger={0.08}>
+            {PRODUCT_CATEGORIES.map((c) => {
+              const imgSrc = categoryImages[c.value];
+              return (
+                <StaggerItem key={c.value}>
+                  <a
+                    href={`/products?category=${encodeURIComponent(c.value)}`}
+                    className="group relative block overflow-hidden rounded-xl bg-[#EDE8E0] aspect-[4/5]"
+                  >
+                    {imgSrc ? (
+                      <Image src={imgSrc} alt={c.label} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" className="img-matte object-cover" />
+                    ) : null}
+                    <div className="glass-overlay pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+                    <div className="absolute bottom-5 left-5">
+                      <span className="font-serif text-base font-light text-white tracking-wide">
+                        {c.label}
+                      </span>
+                    </div>
+                  </a>
+                </StaggerItem>
+              );
+            })}
+          </StaggerGrid>
+        </section>
+      </CinematicReveal>
+
+      {/* ——— 3. EDITORIAL STORIES ——— */}
+      {storiesData.stories.map((story, i) => (
+        <CinematicReveal key={i} delay={150 + i * 100}>
+          <section className="w-full py-28 px-6 lg:px-16 xl:px-24">
+            <div className={`grid lg:grid-cols-2 items-center gap-16 lg:gap-24 ${i % 2 === 1 ? "direction-rtl" : ""}`}>
+              {/* Image */}
+              <div className={`relative aspect-[4/5] overflow-hidden rounded-xl bg-[#EDE8E0] ${i % 2 === 1 ? "lg:order-2" : ""}`}>
+                {story.image_url ? (
+                  <Image src={story.image_url} alt={story.title} fill sizes="(max-width: 1024px) 100vw, 50vw" className="img-matte object-cover" />
+                ) : (
+                  <div className="flex h-full items-center justify-center">
+                    <span className="text-sm text-neutral-400 font-light">{story.title}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Text */}
+              <div className={i % 2 === 1 ? "lg:order-1" : ""}>
+                <div className="max-w-[480px]">
+                  <p className="text-[11px] tracking-[0.3em] uppercase text-gold font-medium">
+                    {story.label}
+                  </p>
+                  <h2 className="mt-3 font-serif text-3xl lg:text-4xl font-light leading-[1.15] text-heading">
+                    {renderHighlight(story.title, story.highlight)}
+                  </h2>
+                  <div className="mt-5 space-y-3 text-[15px] leading-[1.7] text-neutral-600">
+                    <p>{story.paragraph_1}</p>
+                    <p>{story.paragraph_2}</p>
+                  </div>
+                  <a
+                    href={story.cta_href}
+                    className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#1C3A2A] px-7 py-2.5 text-[12px] tracking-[0.15em] uppercase font-light text-white transition-all duration-300 btn-luxury"
+                  >
+                    {story.cta_text}
+                  </a>
                 </div>
-              </HeroItem>
-            </HeroReveal>
+              </div>
+            </div>
+          </section>
+        </CinematicReveal>
+      ))}
+
+      {/* ——— 4. LATEST ARRIVALS ——— */}
+      <CinematicReveal delay={300}>
+        <section className="w-full py-28 px-6 lg:px-16 xl:px-24">
+          <FadeIn>
+            <div className="mb-12">
+              <p className="text-[11px] tracking-[0.3em] uppercase text-gold font-medium">
+                New In
+              </p>
+              <h2 className="mt-2 font-serif text-3xl lg:text-4xl font-light text-heading">
+                Latest Arrivals
+              </h2>
+            </div>
+          </FadeIn>
+          <Suspense fallback={<FeaturedProductsSkeleton />}>
+            <FeaturedProducts />
+          </Suspense>
+        </section>
+      </CinematicReveal>
+
+      {/* ——— 5. CRAFTSMANSHIP ——— */}
+      <CinematicReveal delay={350}>
+        <section id="craftsmanship" className="w-full py-28 px-6 lg:px-16 xl:px-24">
+          <div className="grid lg:grid-cols-2 items-center gap-16 lg:gap-24">
+            {/* Text */}
+            <div>
+              <div className="max-w-[480px]">
+                <div className="flex items-center gap-2">
+                  <span className="text-gold text-sm">✦</span>
+                  <p className="text-[11px] tracking-[0.3em] uppercase text-gold font-semibold">
+                    {craft.subtitle}
+                  </p>
+                </div>
+                <h2 className="mt-3 font-serif text-3xl lg:text-4xl font-light leading-[1.15] text-heading">
+                  {craft.title}
+                </h2>
+                <div className="mt-5 w-10 h-[1px] bg-gold opacity-60" />
+                <div className="mt-5 space-y-3 text-[15px] leading-[1.7] text-neutral-600">
+                  <p>{craft.paragraph_1}</p>
+                  <p>{craft.paragraph_2}</p>
+                </div>
+                <a
+                  href="/about"
+                  className="mt-6 inline-flex items-center gap-2 text-[13px] font-medium text-gold transition-opacity hover:opacity-70"
+                >
+                  {craft.cta_text} →
+                </a>
+              </div>
+            </div>
+
+            {/* Images */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-[#EDE8E0] row-span-2">
+                {craft.image_url_1 ? (
+                  <Image src={craft.image_url_1} alt="Craftsmanship" fill sizes="25vw" className="img-matte object-cover" />
+                ) : null}
+              </div>
+              <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-[#EDE8E0]">
+                {craft.image_url_2 ? (
+                  <Image src={craft.image_url_2} alt="Detail" fill sizes="25vw" className="img-matte object-cover" />
+                ) : null}
+              </div>
+              <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-[#EDE8E0]">
+                {craft.image_url_3 ? (
+                  <Image src={craft.image_url_3} alt="Artistry" fill sizes="25vw" className="img-matte object-cover" />
+                ) : null}
+              </div>
+            </div>
           </div>
         </section>
       </CinematicReveal>
 
-      <main className="mx-auto w-full max-w-[1280px] px-6">
-        {/* ——— 2. CURATED COLLECTIONS — 6 cards ——— */}
-        <CinematicReveal delay={150}>
-          <section className="py-24">
-            <FadeIn>
-              <h2 className="text-center font-serif text-[clamp(28px,4vw,42px)] font-light tracking-[-0.02em] leading-[1.15] text-heading">
-                Curated Collections
-              </h2>
-            </FadeIn>
-
-            <StaggerGrid className="mt-14 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6" stagger={0.1}>
-              {PRODUCT_CATEGORIES.map((c) => {
-                const imgSrc = categoryImages[c.value];
-                return (
-                  <StaggerItem key={c.value}>
-                    <a
-                      href={`/products?category=${encodeURIComponent(c.value)}`}
-                      className="group relative block overflow-hidden rounded-2xl bg-[#EDE8E0] aspect-[3/4] transition-all duration-500 ease-[cubic-bezier(.22,1,.36,1)] hover:scale-[1.02] hover:shadow-[0_14px_40px_rgba(0,0,0,0.08)]"
-                    >
-                      {imgSrc ? (
-                        <Image src={imgSrc} alt={c.label} fill sizes="(max-width: 640px) 50vw, 16vw" className="img-matte object-cover" />
-                      ) : null}
-                      <div className="glass-overlay pointer-events-none" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#1C1A18]/50 via-transparent to-transparent" />
-                      <div className="absolute bottom-5 left-5 right-5">
-                        <div className="font-serif text-lg font-light text-white tracking-[-0.01em]">
-                          {c.label}
-                        </div>
-                      </div>
-                    </a>
-                  </StaggerItem>
-                );
-              })}
-            </StaggerGrid>
-          </section>
-        </CinematicReveal>
-
-        {/* ——— 3. STORY SECTIONS — 3 alternating image + text ——— */}
-        <CinematicReveal delay={250}>
-          <section className="py-12">
-            {storiesData.stories.map((story, i) => (
-              <FadeIn key={i}>
-                <div
-                  className={`grid grid-cols-1 gap-12 md:gap-16 md:grid-cols-2 items-center py-16 md:py-24 ${i > 0 ? "border-t border-[rgba(0,0,0,0.04)]" : ""
-                    }`}
-                >
-                  {/* Image — alternates left/right */}
-                  <div
-                    className={`relative overflow-hidden rounded-2xl aspect-[4/5] bg-[#EDE8E0] ${i % 2 === 1 ? "md:order-2" : ""
-                      }`}
-                  >
-                    <ImageOrPlaceholder src={story.image_url} alt={story.title} />
-                  </div>
-
-                  {/* Text content */}
-                  <div className={`space-y-6 ${i % 2 === 1 ? "md:order-1" : ""}`}>
-                    <div className="text-[11px] font-medium tracking-[0.25em] text-gold uppercase">
-                      {story.label}
-                    </div>
-                    <h2 className="font-serif text-[clamp(28px,4vw,46px)] font-light tracking-[-0.02em] leading-[1.1] text-heading">
-                      {renderHighlight(story.title, story.highlight)}
-                    </h2>
-                    <div className="space-y-4 text-[15px] leading-[1.7] text-muted">
-                      <p>{story.paragraph_1}</p>
-                      <p>{story.paragraph_2}</p>
-                    </div>
-                    <a
-                      href={story.cta_href}
-                      className="inline-flex items-center gap-2 rounded-full bg-[#1C3A2A] px-6 py-3 text-[13px] font-medium text-white transition-all duration-300 hover:bg-[#162E22] hover:shadow-[0_4px_16px_rgba(28,58,42,0.25)]"
-                    >
-                      {story.cta_text}
-                    </a>
-                  </div>
-                </div>
-              </FadeIn>
-            ))}
-          </section>
-        </CinematicReveal>
-
-        {/* ——— 4. LATEST ARRIVALS ——— */}
-        <section className="py-24">
+      {/* ——— 6. NEWSLETTER ——— */}
+      <CinematicReveal delay={400}>
+        <section className="w-full py-28 px-6 lg:px-16 xl:px-24">
           <FadeIn>
-            <SectionTitle
-              subtitle="New In"
-              title="Latest Arrivals"
-              description="Discover our newest couture creations."
-            />
+            <div className="max-w-[520px] mx-auto text-center">
+              <p className="text-[11px] tracking-[0.3em] uppercase text-gold font-medium">
+                Stay Connected
+              </p>
+              <h3 className="mt-2 font-serif text-2xl lg:text-3xl font-light text-heading">
+                {newsletter.title}
+              </h3>
+              <p className="mt-3 text-[14px] leading-[1.7] text-neutral-600">
+                {newsletter.description}
+              </p>
+              <div className="mt-6 flex justify-center">
+                <NewsletterForm />
+              </div>
+            </div>
           </FadeIn>
-          <div className="mt-14">
-            <Suspense fallback={<FeaturedProductsSkeleton />}>
-              <FeaturedProducts />
-            </Suspense>
-          </div>
         </section>
-
-        {/* ——— 5. CRAFTSMANSHIP — text left + 3 staggered images right ——— */}
-        <CinematicReveal delay={350}>
-          <section id="craftsmanship" className="py-24">
-            <FadeIn>
-              <div className="grid grid-cols-1 gap-12 md:gap-16 lg:grid-cols-[1fr_1.2fr] items-start">
-                {/* Left: Text */}
-                <div className="space-y-6 pt-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-gold text-lg">✦</span>
-                    <div className="text-[11px] font-semibold tracking-[0.25em] text-gold uppercase">
-                      {craft.subtitle}
-                    </div>
-                  </div>
-                  <h2 className="font-serif text-[clamp(28px,4vw,42px)] font-light tracking-[-0.02em] leading-[1.15] text-heading">
-                    {craft.title}
-                  </h2>
-                  <div className="w-10 h-[2px] bg-gold opacity-60" />
-                  <div className="space-y-4 text-[15px] leading-[1.7] text-muted">
-                    <p>{craft.paragraph_1}</p>
-                    <p>{craft.paragraph_2}</p>
-                  </div>
-                  <a
-                    href="/about"
-                    className="inline-flex items-center gap-2 text-[14px] font-medium text-gold transition-colors hover:text-gold-hover"
-                  >
-                    {craft.cta_text}
-                  </a>
-                </div>
-
-                {/* Right: 3 staggered images collage */}
-                <div className="relative grid grid-cols-2 gap-4" style={{ minHeight: "520px" }}>
-                  {/* Image 1 — tall left */}
-                  <div className="relative overflow-hidden rounded-2xl bg-[#EDE8E0] row-span-2" style={{ marginTop: "60px" }}>
-                    <ImageOrPlaceholder src={craft.image_url_1} alt="Craftsmanship 1" />
-                  </div>
-                  {/* Image 2 — top right (shorter) */}
-                  <div className="relative overflow-hidden rounded-2xl bg-[#EDE8E0] aspect-[3/4]">
-                    <ImageOrPlaceholder src={craft.image_url_2} alt="Craftsmanship 2" />
-                  </div>
-                  {/* Image 3 — bottom right (shorter) */}
-                  <div className="relative overflow-hidden rounded-2xl bg-[#EDE8E0] aspect-[3/4]">
-                    <ImageOrPlaceholder src={craft.image_url_3} alt="Craftsmanship 3" />
-                  </div>
-                </div>
-              </div>
-            </FadeIn>
-          </section>
-        </CinematicReveal>
-
-        {/* ——— 6. NEWSLETTER — green Subscribe button ——— */}
-        <CinematicReveal delay={450}>
-          <section className="py-16">
-            <FadeIn>
-              <div className="mx-auto max-w-xl rounded-2xl border border-[rgba(0,0,0,0.06)] bg-bg-card p-10 text-center">
-                <h3 className="font-serif text-2xl font-light text-heading tracking-[-0.02em]">
-                  {newsletter.title}
-                </h3>
-                <p className="mt-3 text-[14px] text-muted">
-                  {newsletter.description}
-                </p>
-                <div className="mt-6 flex gap-3">
-                  <NewsletterForm />
-                </div>
-              </div>
-            </FadeIn>
-          </section>
-        </CinematicReveal>
-      </main>
+      </CinematicReveal>
     </div>
   );
 }

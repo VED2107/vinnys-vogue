@@ -1,5 +1,34 @@
 -- Admin stock adjustment RPC (transactional)
 
+CREATE TABLE IF NOT EXISTS public.inventory_logs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id uuid REFERENCES public.products(id) ON DELETE CASCADE,
+  change integer NOT NULL,
+  reason text,
+  created_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE public.inventory_logs ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Admin read inventory_logs" ON public.inventory_logs;
+CREATE POLICY "Admin read inventory_logs"
+ON public.inventory_logs
+FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE profiles.id = auth.uid()
+    AND profiles.role = 'admin'
+  )
+);
+
+DROP POLICY IF EXISTS "Service role full access" ON public.inventory_logs;
+CREATE POLICY "Service role full access"
+ON public.inventory_logs
+FOR ALL
+USING (auth.role() = 'service_role')
+WITH CHECK (auth.role() = 'service_role');
+
 create or replace function public.admin_adjust_product_stock(
   p_product_id uuid,
   p_change integer,

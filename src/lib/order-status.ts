@@ -1,6 +1,7 @@
 export const ORDER_STATUSES = [
     "pending",
     "confirmed",
+    "shipping",
     "shipped",
     "delivered",
     "cancelled",
@@ -15,6 +16,7 @@ export function isValidOrderStatus(value: string): value is OrderStatus {
 const STYLE_MAP: Record<OrderStatus, { bg: string; text: string }> = {
     pending: { bg: "bg-amber-50", text: "text-amber-700" },
     confirmed: { bg: "bg-blue-50", text: "text-blue-700" },
+    shipping: { bg: "bg-violet-50", text: "text-violet-700" },
     shipped: { bg: "bg-violet-50", text: "text-violet-700" },
     delivered: { bg: "bg-emerald-50", text: "text-emerald-700" },
     cancelled: { bg: "bg-red-50", text: "text-red-700" },

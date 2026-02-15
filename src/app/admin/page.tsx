@@ -15,11 +15,12 @@ export default async function AdminPage() {
     { title: "Add New Product", description: "Create a new listing for your boutique collection.", href: "/admin/products/new", action: "Create", primary: false },
     { title: "Orders", description: "View orders, filter by date, and export CSV.", href: "/admin/orders", action: "Open", primary: true },
     { title: "Analytics", description: "Revenue, order stats, and payment insights.", href: "/admin/analytics", action: "View", primary: false },
+    { title: "Reliability", description: "Webhook queue health, retries, and reconciliation status.", href: "/admin/reliability", action: "View", primary: false },
   ];
 
   return (
     <div className="min-h-screen bg-bg-admin">
-      <div className="mx-auto w-full max-w-[1280px] px-6 py-16">
+      <div className="w-full px-6 lg:px-16 xl:px-24 py-16">
         <FadeIn>
           <div className="flex items-end justify-between gap-6">
             <div className="space-y-3">

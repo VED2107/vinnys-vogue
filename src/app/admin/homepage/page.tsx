@@ -14,6 +14,7 @@ import {
     type CollectionsContent,
 } from "@/lib/site-defaults";
 import { saveSiteContent } from "./actions";
+import { ImageUploadInput } from "@/components/admin/image-upload-input";
 
 export default async function AdminHomepagePage({
     searchParams,
@@ -135,6 +136,12 @@ export default async function AdminHomepagePage({
                                 <input name="field_cta_secondary" defaultValue={hero.cta_secondary} className={inputClass} />
                             </div>
                         </div>
+                        <ImageUploadInput
+                            name="field_image_url"
+                            defaultValue={hero.image_url}
+                            label="Hero Image"
+                            sublabel="public URL or upload"
+                        />
                         <button type="submit" className={saveBtn}>Save Hero</button>
                     </div>
                 </form>
@@ -186,10 +193,12 @@ export default async function AdminHomepagePage({
                                         <input name={`field_story_${i}_cta_href`} defaultValue={story.cta_href} className={inputClass} />
                                     </div>
                                 </div>
-                                <div>
-                                    <label className={labelClass}>Image URL <span className="text-muted font-normal">(public URL to image)</span></label>
-                                    <input name={`field_story_${i}_image_url`} defaultValue={story.image_url} className={inputClass} placeholder="https://..." />
-                                </div>
+                                <ImageUploadInput
+                                    name={`field_story_${i}_image_url`}
+                                    defaultValue={story.image_url}
+                                    label="Image"
+                                    sublabel="public URL or upload"
+                                />
                             </div>
                         ))}
 
@@ -226,18 +235,24 @@ export default async function AdminHomepagePage({
                         <div className="border-t border-[rgba(0,0,0,0.04)] pt-5 mt-4">
                             <div className="text-[13px] font-semibold text-gold uppercase tracking-wider mb-4">3 Staggered Images (collage layout)</div>
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                                <div>
-                                    <label className={labelClass}>Image 1 <span className="text-muted font-normal">(tall left)</span></label>
-                                    <input name="field_image_url_1" defaultValue={craft.image_url_1} className={inputClass} placeholder="https://..." />
-                                </div>
-                                <div>
-                                    <label className={labelClass}>Image 2 <span className="text-muted font-normal">(top right)</span></label>
-                                    <input name="field_image_url_2" defaultValue={craft.image_url_2} className={inputClass} placeholder="https://..." />
-                                </div>
-                                <div>
-                                    <label className={labelClass}>Image 3 <span className="text-muted font-normal">(bottom right)</span></label>
-                                    <input name="field_image_url_3" defaultValue={craft.image_url_3} className={inputClass} placeholder="https://..." />
-                                </div>
+                                <ImageUploadInput
+                                    name="field_image_url_1"
+                                    defaultValue={craft.image_url_1}
+                                    label="Image 1"
+                                    sublabel="tall left"
+                                />
+                                <ImageUploadInput
+                                    name="field_image_url_2"
+                                    defaultValue={craft.image_url_2}
+                                    label="Image 2"
+                                    sublabel="top right"
+                                />
+                                <ImageUploadInput
+                                    name="field_image_url_3"
+                                    defaultValue={craft.image_url_3}
+                                    label="Image 3"
+                                    sublabel="bottom right"
+                                />
                             </div>
                         </div>
 
@@ -278,33 +293,15 @@ export default async function AdminHomepagePage({
                             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1C3A2A]/10 text-[#1C3A2A] text-[14px] font-bold">5</div>
                             <h2 className="font-serif text-xl font-light text-heading">Collection Category Images</h2>
                         </div>
-                        <p className="text-[13px] text-muted">Set images for each category card on the homepage. Use full image URLs.</p>
+                        <p className="text-[13px] text-muted">Set images for each category card on the homepage. Paste a URL or upload from your device.</p>
 
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div>
-                                <label className={labelClass}>Bridal</label>
-                                <input name="field_bridal_image" defaultValue={collections.bridal_image} className={inputClass} placeholder="https://..." />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Festive</label>
-                                <input name="field_festive_image" defaultValue={collections.festive_image} className={inputClass} placeholder="https://..." />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Haldi</label>
-                                <input name="field_haldi_image" defaultValue={collections.haldi_image} className={inputClass} placeholder="https://..." />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Reception</label>
-                                <input name="field_reception_image" defaultValue={collections.reception_image} className={inputClass} placeholder="https://..." />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Mehendi Ceremony</label>
-                                <input name="field_mehendi_image" defaultValue={collections.mehendi_image} className={inputClass} placeholder="https://..." />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Sangeet</label>
-                                <input name="field_sangeet_image" defaultValue={collections.sangeet_image} className={inputClass} placeholder="https://..." />
-                            </div>
+                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                            <ImageUploadInput name="field_bridal_image" defaultValue={collections.bridal_image} label="Bridal" />
+                            <ImageUploadInput name="field_festive_image" defaultValue={collections.festive_image} label="Festive" />
+                            <ImageUploadInput name="field_haldi_image" defaultValue={collections.haldi_image} label="Haldi" />
+                            <ImageUploadInput name="field_reception_image" defaultValue={collections.reception_image} label="Reception" />
+                            <ImageUploadInput name="field_mehendi_image" defaultValue={collections.mehendi_image} label="Mehendi Ceremony" />
+                            <ImageUploadInput name="field_sangeet_image" defaultValue={collections.sangeet_image} label="Sangeet" />
                         </div>
                         <button type="submit" className={saveBtn}>Save Collection Images</button>
                     </div>

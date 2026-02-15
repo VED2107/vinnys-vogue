@@ -44,6 +44,18 @@ export async function PATCH(
         );
     }
 
+    if (payment_status === "paid") {
+        const { error } = await supabase.rpc("confirm_order_payment", {
+            p_order_id: params.id,
+        });
+
+        if (error) {
+            return NextResponse.json({ error: error.message }, { status: 500 });
+        }
+
+        return NextResponse.json({ success: true, payment_status });
+    }
+
     const { error } = await supabase
         .from("orders")
         .update({ payment_status })

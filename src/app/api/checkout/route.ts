@@ -2,20 +2,10 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
     try {
-        // Rate limit: 5 per minute
-        const ip = getClientIp(request);
-        const rl = rateLimit(`checkout:${ip}`, 5, 60_000);
-        if (!rl.success) {
-            return NextResponse.json(
-                { error: "Too many requests. Please try again later." },
-                { status: 429 },
-            );
-        }
-
         const supabase = createSupabaseServerClient();
 
         const {
@@ -24,6 +14,15 @@ export async function POST(request: Request) {
 
         if (!user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        // Rate limit: 5 per minute per user
+        const rl = rateLimit(`checkout:${user.id}`, 5, 60_000);
+        if (!rl.success) {
+            return NextResponse.json(
+                { error: "Too many requests. Please try again later." },
+                { status: 429 },
+            );
         }
 
         let body: {

@@ -5,6 +5,7 @@ import { SectionTitle } from "@/components/ui";
 import PayNowButton from "@/components/pay-now-button";
 import DownloadInvoiceButton from "@/components/download-invoice-button";
 import { FadeIn } from "@/components/fade-in";
+import { getTrackingUrl } from "@/lib/tracking";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,9 @@ type OrderRow = {
     total_amount: number;
     status: string;
     payment_status: string;
+    courier_name: string | null;
+    tracking_number: string | null;
+    shipped_at: string | null;
     full_name: string | null;
     email: string | null;
     phone: string | null;
@@ -27,6 +31,29 @@ type OrderItemRow = {
     unit_price: number;
     products: { title: string } | null;
 };
+
+type OrderEventRow = {
+    id: string;
+    event_type: string;
+    created_at: string;
+};
+
+function formatEventLabel(type: string) {
+    switch (type) {
+        case "ORDER_CREATED":
+            return "Order Placed";
+        case "PAYMENT_CONFIRMED":
+            return "Payment Confirmed";
+        case "SHIPPED":
+            return "Order Shipped";
+        case "DELIVERED":
+            return "Delivered";
+        case "CANCELLED":
+            return "Order Cancelled";
+        default:
+            return type;
+    }
+}
 
 export default async function OrderPage({
     params,
@@ -46,7 +73,7 @@ export default async function OrderPage({
     const { data: order, error: orderError } = await supabase
         .from("orders")
         .select(
-            "id,created_at,total_amount,status,payment_status,full_name,email,phone,address_line1,razorpay_order_id",
+            "id,created_at,total_amount,status,payment_status,courier_name,tracking_number,shipped_at,full_name,email,phone,address_line1,razorpay_order_id",
         )
         .eq("id", params.id)
         .eq("user_id", user.id)
@@ -67,6 +94,16 @@ export default async function OrderPage({
         .eq("order_id", o.id);
 
     const items = (orderItems ?? []) as unknown as OrderItemRow[];
+
+    const { data: events, error: eventsError } = await supabase
+        .from("order_events")
+        .select("id,event_type,created_at")
+        .eq("order_id", o.id)
+        .order("created_at", { ascending: true });
+
+    if (eventsError) {
+        console.error("[OrderPage] order_events query error:", eventsError);
+    }
 
     const isPaid = o.payment_status === "paid";
 
@@ -128,6 +165,65 @@ export default async function OrderPage({
                         <div className="mt-5 flex items-center justify-between">
                             <div className="text-[15px] text-muted">Total</div>
                             <div className="font-serif text-xl font-light text-gold">{formatMoney(Number(o.total_amount))}</div>
+                        </div>
+                    </div>
+
+                    {o.status === "shipping" && o.tracking_number && (
+                        <div className="mt-8 border rounded-xl p-6 bg-neutral-50">
+                            <h3 className="text-lg font-semibold mb-4">
+                                Shipment Details
+                            </h3>
+
+                            <div className="space-y-2 text-sm text-neutral-700">
+                                <p>
+                                    <span className="font-medium">Courier:</span>{" "}
+                                    {o.courier_name}
+                                </p>
+
+                                <p>
+                                    <span className="font-medium">Tracking Number:</span>{" "}
+                                    {o.tracking_number}
+                                </p>
+
+                                {o.shipped_at && (
+                                    <p>
+                                        <span className="font-medium">Shipped On:</span>{" "}
+                                        {new Date(o.shipped_at).toLocaleDateString()}
+                                    </p>
+                                )}
+
+                                {getTrackingUrl(o.courier_name, o.tracking_number) && (
+                                    <a
+                                        href={getTrackingUrl(o.courier_name, o.tracking_number)!}
+                                        target="_blank"
+                                        className="inline-block mt-3 text-black underline font-medium"
+                                    >
+                                        Track Shipment →
+                                    </a>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="mt-10">
+                        <h3 className="text-lg font-semibold mb-6">
+                            Order Timeline
+                        </h3>
+
+                        <div className="space-y-6 border-l pl-6">
+                            {(events as OrderEventRow[] | null | undefined)?.map((event) => (
+                                <div key={event.id} className="relative">
+                                    <div className="absolute -left-[13px] top-1 h-3 w-3 bg-black rounded-full" />
+
+                                    <p className="font-medium text-sm">
+                                        {formatEventLabel(event.event_type)}
+                                    </p>
+
+                                    <p className="text-xs text-neutral-500">
+                                        {new Date(event.created_at).toLocaleString()}
+                                    </p>
+                                </div>
+                            ))}
                         </div>
                     </div>
 

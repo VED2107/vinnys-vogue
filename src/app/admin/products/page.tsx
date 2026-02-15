@@ -54,7 +54,7 @@ export default async function AdminProductsPage({
   if (error) {
     return (
       <div className="min-h-screen bg-bg-admin">
-        <div className="mx-auto w-full max-w-[1280px] px-6 py-16">
+        <div className="w-full px-6 lg:px-16 xl:px-24 py-16">
           <div className="rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-white p-6 text-[15px] text-muted">{error.message}</div>
         </div>
       </div>
@@ -65,7 +65,7 @@ export default async function AdminProductsPage({
 
   return (
     <div className="min-h-screen bg-bg-admin">
-      <div className="mx-auto w-full max-w-[1280px] px-6 py-16">
+      <div className="w-full px-6 lg:px-16 xl:px-24 py-16">
         <FadeIn>
           <div className="flex items-end justify-between gap-6">
             <div className="space-y-3">

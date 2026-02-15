@@ -44,7 +44,7 @@ export default async function CheckoutPage() {
 
     return (
         <div className="min-h-screen bg-bg-primary">
-            <div className="mx-auto w-full max-w-[1280px] px-6 py-16">
+            <div className="w-full px-6 lg:px-16 xl:px-24 py-16">
                 <FadeIn>
                     <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-16">
                         {/* Order Summary — sticky glass card */}

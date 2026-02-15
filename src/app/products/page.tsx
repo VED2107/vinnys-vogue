@@ -55,54 +55,26 @@ export default async function ProductsPage({
 
   return (
     <div className="min-h-screen bg-bg-primary">
-      <div className="mx-auto w-full max-w-[1280px] px-6 py-16">
+      <div className="w-full px-6 lg:px-16 xl:px-24 py-24">
         <FadeIn>
           <SectionTitle
             subtitle="Browse"
             title="Our Collection"
             description="Handcrafted couture for every moment."
+            align="left"
           />
         </FadeIn>
 
         <div className="mt-16 flex gap-12">
           {/* Filter Sidebar */}
-          <aside className="hidden md:block w-56 flex-shrink-0">
-            <div className="sticky top-24 glass rounded-[20px] p-6">
-              <div className="text-[11px] font-medium tracking-[0.2em] text-gold uppercase">Categories</div>
-              <div className="mt-5 space-y-1">
-                <a
-                  href="/products"
-                  className={`block rounded-full px-4 py-2.5 text-[14px] transition ${!filterCategory
-                    ? "bg-accent text-white font-medium"
-                    : "text-muted hover:text-heading"
-                    }`}
-                >
-                  All
-                </a>
-                {PRODUCT_CATEGORIES.map((c) => (
-                  <a
-                    key={c.value}
-                    href={`/products?category=${encodeURIComponent(c.value)}`}
-                    className={`block rounded-full px-4 py-2.5 text-[14px] transition ${filterCategory === c.value
-                      ? "bg-accent text-white font-medium"
-                      : "text-muted hover:text-heading"
-                      }`}
-                  >
-                    {c.label}
-                  </a>
-                ))}
-              </div>
-            </div>
-          </aside>
-
-          <div className="flex-1">
-            {/* Mobile pills */}
-            <div className="flex flex-wrap gap-2 md:hidden mb-10">
+          <aside className="hidden md:block w-[240px] flex-shrink-0">
+            <div className="sticky top-24 space-y-1">
+              <div className="text-[11px] font-medium tracking-[0.25em] text-neutral-400 uppercase mb-4">Categories</div>
               <a
                 href="/products"
-                className={`inline-flex h-10 items-center rounded-full px-5 text-[14px] transition ${!filterCategory
-                  ? "bg-accent text-white font-medium"
-                  : "border border-[rgba(0,0,0,0.08)] text-muted hover:border-[rgba(0,0,0,0.15)]"
+                className={`block px-3 py-2 text-[13px] transition-opacity ${!filterCategory
+                  ? "text-heading font-medium"
+                  : "text-neutral-500 hover:opacity-70"
                   }`}
               >
                 All
@@ -111,9 +83,36 @@ export default async function ProductsPage({
                 <a
                   key={c.value}
                   href={`/products?category=${encodeURIComponent(c.value)}`}
-                  className={`inline-flex h-10 items-center rounded-full px-5 text-[14px] transition ${filterCategory === c.value
-                    ? "bg-accent text-white font-medium"
-                    : "border border-[rgba(0,0,0,0.08)] text-muted hover:border-[rgba(0,0,0,0.15)]"
+                  className={`block px-3 py-2 text-[13px] transition-opacity ${filterCategory === c.value
+                    ? "text-heading font-medium"
+                    : "text-neutral-500 hover:opacity-70"
+                    }`}
+                >
+                  {c.label}
+                </a>
+              ))}
+            </div>
+          </aside>
+
+          <div className="flex-1">
+            {/* Mobile pills */}
+            <div className="flex flex-wrap gap-2 md:hidden mb-10">
+              <a
+                href="/products"
+                className={`inline-flex h-9 items-center rounded-full px-4 text-[13px] transition ${!filterCategory
+                  ? "bg-[#1C3A2A] text-white"
+                  : "border border-neutral-200 text-neutral-500 hover:border-neutral-300"
+                  }`}
+              >
+                All
+              </a>
+              {PRODUCT_CATEGORIES.map((c) => (
+                <a
+                  key={c.value}
+                  href={`/products?category=${encodeURIComponent(c.value)}`}
+                  className={`inline-flex h-9 items-center rounded-full px-4 text-[13px] transition ${filterCategory === c.value
+                    ? "bg-[#1C3A2A] text-white"
+                    : "border border-neutral-200 text-neutral-500 hover:border-neutral-300"
                     }`}
                 >
                   {c.label}
@@ -123,12 +122,12 @@ export default async function ProductsPage({
 
             {products.length === 0 ? (
               <FadeIn>
-                <div className="rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-bg-card p-12 text-center text-[15px] text-muted">
+                <div className="p-12 text-[15px] text-neutral-400">
                   No products found{filterCategory ? " in this category" : ""}.
                 </div>
               </FadeIn>
             ) : (
-              <StaggerGrid className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3" stagger={0.08}>
+              <StaggerGrid className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-12" stagger={0.08}>
                 {products.map((p) => (
                   <StaggerItem key={p.id}>
                     <ProductCard

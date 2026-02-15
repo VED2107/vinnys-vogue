@@ -104,7 +104,7 @@ export default async function CartPage() {
 
     return (
         <div className="min-h-screen bg-bg-primary">
-            <div className="mx-auto w-full max-w-[1280px] px-6 py-16">
+            <div className="w-full px-6 lg:px-16 xl:px-24 py-16">
                 <FadeIn>
                     <div className="space-y-3">
                         <div className="gold-divider" />

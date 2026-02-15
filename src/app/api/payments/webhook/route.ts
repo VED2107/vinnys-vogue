@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { processWebhookEvent } from "@/lib/process-webhook-event";
+
+export const runtime = "nodejs";
 
 const supabase = createClient(
     process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -53,62 +56,36 @@ export async function POST(req: Request) {
             return new NextResponse("OK", { status: 200 });
         }
 
-        const ack = new NextResponse("OK", { status: 200 });
+        const evt = event as {
+            id?: unknown;
+            payload?: { payment?: { entity?: { order_id?: unknown } } };
+        };
 
-        void (async () => {
-            try {
-                const evt = event as {
-                    event?: unknown;
-                    payload?: { payment?: { entity?: { id?: unknown; order_id?: unknown } } };
-                };
+        const razorpayOrderIdRaw = evt.payload?.payment?.entity?.order_id;
+        const razorpayOrderId =
+            typeof razorpayOrderIdRaw === "string" ? razorpayOrderIdRaw : null;
 
-                const eventName = typeof evt.event === "string" ? evt.event : "";
-                const paymentEntity = evt.payload?.payment?.entity;
-                const paymentId =
-                    paymentEntity && typeof paymentEntity.id === "string"
-                        ? paymentEntity.id
-                        : null;
-                const razorpayOrderId =
-                    paymentEntity && typeof paymentEntity.order_id === "string"
-                        ? paymentEntity.order_id
-                        : null;
+        const razorpayEventId = typeof evt.id === "string" ? evt.id : null;
 
-                if (!razorpayOrderId) {
-                    console.error("Webhook missing payment.order_id");
-                    return;
-                }
+        const { data: inserted, error: insertError } = await supabase
+            .from("webhook_events")
+            .insert({
+                razorpay_event_id: razorpayEventId,
+                razorpay_order_id: razorpayOrderId,
+                payload: event,
+                status: "pending",
+            })
+            .select("id")
+            .single<{ id: string }>();
 
-                if (eventName === "payment.captured") {
-                    const { error } = await supabase
-                        .from("orders")
-                        .update({
-                            status: "confirmed",
-                            payment_status: "paid",
-                            razorpay_payment_id: paymentId,
-                        })
-                        .eq("razorpay_order_id", razorpayOrderId);
+        if (insertError || !inserted) {
+            console.error("Webhook enqueue failed:", insertError);
+            return new NextResponse("OK", { status: 200 });
+        }
 
-                    if (error) {
-                        console.error("Webhook update failed (payment.captured):", error);
-                    }
-                } else if (eventName === "payment.failed") {
-                    const { error } = await supabase
-                        .from("orders")
-                        .update({
-                            payment_status: "unpaid",
-                        })
-                        .eq("razorpay_order_id", razorpayOrderId);
+        void processWebhookEvent(inserted.id);
 
-                    if (error) {
-                        console.error("Webhook update failed (payment.failed):", error);
-                    }
-                }
-            } catch (error) {
-                console.error("Webhook background task error:", error);
-            }
-        })();
-
-        return ack;
+        return new NextResponse("OK", { status: 200 });
     } catch (error) {
         console.error("Webhook handler error:", error);
         return new NextResponse("OK", { status: 200 });

@@ -13,7 +13,7 @@ export const MOTION = {
     duration: {
         fast: 0.3,
         normal: 0.6,
-        slow: 0.7,
+        slow: 0.8,
     },
 
     /** Stagger delay between sibling elements (seconds) */
@@ -29,5 +29,5 @@ export const MOTION = {
     image: { scale: 1.05, duration: 0.5 },
 
     /** Default enter state (before reveal) */
-    enter: { y: 20, opacity: 0 },
+    enter: { y: 40, opacity: 0 },
 } as const;

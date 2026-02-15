@@ -1,51 +1,61 @@
+"use client";
+
 import Image from "next/image";
-import { formatMoneyFromCents } from "@/lib/format";
-import WishlistToggle from "@/components/wishlist-toggle";
+import { useRouter } from "next/navigation";
+import WishlistToggle from "./wishlist-toggle";
 
-type Product = {
-  id: string;
-  title: string;
-  price_cents: number;
-  currency: string;
-  active: boolean;
-};
-
-export function ProductCard({
-  product,
-  imageUrl,
-  initialInWishlist,
-}: {
-  product: Product;
+interface ProductCardProps {
+  product: {
+    id: string;
+    title: string;
+    price_cents: number;
+    currency: string;
+  };
   imageUrl: string;
   initialInWishlist?: boolean;
-}) {
+}
+
+export function ProductCard({ product, imageUrl, initialInWishlist }: ProductCardProps) {
+  const router = useRouter();
+  const price = new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: product.currency || "INR",
+    maximumFractionDigits: 0,
+  }).format(product.price_cents / 100);
+
   return (
-    <a
-      href={`/product/${product.id}`}
-      className="group relative block overflow-hidden rounded-[20px] bg-bg-card transition-all duration-500 hover:shadow-xl"
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => router.push(`/product/${product.id}`)}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") router.push(`/product/${product.id}`); }}
+      className="group cursor-pointer"
     >
-      {typeof initialInWishlist === "boolean" ? (
-        <WishlistToggle productId={product.id} initialInWishlist={initialInWishlist} />
-      ) : null}
-      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-t-[20px] bg-[#EDE8E0]">
+      <div className="relative overflow-hidden rounded-xl bg-[#EDE8E0] aspect-[4/5]">
         <Image
           src={imageUrl}
           alt={product.title}
           fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
           className="img-matte object-cover"
         />
         <div className="glass-overlay pointer-events-none" />
+
+        {initialInWishlist !== undefined ? (
+          <div className="absolute right-3 top-3 z-10">
+            <WishlistToggle productId={product.id} initialInWishlist={initialInWishlist} />
+          </div>
+        ) : null}
       </div>
-      <div className="p-5 text-center space-y-3">
-        <div className="font-serif text-lg font-medium text-heading line-clamp-1">
+
+      <div className="mt-3 space-y-1">
+        <div className="font-serif text-[14px] font-light text-heading leading-snug">
           {product.title}
         </div>
-        <div className="gold-divider-gradient mx-auto" />
-        <div className="font-serif text-[16px] font-light text-gold">
-          {formatMoneyFromCents(product.price_cents, product.currency)}
+        <div className="text-[13px] text-gold">
+          {price}
         </div>
       </div>
-    </a >
+    </div>
   );
 }
