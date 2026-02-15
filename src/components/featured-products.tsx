@@ -10,6 +10,9 @@ type ProductRow = {
   currency: string;
   image_path: string | null;
   active: boolean;
+  stock: number;
+  is_bestseller: boolean;
+  is_new: boolean;
 };
 
 export async function FeaturedProducts() {
@@ -34,7 +37,7 @@ export async function FeaturedProducts() {
 
   const { data } = await supabase
     .from("products")
-    .select("id,title,price_cents,currency,image_path,active")
+    .select("id,title,price_cents,currency,image_path,active,stock,is_bestseller,is_new")
     .eq("active", true)
     .eq("show_on_home", true)
     .order("display_order", { ascending: true })

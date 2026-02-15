@@ -16,6 +16,8 @@ export default async function AdminPage() {
     { title: "Orders", description: "View orders, filter by date, and export CSV.", href: "/admin/orders", action: "Open", primary: true },
     { title: "Analytics", description: "Revenue, order stats, and payment insights.", href: "/admin/analytics", action: "View", primary: false },
     { title: "Reliability", description: "Webhook queue health, retries, and reconciliation status.", href: "/admin/reliability", action: "View", primary: false },
+    { title: "Reviews", description: "Moderate customer reviews — approve, reject, or delete.", href: "/admin/reviews", action: "Moderate", primary: false },
+    { title: "Abandoned Carts", description: "View abandoned carts and send reminder emails.", href: "/admin/abandoned-carts", action: "View", primary: false },
   ];
 
   return (

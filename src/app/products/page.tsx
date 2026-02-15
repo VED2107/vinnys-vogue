@@ -12,6 +12,9 @@ type ProductRow = {
   currency: string;
   image_path: string | null;
   active: boolean;
+  stock: number;
+  is_bestseller: boolean;
+  is_new: boolean;
 };
 
 export default async function ProductsPage({
@@ -29,7 +32,7 @@ export default async function ProductsPage({
 
   let query = supabase
     .from("products")
-    .select("id,title,price_cents,currency,image_path,active")
+    .select("id,title,price_cents,currency,image_path,active,stock,is_bestseller,is_new")
     .eq("active", true)
     .order("created_at", { ascending: false });
 

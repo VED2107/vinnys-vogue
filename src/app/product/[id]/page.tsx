@@ -7,6 +7,10 @@ import { formatMoneyFromCents } from "@/lib/format";
 import { getCategoryLabel } from "@/lib/categories";
 import VariantSelector from "@/components/variant-selector";
 import { FadeIn } from "@/components/fade-in";
+import { ProductReviewSummary, ProductReviewList } from "@/components/product-reviews";
+import type { ReviewItem } from "@/components/product-reviews";
+import ProductReviewForm from "@/components/product-review-form";
+import { ProductBadges } from "@/components/product-badges";
 
 export const dynamic = "force-dynamic";
 
@@ -72,6 +76,9 @@ type ProductRow = {
   image_path: string | null;
   active: boolean;
   category: string | null;
+  stock: number;
+  is_bestseller: boolean;
+  is_new: boolean;
 };
 
 type VariantRow = { id: string; size: string; stock: number };
@@ -93,7 +100,7 @@ export default async function ProductDetailPage({
 
   const { data: product } = await supabase
     .from("products")
-    .select("id,title,description,price_cents,currency,image_path,active,category")
+    .select("id,title,description,price_cents,currency,image_path,active,category,stock,is_bestseller,is_new")
     .eq("id", params.id)
     .maybeSingle();
 
@@ -110,6 +117,70 @@ export default async function ProductDetailPage({
     .order("size", { ascending: true });
 
   const variantRows = (variants ?? []) as VariantRow[];
+
+  // ── Server-fetch reviews ──────────────────────────────
+  const { data: rawReviews } = await supabase
+    .from("reviews")
+    .select("id, rating, review_text, is_verified, created_at, user_id, profiles(email)")
+    .eq("product_id", p.id)
+    .eq("status", "approved")
+    .order("created_at", { ascending: false });
+
+  const approvedReviews: ReviewItem[] = ((rawReviews ?? []) as unknown as {
+    id: string;
+    rating: number;
+    review_text: string | null;
+    is_verified: boolean;
+    created_at: string;
+    user_id: string;
+    profiles: { email: string | null } | null;
+  }[]).map((r) => ({
+    id: r.id,
+    rating: r.rating,
+    review_text: r.review_text,
+    is_verified: r.is_verified,
+    created_at: r.created_at,
+    reviewer: r.profiles?.email
+      ? r.profiles.email.replace(/(.{2}).*(@.*)/, "$1***$2")
+      : "Anonymous",
+  }));
+
+  const reviewCount = approvedReviews.length;
+  const avgRating =
+    reviewCount > 0
+      ? Math.round(
+          (approvedReviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount) * 10,
+        ) / 10
+      : 0;
+
+  // ── Eligibility: has reviewed? eligible to review? ───
+  let hasReviewed = false;
+  let showForm = false;
+
+  if (user) {
+    const { data: existingReview } = await supabase
+      .from("reviews")
+      .select("id")
+      .eq("product_id", p.id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (existingReview) {
+      hasReviewed = true;
+    } else {
+      // Check if user has a delivered order with this product
+      const { data: deliveredItem } = await supabase
+        .from("order_items")
+        .select("id, orders!inner(status, user_id)")
+        .eq("product_id", p.id)
+        .limit(1);
+
+      showForm = (deliveredItem ?? []).some((row: any) => {
+        const order = row.orders;
+        return order?.status === "delivered" && order?.user_id === user.id;
+      });
+    }
+  }
 
   return (
     <div className="min-h-screen bg-bg-primary">
@@ -134,9 +205,22 @@ export default async function ProductDetailPage({
                 </div>
               ) : null}
 
+              <ProductBadges
+                stock={p.stock}
+                isBestseller={p.is_bestseller}
+                isNew={p.is_new}
+              />
+
               <h1 className="font-serif text-[clamp(28px,4vw,42px)] font-light tracking-[-0.02em] leading-[1.15] text-heading">
                 {p.title}
               </h1>
+
+              {reviewCount > 0 && (
+                <ProductReviewSummary
+                  avgRating={avgRating}
+                  reviewCount={reviewCount}
+                />
+              )}
 
               <div className="gold-divider" />
 
@@ -155,6 +239,29 @@ export default async function ProductDetailPage({
                 variants={variantRows}
               />
             </div>
+          </div>
+
+          <div className="mt-16">
+            <div className="flex items-center justify-between">
+              <h2 className="font-serif text-xl font-light text-heading">
+                Customer Reviews
+              </h2>
+              {reviewCount > 0 && (
+                <ProductReviewSummary avgRating={avgRating} reviewCount={reviewCount} />
+              )}
+            </div>
+
+            <div className="gold-divider-gradient mt-4" />
+
+            {showForm && (
+              <ProductReviewForm productId={p.id} hasReviewed={false} />
+            )}
+
+            {hasReviewed && (
+              <ProductReviewForm productId={p.id} hasReviewed={true} />
+            )}
+
+            <ProductReviewList reviews={approvedReviews} />
           </div>
         </FadeIn>
       </div>

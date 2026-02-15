@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
-import { processWebhookEvent } from "@/lib/process-webhook-event";
+import { sendOrderConfirmation } from "@/lib/send-order-email";
 
 export const runtime = "nodejs";
 
@@ -57,33 +57,77 @@ export async function POST(req: Request) {
         }
 
         const evt = event as {
-            id?: unknown;
+            event?: unknown;
             payload?: { payment?: { entity?: { order_id?: unknown } } };
         };
 
-        const razorpayOrderIdRaw = evt.payload?.payment?.entity?.order_id;
-        const razorpayOrderId =
-            typeof razorpayOrderIdRaw === "string" ? razorpayOrderIdRaw : null;
+        const eventName = typeof evt.event === "string" ? evt.event : "";
+        const razorpayOrderId = (() => {
+            const raw = evt.payload?.payment?.entity?.order_id;
+            return typeof raw === "string" ? raw : null;
+        })();
 
-        const razorpayEventId = typeof evt.id === "string" ? evt.id : null;
-
-        const { data: inserted, error: insertError } = await supabase
-            .from("webhook_events")
-            .insert({
-                razorpay_event_id: razorpayEventId,
-                razorpay_order_id: razorpayOrderId,
-                payload: event,
-                status: "pending",
-            })
-            .select("id")
-            .single<{ id: string }>();
-
-        if (insertError || !inserted) {
-            console.error("Webhook enqueue failed:", insertError);
+        if (!razorpayOrderId) {
+            console.error("Webhook missing razorpay_order_id");
             return new NextResponse("OK", { status: 200 });
         }
 
-        void processWebhookEvent(inserted.id);
+        // Look up internal order
+        const { data: order, error: orderError } = await supabase
+            .from("orders")
+            .select("id, payment_status")
+            .eq("razorpay_order_id", razorpayOrderId)
+            .maybeSingle<{ id: string; payment_status: string }>();
+
+        if (orderError || !order) {
+            console.error("Webhook: order not found for", razorpayOrderId, orderError);
+            return new NextResponse("OK", { status: 200 });
+        }
+
+        // Idempotency: already paid, nothing to do
+        if (order.payment_status === "paid") {
+            return new NextResponse("OK", { status: 200 });
+        }
+
+        if (eventName === "payment.captured") {
+            try {
+                await supabase.rpc("confirm_order_payment", {
+                    p_order_id: order.id,
+                });
+
+                // Send confirmation email (best-effort)
+                try {
+                    await sendOrderConfirmation(order.id);
+                    await supabase.from("order_email_logs").insert({
+                        order_id: order.id,
+                        status: "sent",
+                    });
+                } catch (emailErr) {
+                    await supabase.from("order_email_logs").insert({
+                        order_id: order.id,
+                        status: "failed",
+                        error: emailErr instanceof Error ? emailErr.message : String(emailErr),
+                    });
+                }
+
+                return NextResponse.json({ success: true });
+            } catch (error) {
+                console.error("Payment confirmation failed:", error);
+                return NextResponse.json(
+                    { error: "Confirmation failed" },
+                    { status: 500 },
+                );
+            }
+        }
+
+        if (eventName === "payment.failed") {
+            await supabase
+                .from("orders")
+                .update({ payment_status: "failed" })
+                .eq("id", order.id);
+
+            return new NextResponse("OK", { status: 200 });
+        }
 
         return new NextResponse("OK", { status: 200 });
     } catch (error) {

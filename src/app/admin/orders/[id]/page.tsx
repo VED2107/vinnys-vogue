@@ -91,6 +91,37 @@ export default async function AdminOrderDetailPage({
         revalidatePath(`/admin/orders/${orderId}`);
     }
 
+    async function reconfirmPayment() {
+        "use server";
+
+        const supabase = createSupabaseServerClient();
+        const orderId = params.id;
+
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) throw new Error("Unauthorized");
+
+        const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", user.id)
+            .maybeSingle();
+
+        if (!profile || profile.role !== "admin") {
+            throw new Error("Forbidden");
+        }
+
+        const { error } = await supabase.rpc("confirm_order_payment", {
+            p_order_id: orderId,
+        });
+
+        if (error) throw new Error("Reconfirmation failed");
+
+        revalidatePath(`/admin/orders/${orderId}`);
+    }
+
     const {
         data: { user },
     } = await supabase.auth.getUser();
@@ -175,12 +206,22 @@ export default async function AdminOrderDetailPage({
                     </a>
                 </div>
 
-                <div className="mt-3">
+                <div className="mt-3 flex gap-3">
                     <form action={markDelivered}>
                         <button className="px-4 py-2 bg-black text-white rounded-xl">
                             Mark as Delivered
                         </button>
                     </form>
+                    {order.payment_status !== "paid" && (
+                        <form action={reconfirmPayment}>
+                            <button
+                                type="submit"
+                                className="px-4 py-2 bg-neutral-900 text-white rounded-xl"
+                            >
+                                Reconfirm Payment
+                            </button>
+                        </form>
+                    )}
                 </div>
 
                 {/* Order meta */}
