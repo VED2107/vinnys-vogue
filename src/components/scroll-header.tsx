@@ -7,14 +7,19 @@ export function ScrollHeader({ children }: { children: React.ReactNode }) {
     const lastScrollY = useRef(0);
 
     useEffect(() => {
+        const DELTA = 5;
+
         function onScroll() {
             const currentY = window.scrollY;
-            if (currentY > lastScrollY.current && currentY > 88) {
+            const diff = currentY - lastScrollY.current;
+
+            if (diff > DELTA && currentY > 88) {
                 setHidden(true);
-            } else {
+                lastScrollY.current = currentY;
+            } else if (diff < -DELTA) {
                 setHidden(false);
+                lastScrollY.current = currentY;
             }
-            lastScrollY.current = currentY;
         }
 
         window.addEventListener("scroll", onScroll, { passive: true });

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 
@@ -38,6 +39,7 @@ export function MobileNav({ isLoggedIn, isAdmin, cartCount, wishlistCount }: Mob
 
     const userLinks = isLoggedIn
         ? [
+            { href: "/account", label: "My Account", count: 0 },
             { href: "/account/orders", label: "My Orders", count: 0 },
             { href: "/wishlist", label: "Wishlist", count: wishlistCount },
             { href: "/cart", label: "Cart", count: cartCount },
@@ -58,7 +60,7 @@ export function MobileNav({ isLoggedIn, isAdmin, cartCount, wishlistCount }: Mob
                 </svg>
             </button>
 
-            {open && (
+            {open && createPortal(
                 <div className="fixed inset-0 bg-[#F4EFE8] z-50 flex flex-col px-6 py-10">
                     <div className="flex items-center justify-between">
                         <div>
@@ -128,7 +130,8 @@ export function MobileNav({ isLoggedIn, isAdmin, cartCount, wishlistCount }: Mob
                             </Link>
                         )}
                     </div>
-                </div>
+                </div>,
+                document.body,
             )}
         </>
     );

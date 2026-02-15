@@ -171,14 +171,13 @@ export default async function ProductDetailPage({
       // Check if user has a delivered order with this product
       const { data: deliveredItem } = await supabase
         .from("order_items")
-        .select("id, orders!inner(status, user_id)")
+        .select("id, orders!inner(status)")
         .eq("product_id", p.id)
+        .eq("orders.user_id", user.id)
+        .eq("orders.status", "delivered")
         .limit(1);
 
-      showForm = (deliveredItem ?? []).some((row: any) => {
-        const order = row.orders;
-        return order?.status === "delivered" && order?.user_id === user.id;
-      });
+      showForm = (deliveredItem ?? []).length > 0;
     }
   }
 

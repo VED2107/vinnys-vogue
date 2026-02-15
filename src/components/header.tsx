@@ -88,6 +88,15 @@ export async function Header() {
 
                     {user ? (
                         <Link
+                            href="/account"
+                            className="nav-link-editorial text-[12px] tracking-[0.2em] uppercase font-light text-[#1C1A18] leading-none py-2"
+                        >
+                            My Account
+                        </Link>
+                    ) : null}
+
+                    {user ? (
+                        <Link
                             href="/account/orders"
                             className="nav-link-editorial text-[12px] tracking-[0.2em] uppercase font-light text-[#1C1A18] leading-none py-2"
                         >

@@ -14,16 +14,25 @@ if (!smtpConfigured) {
   );
 }
 
+const portNumber = Number(SMTP_PORT);
+
 export const transporter = smtpConfigured
   ? nodemailer.createTransport({
       host: SMTP_HOST,
-      port: Number(SMTP_PORT),
-      secure: false,
+      port: portNumber,
+      secure: portNumber === 465,
       auth: {
         user: SMTP_USER,
         pass: SMTP_PASS,
       },
     })
   : null;
+
+if (transporter) {
+  transporter.verify().then(
+    () => console.log("SMTP transporter verified successfully"),
+    (err: unknown) => console.error("SMTP transporter verification failed:", err),
+  );
+}
 
 export { FROM_EMAIL, smtpConfigured };

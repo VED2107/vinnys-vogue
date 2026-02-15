@@ -16,9 +16,10 @@ interface ProductCardProps {
   };
   imageUrl: string;
   initialInWishlist?: boolean;
+  onWishlistToggle?: (productId: string, inWishlist: boolean) => void;
 }
 
-export function ProductCard({ product, imageUrl, initialInWishlist }: ProductCardProps) {
+export function ProductCard({ product, imageUrl, initialInWishlist, onWishlistToggle }: ProductCardProps) {
   return (
     <Link href={`/product/${product.id}`} className="group block" prefetch={true}>
       <div className="relative overflow-hidden rounded-xl bg-[#EDE8E0] aspect-[4/5]">
@@ -38,7 +39,7 @@ export function ProductCard({ product, imageUrl, initialInWishlist }: ProductCar
         />
 
         {initialInWishlist !== undefined ? (
-          <WishlistToggle productId={product.id} initialInWishlist={initialInWishlist} />
+          <WishlistToggle productId={product.id} initialInWishlist={initialInWishlist} onToggle={onWishlistToggle} />
         ) : null}
       </div>
 

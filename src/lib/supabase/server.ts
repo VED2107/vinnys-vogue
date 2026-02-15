@@ -12,21 +12,16 @@ export function createSupabaseServerClient() {
 
   return createServerClient(url, anonKey, {
     cookies: {
-      get(name) {
-        return cookieStore.get(name)?.value;
+      getAll() {
+        return cookieStore.getAll();
       },
-      set(name, value, options) {
+      setAll(cookiesToSet) {
         try {
-          cookieStore.set(name, value, options);
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+          });
         } catch {
-          // ignore: set can be called from a Server Component
-        }
-      },
-      remove(name, options) {
-        try {
-          cookieStore.set(name, "", { ...options, maxAge: 0 });
-        } catch {
-          // ignore: remove can be called from a Server Component
+          // ignore: setAll can be called from a Server Component
         }
       },
     },

@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { ProductCard } from "@/components/product-card";
 import { getProductImagePublicUrl } from "@/lib/product-images";
 import { SectionTitle, PremiumButton } from "@/components/ui";
-import { FadeIn, StaggerGrid, StaggerItem } from "@/components/fade-in";
+import { FadeIn } from "@/components/fade-in";
+import { WishlistGrid } from "@/components/wishlist-grid";
 
 export default async function WishlistPage() {
   const supabase = createSupabaseServerClient();
@@ -22,7 +22,6 @@ export default async function WishlistPage() {
     .eq("user_id", user.id);
 
   if (wishlistError) {
-    console.error("[WishlistPage] query error:", wishlistError);
     return (
       <div className="min-h-screen bg-bg-primary">
         <div className="w-full px-6 lg:px-16 xl:px-24 py-16">
@@ -37,6 +36,14 @@ export default async function WishlistPage() {
   const products = (rows ?? [])
     .map((r) => (r as unknown as { products: { id: string; title: string; price_cents: number; currency: string; image_path: string | null; active: boolean } | null }).products)
     .filter(Boolean) as { id: string; title: string; price_cents: number; currency: string; image_path: string | null; active: boolean }[];
+
+  const productsWithUrls = products.map((p) => ({
+    id: p.id,
+    title: p.title,
+    price_cents: p.price_cents,
+    currency: p.currency,
+    imageUrl: getProductImagePublicUrl(supabase, p.image_path),
+  }));
 
   return (
     <div className="min-h-screen bg-bg-primary">
@@ -60,17 +67,7 @@ export default async function WishlistPage() {
             </div>
           </FadeIn>
         ) : (
-          <StaggerGrid className="mt-16 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4" stagger={0.08}>
-            {products.map((p) => (
-              <StaggerItem key={p.id}>
-                <ProductCard
-                  product={p}
-                  imageUrl={getProductImagePublicUrl(supabase, p.image_path)}
-                  initialInWishlist={true}
-                />
-              </StaggerItem>
-            ))}
-          </StaggerGrid>
+          <WishlistGrid products={productsWithUrls} />
         )}
       </div>
     </div>

@@ -5,9 +5,11 @@ import { useState, useCallback, useOptimistic } from "react";
 export default function WishlistToggle({
   productId,
   initialInWishlist,
+  onToggle,
 }: {
   productId: string;
   initialInWishlist: boolean;
+  onToggle?: (productId: string, inWishlist: boolean) => void;
 }) {
   const [inWishlist, setInWishlist] = useOptimistic(initialInWishlist);
   const [pending, setPending] = useState(false);
@@ -17,6 +19,7 @@ export default function WishlistToggle({
     setPending(true);
     const next = !inWishlist;
     setInWishlist(next);
+    onToggle?.(productId, next);
 
     try {
       const endpoint = next ? "/api/wishlist/add" : "/api/wishlist/remove";
@@ -27,13 +30,15 @@ export default function WishlistToggle({
       });
       if (!res.ok) {
         setInWishlist(!next);
+        onToggle?.(productId, !next);
       }
-    } catch (err) {
+    } catch {
       setInWishlist(!next);
+      onToggle?.(productId, !next);
     } finally {
       setPending(false);
     }
-  }, [productId, inWishlist, pending, setInWishlist]);
+  }, [productId, inWishlist, pending, setInWishlist, onToggle]);
 
   return (
     <button
