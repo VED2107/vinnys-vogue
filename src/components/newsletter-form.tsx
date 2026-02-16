@@ -60,7 +60,7 @@ export function NewsletterForm() {
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="group relative h-12 rounded-full bg-[#1C3A2A] px-6 text-[14px] font-medium text-white overflow-hidden transition-all duration-300 hover:bg-[#162E22] hover:shadow-[0_4px_16px_rgba(28,58,42,0.25)] disabled:opacity-60"
+                    className="group relative h-12 rounded-full bg-[#0F2E22] px-6 text-[14px] font-medium text-white overflow-hidden transition-all duration-300 hover:bg-[#1C3A2A] hover:shadow-[0_4px_16px_rgba(15,46,34,0.2)] disabled:opacity-60"
                 >
                     <span className="glass-overlay pointer-events-none" />
                     <span className="relative z-10">

@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { MandalaBackground } from "@/components/decorative";
+import { GoldDivider } from "@/components/section-divider";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -55,8 +57,9 @@ export default function LoginPage() {
     "h-12 w-full rounded-full border border-[rgba(0,0,0,0.1)] bg-bg-card px-5 text-[15px] text-heading outline-none transition-all duration-400 focus:border-gold focus:ring-1 focus:ring-gold/15 placeholder:text-[rgba(0,0,0,0.25)]";
 
   return (
-    <div className="min-h-screen bg-bg-primary">
-      <div className="mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center px-6 py-16">
+    <div className="relative min-h-screen overflow-hidden bg-bg-primary">
+      <MandalaBackground variant="lotus" position="center" />
+      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center px-6 py-16">
         <div className="rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-bg-card p-8">
           <div className="space-y-3">
             <div className="gold-divider" />
@@ -99,6 +102,7 @@ export default function LoginPage() {
             </div>
           </form>
         </div>
+        <GoldDivider className="mt-8 mb-4" />
       </div>
     </div>
   );

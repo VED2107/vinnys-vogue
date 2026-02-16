@@ -4,6 +4,8 @@ import { getProductImagePublicUrl } from "@/lib/product-images";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
 import { SectionTitle } from "@/components/ui";
 import { FadeIn, StaggerGrid, StaggerItem } from "@/components/fade-in";
+import { MandalaBackground } from "@/components/decorative";
+import { GoldDivider } from "@/components/section-divider";
 
 type ProductRow = {
   id: string;
@@ -57,8 +59,9 @@ export default async function ProductsPage({
   }
 
   return (
-    <div className="min-h-screen bg-bg-primary">
-      <div className="w-full px-6 lg:px-16 xl:px-24 py-24">
+    <div className="relative min-h-screen overflow-hidden bg-bg-primary">
+      <MandalaBackground variant="lotus" position="center" />
+      <div className="relative z-10 w-full px-6 lg:px-16 xl:px-24 py-24">
         <FadeIn>
           <SectionTitle
             subtitle="Browse"
@@ -67,6 +70,8 @@ export default async function ProductsPage({
             align="left"
           />
         </FadeIn>
+
+        <GoldDivider className="my-8" />
 
         <div className="mt-16 flex gap-12">
           {/* Filter Sidebar */}
@@ -103,7 +108,7 @@ export default async function ProductsPage({
               <a
                 href="/products"
                 className={`inline-flex h-9 items-center rounded-full px-4 text-[13px] transition ${!filterCategory
-                  ? "bg-[#1C3A2A] text-white"
+                  ? "bg-[#0F2E22] text-white"
                   : "border border-neutral-200 text-neutral-500 hover:border-neutral-300"
                   }`}
               >
@@ -114,7 +119,7 @@ export default async function ProductsPage({
                   key={c.value}
                   href={`/products?category=${encodeURIComponent(c.value)}`}
                   className={`inline-flex h-9 items-center rounded-full px-4 text-[13px] transition ${filterCategory === c.value
-                    ? "bg-[#1C3A2A] text-white"
+                    ? "bg-[#0F2E22] text-white"
                     : "border border-neutral-200 text-neutral-500 hover:border-neutral-300"
                     }`}
                 >
@@ -144,6 +149,8 @@ export default async function ProductsPage({
             )}
           </div>
         </div>
+
+        <GoldDivider className="mt-16 mb-4" />
       </div>
     </div>
   );

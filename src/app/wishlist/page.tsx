@@ -4,6 +4,8 @@ import { getProductImagePublicUrl } from "@/lib/product-images";
 import { SectionTitle, PremiumButton } from "@/components/ui";
 import { FadeIn } from "@/components/fade-in";
 import { WishlistGrid } from "@/components/wishlist-grid";
+import { MandalaBackground } from "@/components/decorative";
+import { GoldDivider } from "@/components/section-divider";
 
 export default async function WishlistPage() {
   const supabase = createSupabaseServerClient();
@@ -46,8 +48,9 @@ export default async function WishlistPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-bg-primary">
-      <div className="w-full px-6 lg:px-16 xl:px-24 py-16">
+    <div className="relative min-h-screen overflow-hidden bg-bg-primary">
+      <MandalaBackground variant="lotus" position="bottom-right" />
+      <div className="relative z-10 w-full px-6 lg:px-16 xl:px-24 py-16">
         <FadeIn>
           <SectionTitle
             subtitle="Saved"
@@ -69,6 +72,8 @@ export default async function WishlistPage() {
         ) : (
           <WishlistGrid products={productsWithUrls} />
         )}
+
+        <GoldDivider className="mt-16 mb-4" />
       </div>
     </div>
   );

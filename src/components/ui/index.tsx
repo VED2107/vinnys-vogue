@@ -50,143 +50,87 @@ export function PageContainer({
     );
 }
 
-/* ——— Primary Button (Green Luxury) ——— */
-export function PremiumButton({
-    children,
-    href,
-    type,
-    disabled,
-    onClick,
-    className = "",
-}: {
+/* ——— Shared button props ——— */
+interface BtnProps {
     children: React.ReactNode;
     href?: string;
     type?: "button" | "submit";
     disabled?: boolean;
     onClick?: (e?: React.MouseEvent) => void;
     className?: string;
-}) {
-    const base =
-        "group relative inline-flex items-center justify-center rounded-full bg-[#1C3A2A] px-8 py-3 text-sm font-medium tracking-wide text-white overflow-hidden transition-all duration-300 hover:bg-[#162E22] hover:shadow-[0_4px_16px_rgba(28,58,42,0.25)] disabled:opacity-50 disabled:cursor-not-allowed";
-    const glassSpan = <span className="glass-overlay pointer-events-none" />;
-    if (href) {
-        const disabledClass = disabled ? "opacity-50 cursor-not-allowed pointer-events-none" : "";
-        const needsHandler = !!(onClick || disabled);
-        return (
-            <a
-                href={disabled ? undefined : href}
-                {...(needsHandler ? {
-                    onClick: (e: React.MouseEvent) => {
-                        if (disabled) { e.preventDefault(); return; }
-                        onClick?.(e);
-                    },
-                } : {})}
-                aria-disabled={disabled || undefined}
-                tabIndex={disabled ? -1 : undefined}
-                className={`${base} ${disabledClass} ${className}`}
-            >
-                {glassSpan}
-                <span className="relative z-10">{children}</span>
-            </a>
-        );
-    }
-    return (
-        <button
-            type={type || "button"}
-            disabled={disabled}
-            onClick={onClick}
-            className={`${base} ${className}`}
-        >
-            {glassSpan}
-            <span className="relative z-10">{children}</span>
-        </button>
-    );
 }
 
-/* ——— Gold Outline Button ——— */
-export function GoldOutlineButton({
-    children,
-    href,
-    type,
-    disabled,
-    onClick,
-    className = "",
-}: {
-    children: React.ReactNode;
-    href?: string;
-    type?: "button" | "submit";
-    disabled?: boolean;
-    onClick?: (e?: React.MouseEvent) => void;
-    className?: string;
-}) {
-    const base =
-        "inline-flex items-center justify-center rounded-full border border-[#C6A756] px-8 py-3 text-sm font-medium tracking-wide text-[#C6A756] transition-all duration-300 ease-[cubic-bezier(.22,1,.36,1)] hover:bg-[#C6A756] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed";
+function ButtonShell({ children, href, type, disabled, onClick, className = "", base }: BtnProps & { base: string }) {
+    const cls = `${base} ${disabled ? "opacity-50 cursor-not-allowed" : ""} ${className}`;
     if (href) {
-        const disabledClass = disabled ? "opacity-50 cursor-not-allowed pointer-events-none" : "";
-        const needsHandler = !!(onClick || disabled);
         return (
             <a
                 href={disabled ? undefined : href}
-                {...(needsHandler ? {
-                    onClick: (e: React.MouseEvent) => {
-                        if (disabled) { e.preventDefault(); return; }
-                        onClick?.(e);
-                    },
+                {...(onClick || disabled ? {
+                    onClick: (e: React.MouseEvent) => { if (disabled) { e.preventDefault(); return; } onClick?.(e); },
                 } : {})}
                 aria-disabled={disabled || undefined}
                 tabIndex={disabled ? -1 : undefined}
-                className={`${base} ${disabledClass} ${className}`}
+                className={`${cls} ${disabled ? "pointer-events-none" : ""}`}
             >
                 {children}
             </a>
         );
     }
     return (
-        <button
-            type={type || "button"}
-            disabled={disabled}
-            onClick={onClick}
-            className={`${base} ${className}`}
-        >
+        <button type={type || "button"} disabled={disabled} onClick={onClick} className={cls}>
             {children}
         </button>
     );
 }
+
+/* ——— Primary Button (Gold Gradient) ——— */
+export function BtnPrimary(props: BtnProps) {
+    return (
+        <ButtonShell
+            {...props}
+            base="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#C6A75E] to-[#E8D4A2] px-8 py-3 text-sm font-medium tracking-wide text-white shadow-[0_2px_12px_rgba(198,167,94,0.25)] transition-all duration-300 hover:shadow-[0_4px_20px_rgba(198,167,94,0.35)] hover:-translate-y-0.5"
+        />
+    );
+}
+
+/* ——— Secondary Button (Deep Green) ——— */
+export function BtnSecondary(props: BtnProps) {
+    return (
+        <ButtonShell
+            {...props}
+            base="inline-flex items-center justify-center rounded-full bg-[#0F2E22] px-8 py-3 text-sm font-medium tracking-wide text-white transition-all duration-300 hover:bg-[#1C3A2A] hover:-translate-y-0.5"
+        />
+    );
+}
+
+/* ——— Outline Button (Elegant Gold Border) ——— */
+export function BtnOutline(props: BtnProps) {
+    return (
+        <ButtonShell
+            {...props}
+            base="inline-flex items-center justify-center rounded-full border border-[#C6A75E] px-8 py-3 text-sm font-medium tracking-wide text-[#C6A75E] transition-all duration-300 ease-[cubic-bezier(.22,1,.36,1)] hover:bg-[#C6A75E]/8 hover:-translate-y-0.5"
+        />
+    );
+}
+
+/* ——— Backward-compatible aliases ——— */
+export const PremiumButton = BtnSecondary;
+export const GoldOutlineButton = BtnOutline;
 
 /* ——— Glass Button (Secondary CTA) ——— */
-export function GlassButton({
-    children,
-    href,
-    type,
-    disabled,
-    onClick,
-    className = "",
-}: {
-    children: React.ReactNode;
-    href?: string;
-    type?: "button" | "submit";
-    disabled?: boolean;
-    onClick?: (e?: React.MouseEvent) => void;
-    className?: string;
-}) {
-    const base =
-        "inline-flex items-center justify-center rounded-full backdrop-blur-md bg-white/20 border border-white/30 px-8 py-3 text-sm font-medium tracking-wide text-[#1C3A2A] shadow-lg transition-all duration-300 hover:bg-white/30 disabled:opacity-50 disabled:cursor-not-allowed";
-    if (href) {
-        return (
-            <a href={href} className={`${base} ${className}`}>
-                {children}
-            </a>
-        );
-    }
+export function GlassButton({ children, href, type, disabled, onClick, className = "" }: BtnProps) {
     return (
-        <button
-            type={type || "button"}
+        <ButtonShell
+            href={href}
+            type={type}
             disabled={disabled}
             onClick={onClick}
-            className={`${base} ${className}`}
+            className={className}
+            base="inline-flex items-center justify-center rounded-full backdrop-blur-md bg-white/20 border border-white/30 px-8 py-3 text-sm font-medium tracking-wide text-[#1C3A2A] shadow-lg transition-all duration-300 hover:bg-white/30"
         >
             {children}
-        </button>
+        </ButtonShell>
     );
 }
 

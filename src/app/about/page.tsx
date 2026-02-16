@@ -5,6 +5,8 @@ import {
     type CraftsmanshipContent,
 } from "@/lib/site-defaults";
 import { FadeIn } from "@/components/fade-in";
+import { MandalaBackground } from "@/components/decorative";
+import { GoldDivider } from "@/components/section-divider";
 
 export default async function AboutPage() {
     const supabase = createSupabaseServerClient();
@@ -31,8 +33,9 @@ export default async function AboutPage() {
         );
 
     return (
-        <div className="min-h-screen bg-bg-primary">
-            <div className="mx-auto w-full max-w-[1100px] px-6 py-20 md:py-28">
+        <div className="relative min-h-screen overflow-hidden bg-bg-primary">
+            <MandalaBackground variant="lotus" position="center" />
+            <div className="relative z-10 mx-auto w-full max-w-[1100px] px-6 py-20 md:py-28">
                 {/* Title */}
                 <FadeIn>
                     <div className="text-center space-y-6 mb-16">
@@ -80,6 +83,8 @@ export default async function AboutPage() {
                         </div>
                     </div>
                 </FadeIn>
+
+                <GoldDivider className="mt-16 mb-4" />
             </div>
         </div>
     );

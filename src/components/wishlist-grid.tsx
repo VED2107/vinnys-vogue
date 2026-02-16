@@ -35,7 +35,7 @@ export function WishlistGrid({ products }: { products: WishlistProduct[] }) {
                 <p className="mt-3 text-[15px] text-muted">Browse our collection and save pieces you love.</p>
                 <a
                     href="/products"
-                    className="mt-8 inline-flex items-center justify-center rounded-full bg-[#1C3A2A] px-8 py-3 text-sm font-medium tracking-wide text-white transition-all duration-300 hover:bg-[#162E22]"
+                    className="mt-8 inline-flex items-center justify-center rounded-full border border-[#C6A75E] px-8 py-3 text-sm font-medium tracking-wide text-[#C6A75E] transition-all duration-300 hover:bg-[#C6A75E]/8 hover:-translate-y-0.5"
                 >
                     Explore Collection
                 </a>

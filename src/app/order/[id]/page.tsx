@@ -1,12 +1,14 @@
 import { redirect, notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatMoney } from "@/lib/format";
+import { getProductImagePublicUrl } from "@/lib/product-images";
 import { SectionTitle } from "@/components/ui";
 import PayNowButton from "@/components/pay-now-button";
 import DownloadInvoiceButton from "@/components/download-invoice-button";
 import CancelOrderButton from "@/components/cancel-order-button";
 import { FadeIn } from "@/components/fade-in";
 import { getTrackingUrl } from "@/lib/tracking";
+import { MandalaBackground } from "@/components/decorative";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +32,8 @@ type OrderItemRow = {
     id: string;
     quantity: number;
     price: number;
+    product_name: string | null;
+    image_url: string | null;
     products: { title: string; image_path: string | null } | null;
 };
 
@@ -91,7 +95,7 @@ export default async function OrderPage({
 
     const { data: orderItems } = await supabase
         .from("order_items")
-        .select("id,quantity,price,products(title,image_path)")
+        .select("id,quantity,price,product_name,image_url,products(title,image_path)")
         .eq("order_id", o.id);
 
     const items = (orderItems ?? []) as unknown as OrderItemRow[];
@@ -109,8 +113,9 @@ export default async function OrderPage({
     const isPaid = o.payment_status === "paid";
 
     return (
-        <div className="min-h-screen bg-bg-primary">
-            <div className="mx-auto w-full max-w-3xl px-6 py-16">
+        <div className="relative min-h-screen overflow-hidden bg-bg-primary">
+            <MandalaBackground variant="lotus" position="bottom-left" />
+            <div className="relative z-10 mx-auto w-full max-w-3xl px-6 py-16">
                 <FadeIn>
                     <div className="flex flex-col items-center text-center">
                         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gold/10">
@@ -152,15 +157,33 @@ export default async function OrderPage({
 
                         <div className="mt-6 gold-divider-gradient" />
 
-                        <div className="mt-6 space-y-3">
-                            {items.map((item) => (
-                                <div key={item.id} className="flex items-center justify-between text-[15px]">
-                                    <div className="text-heading">
-                                        {(item.products as { title: string } | null)?.title ?? "Product"} × {item.quantity}
+                        <div className="mt-6 space-y-4">
+                            {items.map((item) => {
+                                const prod = item.products as { title: string; image_path: string | null } | null;
+                                const title = item.product_name ?? prod?.title ?? "Product";
+                                const imgPath = item.image_url ?? prod?.image_path ?? null;
+                                const imageUrl = getProductImagePublicUrl(supabase, imgPath);
+                                return (
+                                    <div key={item.id} className="flex items-center gap-4 text-[15px]">
+                                        <div className="h-[60px] w-[60px] flex-shrink-0 overflow-hidden rounded-xl bg-[#EDE8E0]">
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img
+                                                src={imageUrl}
+                                                alt={title}
+                                                className="h-full w-full object-cover"
+                                            />
+                                        </div>
+                                        <div className="flex flex-1 items-center justify-between gap-3 min-w-0">
+                                            <div className="text-heading truncate">
+                                                {title} × {item.quantity}
+                                            </div>
+                                            <div className="font-serif font-light text-gold flex-shrink-0">
+                                                {formatMoney(Number(item.price) * item.quantity)}
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="font-serif font-light text-gold">{formatMoney(Number(item.price) * item.quantity)}</div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
 
                         <div className="mt-6 gold-divider-gradient" />
@@ -242,7 +265,7 @@ export default async function OrderPage({
                         </div>
                     </div>
 
-                    <div className="mt-8 flex flex-wrap gap-3 justify-center">
+                    <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center">
                         {o.payment_status === "unpaid" ? (
                             <PayNowButton orderId={o.id} userEmail={o.email ?? undefined} />
                         ) : null}
@@ -252,7 +275,7 @@ export default async function OrderPage({
                         ) : null}
                         <a
                             href="/products"
-                            className="inline-flex h-12 items-center rounded-full border border-[rgba(0,0,0,0.1)] px-8 text-[14px] text-heading transition-all duration-400 hover:border-[rgba(0,0,0,0.2)]"
+                            className="inline-flex h-12 items-center justify-center rounded-full border border-[rgba(0,0,0,0.1)] px-8 text-[14px] text-heading transition-all duration-400 hover:border-[rgba(0,0,0,0.2)] w-full sm:w-auto"
                         >
                             Continue Shopping
                         </a>

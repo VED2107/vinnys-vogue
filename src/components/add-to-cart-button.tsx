@@ -61,7 +61,7 @@ export default function AddToCartButton({
 
     return (
         <div className="space-y-3">
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
                 <button
                     onClick={handleAddToCart}
                     disabled={disabled || anyPending}

@@ -5,6 +5,8 @@ import { formatMoneyFromCents } from "@/lib/format";
 import { getProductImagePublicUrl } from "@/lib/product-images";
 import CheckoutForm from "@/components/checkout-form";
 import { FadeIn } from "@/components/fade-in";
+import { MandalaBackground } from "@/components/decorative";
+import { GoldDivider } from "@/components/section-divider";
 
 export default async function CheckoutPage() {
     const supabase = createSupabaseServerClient();
@@ -43,8 +45,9 @@ export default async function CheckoutPage() {
     const currency = (validItems[0].products as { currency: string }).currency ?? "INR";
 
     return (
-        <div className="min-h-screen bg-bg-primary">
-            <div className="w-full px-6 lg:px-16 xl:px-24 py-16">
+        <div className="relative min-h-screen overflow-hidden bg-bg-primary">
+            <MandalaBackground variant="lotus" position="top-right" />
+            <div className="relative z-10 w-full px-6 lg:px-16 xl:px-24 py-16">
                 <FadeIn>
                     <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-16">
                         {/* Order Summary — sticky glass card */}
@@ -100,6 +103,8 @@ export default async function CheckoutPage() {
                         </div>
                     </div>
                 </FadeIn>
+
+                <GoldDivider className="mt-16 mb-4" />
             </div>
         </div>
     );

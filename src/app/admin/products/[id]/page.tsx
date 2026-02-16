@@ -6,6 +6,7 @@ import {
 } from "@/lib/product-images";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
 import VariantManager from "@/components/variant-manager";
+import { RichTextEditor } from "@/components/admin/rich-text-editor";
 
 type VariantRow = {
   id: string;
@@ -407,13 +408,7 @@ export default async function AdminEditProductPage({
               <label className="text-sm font-medium text-zinc-900" htmlFor="description">
                 Description
               </label>
-              <textarea
-                id="description"
-                name="description"
-                defaultValue={product.description ?? ""}
-                rows={6}
-                className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 outline-none transition focus:border-zinc-400"
-              />
+              <RichTextEditor name="description" defaultValue={product.description ?? ""} />
             </div>
 
             {/* Display Order */}

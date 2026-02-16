@@ -11,8 +11,13 @@ import { PRODUCT_CATEGORIES } from "@/lib/categories";
 import { SectionTitle, PremiumButton, GoldOutlineButton } from "@/components/ui";
 import { FadeIn, StaggerGrid, StaggerItem } from "@/components/fade-in";
 import { HeroReveal, HeroItem } from "@/components/hero-section";
+import Hero from "@/components/Hero";
+import { ShufflingImages } from "@/components/shuffling-images";
 import CinematicReveal from "@/components/CinematicReveal";
+import { StorySection } from "@/components/story-section";
+import { GoldDivider } from "@/components/section-divider";
 import { NewsletterForm } from "@/components/newsletter-form";
+import { MandalaBackground } from "@/components/decorative";
 import {
   DEFAULT_HERO,
   DEFAULT_CRAFTSMANSHIP,
@@ -93,47 +98,20 @@ export default async function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-bg-primary">
-      {/* ——— 1. HERO — Balanced Split ——— */}
-      <section className="w-full py-28 lg:py-32 px-6 lg:px-16 xl:px-24">
-        <div className="grid lg:grid-cols-2 items-center gap-16 lg:gap-20">
-          {/* Left — Text */}
-          <div>
-            <div>
-              <h1 className="font-serif leading-[1.1] text-heading" style={{ fontSize: 'clamp(2rem, 3.5vw, 4.5rem)' }}>
-                {renderHighlight(hero.heading, hero.highlight)}
-              </h1>
-              <p className="mt-6 text-neutral-600 leading-relaxed" style={{ fontSize: 'clamp(0.85rem, 1.1vw, 1.125rem)' }}>
-                {hero.subtext}
-              </p>
-              <div className="mt-8 flex gap-4">
-                <PremiumButton href="/products">
-                  {hero.cta_primary}
-                </PremiumButton>
-                <GoldOutlineButton href="/about">
-                  {hero.cta_secondary}
-                </GoldOutlineButton>
-              </div>
-            </div>
-          </div>
-
-          {/* Right — Image */}
-          <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-[#EDE8E0]">
-            <Image
-              src={hero.image_url || "/og-banner.jpg"}
-              alt="Luxury couture"
-              fill
-              sizes="(max-width: 1024px) 100vw, 50vw"
-              className="object-cover img-matte"
-              priority
-            />
-          </div>
-        </div>
-      </section>
+    <div className="relative min-h-screen overflow-hidden bg-bg-primary">
+      {/* ——— 1. HERO — Animated Couture Campaign ——— */}
+      <Hero
+        heading={hero.heading}
+        highlight={hero.highlight}
+        subtext={hero.subtext}
+        cta_primary={hero.cta_primary}
+        cta_secondary={hero.cta_secondary}
+        image_url={hero.image_url}
+      />
 
       {/* ——— 2. CURATED COLLECTIONS ——— */}
       <CinematicReveal delay={100}>
-        <section className="w-full py-28 px-6 lg:px-16 xl:px-24">
+        <section className="w-full py-16 lg:py-20 px-6 lg:px-16 xl:px-24">
           <FadeIn>
             <div className="mb-12">
               <p className="text-[11px] tracking-[0.3em] uppercase text-gold font-medium">
@@ -145,14 +123,14 @@ export default async function Home() {
             </div>
           </FadeIn>
 
-          <StaggerGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 lg:gap-12" stagger={0.08}>
+          <StaggerGrid className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 lg:gap-6" stagger={0.08}>
             {PRODUCT_CATEGORIES.map((c) => {
               const imgSrc = categoryImages[c.value];
               return (
                 <StaggerItem key={c.value}>
                   <a
                     href={`/products?category=${encodeURIComponent(c.value)}`}
-                    className="group relative block overflow-hidden rounded-xl bg-[#EDE8E0] aspect-[4/5]"
+                    className="group relative block overflow-hidden rounded-xl bg-[#EDE8E0] aspect-[3/4]"
                   >
                     {imgSrc ? (
                       <Image src={imgSrc} alt={c.label} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" className="img-matte object-cover" />
@@ -174,45 +152,44 @@ export default async function Home() {
 
       {/* ——— 3. EDITORIAL STORIES ——— */}
       {storiesData.stories.map((story, i) => (
-        <CinematicReveal key={i} delay={150 + i * 100}>
-          <section className="w-full py-28 px-6 lg:px-16 xl:px-24">
-            <div className={`grid lg:grid-cols-2 items-center gap-16 lg:gap-24 ${i % 2 === 1 ? "direction-rtl" : ""}`}>
-              {/* Image */}
-              <div className={`relative aspect-[4/5] overflow-hidden rounded-xl bg-[#EDE8E0] ${i % 2 === 1 ? "lg:order-2" : ""}`}>
-                {story.image_url ? (
-                  <Image src={story.image_url} alt={story.title} fill sizes="(max-width: 1024px) 100vw, 50vw" className="img-matte object-cover" />
-                ) : (
-                  <div className="flex h-full items-center justify-center">
-                    <span className="text-sm text-neutral-400 font-light">{story.title}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Text */}
-              <div className={i % 2 === 1 ? "lg:order-1" : ""}>
-                <div className="max-w-[480px]">
-                  <p className="text-[11px] tracking-[0.3em] uppercase text-gold font-medium">
-                    {story.label}
-                  </p>
-                  <h2 className="mt-3 font-serif text-3xl lg:text-4xl font-light leading-[1.15] text-heading">
-                    {renderHighlight(story.title, story.highlight)}
-                  </h2>
-                  <div className="mt-5 space-y-3 text-[15px] leading-[1.7] text-neutral-600">
-                    <p>{story.paragraph_1}</p>
-                    <p>{story.paragraph_2}</p>
-                  </div>
-                  <a
-                    href={story.cta_href}
-                    className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#1C3A2A] px-7 py-2.5 text-[12px] tracking-[0.15em] uppercase font-light text-white transition-all duration-300 btn-luxury"
-                  >
-                    {story.cta_text}
-                  </a>
+        <div key={i} className="relative overflow-hidden">
+          <StorySection
+            index={i}
+            reversed={i % 2 === 1}
+            mandala={
+              <MandalaBackground variant="lotus" position="center" opacity={0.18} />
+            }
+            image={
+              story.image_url ? (
+                <Image src={story.image_url} alt={story.title} fill sizes="(max-width: 1024px) 100vw, 50vw" className="img-matte object-cover" />
+              ) : (
+                <div className="flex h-full items-center justify-center">
+                  <span className="text-sm text-neutral-400 font-light">{story.title}</span>
                 </div>
-              </div>
-            </div>
-          </section>
-        </CinematicReveal>
+              )
+            }
+            label={story.label}
+            headline={renderHighlight(story.title, story.highlight)}
+            paragraphs={
+              <>
+                <p>{story.paragraph_1}</p>
+                <p>{story.paragraph_2}</p>
+              </>
+            }
+            cta={
+              <a
+                href={story.cta_href}
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#C6A75E] to-[#E8D4A2] px-7 py-2.5 text-[12px] tracking-[0.15em] uppercase font-light text-white shadow-[0_2px_12px_rgba(198,167,94,0.25)] transition-all duration-300 hover:shadow-[0_4px_20px_rgba(198,167,94,0.35)] hover:-translate-y-0.5"
+              >
+                {story.cta_text}
+              </a>
+            }
+          />
+        </div>
       ))}
+
+      {/* Gold divider before Latest Arrivals */}
+      <GoldDivider className="my-4" />
 
       {/* ——— 4. LATEST ARRIVALS ——— */}
       <CinematicReveal delay={300}>
@@ -233,13 +210,17 @@ export default async function Home() {
         </section>
       </CinematicReveal>
 
+      {/* Gold divider before Craftsmanship */}
+      <GoldDivider className="my-4" />
+
       {/* ——— 5. CRAFTSMANSHIP ——— */}
       <CinematicReveal delay={350}>
         <section id="craftsmanship" className="w-full py-28 px-6 lg:px-16 xl:px-24">
-          <div className="grid lg:grid-cols-2 items-center gap-16 lg:gap-24">
+          <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-12 lg:gap-16">
             {/* Text */}
-            <div>
-              <div className="max-w-[480px]">
+            <div className="relative flex items-center lg:min-h-[560px]">
+              <MandalaBackground variant="lotus" position="center" opacity={0.18} />
+              <div className="relative z-10 max-w-[480px]">
                 <div className="flex items-center gap-2">
                   <span className="text-gold text-sm">✦</span>
                   <p className="text-[11px] tracking-[0.3em] uppercase text-gold font-semibold">
@@ -263,27 +244,17 @@ export default async function Home() {
               </div>
             </div>
 
-            {/* Images */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-[#EDE8E0] row-span-2">
-                {craft.image_url_1 ? (
-                  <Image src={craft.image_url_1} alt="Craftsmanship" fill sizes="25vw" className="img-matte object-cover" />
-                ) : null}
-              </div>
-              <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-[#EDE8E0]">
-                {craft.image_url_2 ? (
-                  <Image src={craft.image_url_2} alt="Detail" fill sizes="25vw" className="img-matte object-cover" />
-                ) : null}
-              </div>
-              <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-[#EDE8E0]">
-                {craft.image_url_3 ? (
-                  <Image src={craft.image_url_3} alt="Artistry" fill sizes="25vw" className="img-matte object-cover" />
-                ) : null}
-              </div>
-            </div>
+            {/* Images — auto-shuffling between positions */}
+            <ShufflingImages
+              images={[craft.image_url_1, craft.image_url_2, craft.image_url_3]}
+              alts={["Craftsmanship", "Detail", "Artistry"]}
+            />
           </div>
         </section>
       </CinematicReveal>
+
+      {/* Gold divider before Newsletter */}
+      <GoldDivider className="my-4" />
 
       {/* ——— 6. NEWSLETTER ——— */}
       <CinematicReveal delay={400}>

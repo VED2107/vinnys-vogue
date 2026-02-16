@@ -13,8 +13,9 @@ import {
     type StoryItem,
     type CollectionsContent,
 } from "@/lib/site-defaults";
-import { saveSiteContent } from "./actions";
 import { ImageUploadInput } from "@/components/admin/image-upload-input";
+import { SaveContentForm } from "@/components/admin/save-content-form";
+import { RichTextEditor } from "@/components/admin/rich-text-editor";
 
 export default async function AdminHomepagePage({
     searchParams,
@@ -81,7 +82,7 @@ export default async function AdminHomepagePage({
         "w-full rounded-xl border border-[rgba(0,0,0,0.08)] bg-white px-4 py-3 text-[14px] text-heading outline-none transition focus:border-gold";
     const textareaClass = `${inputClass} resize-y min-h-[100px]`;
     const labelClass = "block text-[13px] font-medium text-heading mb-1.5";
-    const saveBtn = "h-10 rounded-full bg-[#1C3A2A] px-6 text-[13px] font-medium text-white transition-all duration-300 hover:bg-[#162E22] hover:shadow-[0_4px_16px_rgba(28,58,42,0.25)]";
+    const saveBtn = "h-10 rounded-full bg-[#0F2E22] px-6 text-[13px] font-medium text-white transition-all duration-300 hover:bg-[#1C3A2A] hover:shadow-[0_4px_16px_rgba(15,46,34,0.2)]";
 
     return (
         <div className="min-h-screen bg-bg-admin">
@@ -106,11 +107,11 @@ export default async function AdminHomepagePage({
                 ) : null}
 
                 {/* ─── 1. HERO ─── */}
-                <form action={saveSiteContent} className="mb-10">
+                <SaveContentForm className="mb-10">
                     <input type="hidden" name="key" value="hero" />
                     <div className="rounded-2xl border border-[rgba(0,0,0,0.06)] bg-white p-6 space-y-5">
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1C3A2A]/10 text-[#1C3A2A] text-[14px] font-bold">1</div>
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#C6A75E]/10 text-[#C6A75E] text-[14px] font-bold">1</div>
                             <h2 className="font-serif text-xl font-light text-heading">Hero Section</h2>
                         </div>
 
@@ -124,7 +125,7 @@ export default async function AdminHomepagePage({
                         </div>
                         <div>
                             <label className={labelClass}>Subtext</label>
-                            <textarea name="field_subtext" defaultValue={hero.subtext} className={textareaClass} rows={2} />
+                            <RichTextEditor name="field_subtext" defaultValue={hero.subtext} />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
@@ -144,15 +145,15 @@ export default async function AdminHomepagePage({
                         />
                         <button type="submit" className={saveBtn}>Save Hero</button>
                     </div>
-                </form>
+                </SaveContentForm>
 
                 {/* ─── 2. STORIES (3 sections) ─── */}
-                <form action={saveSiteContent} className="mb-10">
+                <SaveContentForm className="mb-10">
                     <input type="hidden" name="key" value="stories" />
                     <input type="hidden" name="field__is_stories" value="true" />
                     <div className="rounded-2xl border border-[rgba(0,0,0,0.06)] bg-white p-6 space-y-8">
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1C3A2A]/10 text-[#1C3A2A] text-[14px] font-bold">2</div>
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#C6A75E]/10 text-[#C6A75E] text-[14px] font-bold">2</div>
                             <h2 className="font-serif text-xl font-light text-heading">Story Sections <span className="text-muted font-sans text-[13px] font-normal">(3 alternating image + text)</span></h2>
                         </div>
 
@@ -177,11 +178,11 @@ export default async function AdminHomepagePage({
                                 </div>
                                 <div>
                                     <label className={labelClass}>Paragraph 1</label>
-                                    <textarea name={`field_story_${i}_paragraph_1`} defaultValue={story.paragraph_1} className={textareaClass} rows={2} />
+                                    <RichTextEditor name={`field_story_${i}_paragraph_1`} defaultValue={story.paragraph_1} />
                                 </div>
                                 <div>
                                     <label className={labelClass}>Paragraph 2</label>
-                                    <textarea name={`field_story_${i}_paragraph_2`} defaultValue={story.paragraph_2} className={textareaClass} rows={2} />
+                                    <RichTextEditor name={`field_story_${i}_paragraph_2`} defaultValue={story.paragraph_2} />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
@@ -204,14 +205,14 @@ export default async function AdminHomepagePage({
 
                         <button type="submit" className={saveBtn}>Save All Stories</button>
                     </div>
-                </form>
+                </SaveContentForm>
 
                 {/* ─── 3. CRAFTSMANSHIP — 3 staggered images ─── */}
-                <form action={saveSiteContent} className="mb-10">
+                <SaveContentForm className="mb-10">
                     <input type="hidden" name="key" value="craftsmanship" />
                     <div className="rounded-2xl border border-[rgba(0,0,0,0.06)] bg-white p-6 space-y-5">
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1C3A2A]/10 text-[#1C3A2A] text-[14px] font-bold">3</div>
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#C6A75E]/10 text-[#C6A75E] text-[14px] font-bold">3</div>
                             <h2 className="font-serif text-xl font-light text-heading">Craftsmanship / Our Story</h2>
                         </div>
 
@@ -225,11 +226,11 @@ export default async function AdminHomepagePage({
                         </div>
                         <div>
                             <label className={labelClass}>Paragraph 1</label>
-                            <textarea name="field_paragraph_1" defaultValue={craft.paragraph_1} className={textareaClass} rows={3} />
+                            <RichTextEditor name="field_paragraph_1" defaultValue={craft.paragraph_1} />
                         </div>
                         <div>
                             <label className={labelClass}>Paragraph 2</label>
-                            <textarea name="field_paragraph_2" defaultValue={craft.paragraph_2} className={textareaClass} rows={3} />
+                            <RichTextEditor name="field_paragraph_2" defaultValue={craft.paragraph_2} />
                         </div>
 
                         <div className="border-t border-[rgba(0,0,0,0.04)] pt-5 mt-4">
@@ -262,14 +263,14 @@ export default async function AdminHomepagePage({
                         </div>
                         <button type="submit" className={saveBtn}>Save Craftsmanship</button>
                     </div>
-                </form>
+                </SaveContentForm>
 
                 {/* ─── 4. NEWSLETTER ─── */}
-                <form action={saveSiteContent} className="mb-10">
+                <SaveContentForm className="mb-10">
                     <input type="hidden" name="key" value="newsletter" />
                     <div className="rounded-2xl border border-[rgba(0,0,0,0.06)] bg-white p-6 space-y-5">
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1C3A2A]/10 text-[#1C3A2A] text-[14px] font-bold">4</div>
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#C6A75E]/10 text-[#C6A75E] text-[14px] font-bold">4</div>
                             <h2 className="font-serif text-xl font-light text-heading">Newsletter Section</h2>
                         </div>
 
@@ -279,18 +280,18 @@ export default async function AdminHomepagePage({
                         </div>
                         <div>
                             <label className={labelClass}>Description</label>
-                            <textarea name="field_description" defaultValue={newsletter.description} className={textareaClass} rows={2} />
+                            <RichTextEditor name="field_description" defaultValue={newsletter.description} />
                         </div>
                         <button type="submit" className={saveBtn}>Save Newsletter</button>
                     </div>
-                </form>
+                </SaveContentForm>
 
                 {/* ─── 5. COLLECTION IMAGES ─── */}
-                <form action={saveSiteContent} className="mb-10">
+                <SaveContentForm className="mb-10">
                     <input type="hidden" name="key" value="collections" />
                     <div className="rounded-2xl border border-[rgba(0,0,0,0.06)] bg-white p-6 space-y-5">
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1C3A2A]/10 text-[#1C3A2A] text-[14px] font-bold">5</div>
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#C6A75E]/10 text-[#C6A75E] text-[14px] font-bold">5</div>
                             <h2 className="font-serif text-xl font-light text-heading">Collection Category Images</h2>
                         </div>
                         <p className="text-[13px] text-muted">Set images for each category card on the homepage. Paste a URL or upload from your device.</p>
@@ -305,7 +306,7 @@ export default async function AdminHomepagePage({
                         </div>
                         <button type="submit" className={saveBtn}>Save Collection Images</button>
                     </div>
-                </form>
+                </SaveContentForm>
             </div>
         </div>
     );

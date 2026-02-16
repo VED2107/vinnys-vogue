@@ -3,6 +3,7 @@ import { Inter, Playfair_Display } from "next/font/google";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ScrollHeader } from "@/components/scroll-header";
+import { GoldenBackground } from "@/components/golden-background";
 import "./globals.css";
 
 const inter = Inter({
@@ -68,6 +69,7 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${playfair.variable} antialiased`}
       >
+        <GoldenBackground />
         <ScrollHeader>
           <Header />
         </ScrollHeader>

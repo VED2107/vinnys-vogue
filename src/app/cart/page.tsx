@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { getProductImagePublicUrl } from "@/lib/product-images";
 import { FadeIn } from "@/components/fade-in";
 import { PremiumButton } from "@/components/ui";
+import { MandalaBackground } from "@/components/decorative";
+import { GoldDivider } from "@/components/section-divider";
 
 type CartItem = {
     id: string;
@@ -103,8 +105,9 @@ export default async function CartPage() {
     const currency = items[0]?.products.currency ?? "INR";
 
     return (
-        <div className="min-h-screen bg-bg-primary">
-            <div className="w-full px-6 lg:px-16 xl:px-24 py-16">
+        <div className="relative min-h-screen overflow-hidden bg-bg-primary">
+            <MandalaBackground variant="lotus" position="top-left" />
+            <div className="relative z-10 w-full px-6 lg:px-16 xl:px-24 py-16">
                 <FadeIn>
                     <div className="space-y-3">
                         <div className="gold-divider" />
@@ -132,9 +135,9 @@ export default async function CartPage() {
                                 {items.map((item) => (
                                     <div
                                         key={item.id}
-                                        className="flex gap-8 items-center rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-bg-card p-5"
+                                        className="flex flex-col gap-4 sm:flex-row sm:gap-6 sm:items-center rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-bg-card p-5"
                                     >
-                                        <div className="w-40 flex-shrink-0 overflow-hidden rounded-2xl bg-[#EDE8E0]">
+                                        <div className="w-full sm:w-32 md:w-40 flex-shrink-0 overflow-hidden rounded-2xl bg-[#EDE8E0]">
                                             {/* eslint-disable-next-line @next/next/no-img-element */}
                                             <img
                                                 src={getProductImagePublicUrl(supabase, item.products.image_path)}
@@ -142,7 +145,7 @@ export default async function CartPage() {
                                                 className="img-matte h-full w-full object-cover aspect-[3/4]"
                                             />
                                         </div>
-                                        <div className="flex flex-1 justify-between">
+                                        <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:justify-between">
                                             <div className="space-y-2">
                                                 <div className="text-[14px] font-medium text-heading">{item.products.title}</div>
                                                 {item.product_variants ? (
@@ -152,7 +155,7 @@ export default async function CartPage() {
                                                     {formatMoneyFromCents(item.products.price_cents, item.products.currency)}
                                                 </div>
                                             </div>
-                                            <div className="flex flex-col items-end justify-between">
+                                            <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end sm:justify-between">
                                                 <form action={removeItem}>
                                                     <input type="hidden" name="itemId" value={item.id} />
                                                     <button className="text-[13px] text-muted transition hover:text-heading">Remove</button>
@@ -198,6 +201,8 @@ export default async function CartPage() {
                         </div>
                     </FadeIn>
                 )}
+
+                <GoldDivider className="mt-16 mb-4" />
             </div>
         </div>
     );

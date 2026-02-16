@@ -120,12 +120,12 @@ export function MobileNav({ isLoggedIn, isAdmin, cartCount, wishlistCount }: Mob
                     <div className="mt-auto pt-6">
                         {isLoggedIn ? (
                             <form action="/logout" method="post">
-                                <button className="w-full rounded-full bg-[#1C3A2A] px-5 py-3 text-[12px] tracking-[0.15em] uppercase font-light text-white transition-all duration-300 btn-luxury">
+                                <button className="w-full rounded-full bg-[#0F2E22] px-5 py-3 text-[12px] tracking-[0.15em] uppercase font-light text-white transition-all duration-300 hover:bg-[#1C3A2A]">
                                     Sign out
                                 </button>
                             </form>
                         ) : (
-                            <Link href="/login" className="block w-full rounded-full bg-[#1C3A2A] px-5 py-3 text-center text-[12px] tracking-[0.15em] uppercase font-light text-white transition-all duration-300 btn-luxury">
+                            <Link href="/login" className="block w-full rounded-full bg-[#0F2E22] px-5 py-3 text-center text-[12px] tracking-[0.15em] uppercase font-light text-white transition-all duration-300 hover:bg-[#1C3A2A]">
                                 Sign in
                             </Link>
                         )}

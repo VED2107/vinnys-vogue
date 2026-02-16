@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { PRODUCT_IMAGE_BUCKET } from "@/lib/product-images";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
 import VariantManager from "@/components/variant-manager";
+import { RichTextEditor } from "@/components/admin/rich-text-editor";
 
 function displayToCents(value: string) {
   const normalized = value.replace(/,/g, "").trim();
@@ -241,12 +242,7 @@ export default async function AdminNewProductPage() {
               >
                 Description
               </label>
-              <textarea
-                id="description"
-                name="description"
-                rows={6}
-                className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 outline-none transition focus:border-zinc-400"
-              />
+              <RichTextEditor name="description" />
             </div>
 
             <div className="space-y-2">

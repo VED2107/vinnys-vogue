@@ -5,6 +5,7 @@ import { getOrderStatusStyles } from "@/lib/order-status";
 import { getPaymentStatusStyles } from "@/lib/payment-status";
 import { FadeIn } from "@/components/fade-in";
 import AdminOrderRowActions from "@/components/admin-order-row-actions";
+import { MandalaBackground } from "@/components/decorative";
 
 type OrderRow = {
     id: string;
@@ -52,8 +53,9 @@ export default async function AdminOrdersPage({
     const csvUrl = `/api/admin/orders/export${csvParams.toString() ? `?${csvParams.toString()}` : ""}`;
 
     return (
-        <div className="min-h-screen bg-bg-admin">
-            <div className="w-full px-6 lg:px-16 xl:px-24 py-16">
+        <div className="relative min-h-screen overflow-hidden bg-bg-admin">
+            <MandalaBackground variant="lotus" position="bottom-right" />
+            <div className="relative z-10 w-full px-6 lg:px-16 xl:px-24 py-16">
                 <FadeIn>
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                         <div className="space-y-3">

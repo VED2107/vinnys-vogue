@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { FadeIn, StaggerGrid, StaggerItem } from "@/components/fade-in";
+import { MandalaBackground } from "@/components/decorative";
 
 export default async function AdminPage() {
   const supabase = createSupabaseServerClient();
@@ -21,8 +22,9 @@ export default async function AdminPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-bg-admin">
-      <div className="w-full px-6 lg:px-16 xl:px-24 py-16">
+    <div className="relative min-h-screen overflow-hidden bg-bg-admin">
+      <MandalaBackground variant="lotus" position="top-right" />
+      <div className="relative z-10 w-full px-6 lg:px-16 xl:px-24 py-16">
         <FadeIn>
           <div className="flex items-end justify-between gap-6">
             <div className="space-y-3">
@@ -36,14 +38,18 @@ export default async function AdminPage() {
           </div>
         </FadeIn>
 
-        <StaggerGrid className="mt-14 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4" stagger={0.08}>
-          {cards.map((c) => (
+        <StaggerGrid className="mt-14 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8" stagger={0.08}>
+          {cards.map((c, i) => (
             <StaggerItem key={c.href}>
-              <a href={c.href} className="group block rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-white p-6 shadow-md transition-all duration-500 hover:-translate-y-1 hover:shadow-xl">
-                <div className="font-serif text-[15px] font-medium text-heading">{c.title}</div>
-                <div className="mt-2 text-[14px] text-muted">{c.description}</div>
-                <div className={`mt-5 inline-flex h-9 items-center rounded-full px-5 text-[13px] font-medium transition ${c.primary ? "bg-accent text-white" : "border border-[rgba(0,0,0,0.1)] text-heading hover:border-[rgba(0,0,0,0.2)]"}`}>
-                  {c.action}
+              <a href={c.href} className="group flex h-full flex-col justify-between rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-white p-7 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
+                <div>
+                  <div className="font-serif text-[16px] font-medium text-heading leading-snug">{c.title}</div>
+                  <div className="mt-2.5 text-[14px] leading-relaxed text-muted">{c.description}</div>
+                </div>
+                <div className="mt-6">
+                  <span className={`inline-flex h-9 items-center rounded-full px-5 text-[13px] font-medium transition ${i < 4 ? "bg-[#0F2E22] text-white hover:bg-[#1C3A2A]" : "bg-gradient-to-r from-[#C6A75E] to-[#E8D4A2] text-white shadow-sm"}`}>
+                    {c.action}
+                  </span>
                 </div>
               </a>
             </StaggerItem>

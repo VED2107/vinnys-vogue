@@ -6,6 +6,8 @@ import { formatMoney } from "@/lib/format";
 import { getTrackingUrl } from "@/lib/tracking";
 import { UpdateProfileForm, ChangePasswordButton } from "@/components/account-client";
 import { FadeIn } from "@/components/fade-in";
+import { MandalaBackground } from "@/components/decorative";
+import { GoldDivider } from "@/components/section-divider";
 
 export const dynamic = "force-dynamic";
 
@@ -90,8 +92,9 @@ export default async function AccountPage() {
     const addressParts = [p.address_line1, p.address_line2, p.city, p.state, p.postal_code, p.country].filter(Boolean);
 
     return (
-        <div className="min-h-screen bg-bg-primary">
-            <div className="mx-auto w-full max-w-[900px] px-6 py-20">
+        <div className="relative min-h-screen overflow-hidden bg-bg-primary">
+            <MandalaBackground variant="lotus" position="top-right" />
+            <div className="relative z-10 mx-auto w-full max-w-[900px] px-6 py-20">
                 <FadeIn>
                     <h1 className="font-serif text-3xl font-light text-heading tracking-[-0.02em]">
                         My Account
@@ -277,6 +280,8 @@ export default async function AccountPage() {
                         </section>
                     )}
                 </FadeIn>
+
+                <GoldDivider className="mt-16 mb-4" />
             </div>
         </div>
     );

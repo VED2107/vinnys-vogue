@@ -47,17 +47,26 @@ export async function POST(req: NextRequest) {
         const ext = file.name.includes(".")
             ? file.name.split(".").pop()!.toLowerCase()
             : "jpg";
-        const timestamp = Date.now();
-        const uploadPath = `${folder}/${timestamp}.${ext}`;
+        const uid = crypto.randomUUID().slice(0, 8);
+        const uploadPath = `${folder}/${Date.now()}-${uid}.${ext}`;
+
+        // Convert File → ArrayBuffer → Buffer for reliable server upload
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
 
         const { error: uploadError } = await supabase.storage
             .from(SITE_IMAGE_BUCKET)
-            .upload(uploadPath, file, {
+            .upload(uploadPath, buffer, {
                 upsert: true,
-                contentType: file.type || undefined,
+                contentType: file.type,
             });
 
         if (uploadError) {
+            console.error("[upload/site-image] Supabase storage error:", {
+                message: uploadError.message,
+                bucket: SITE_IMAGE_BUCKET,
+                path: uploadPath,
+            });
             return NextResponse.json({ error: uploadError.message }, { status: 500 });
         }
 
@@ -68,7 +77,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ url: publicUrlData.publicUrl });
     } catch (err) {
-        console.error("[upload/site-image] Error:", err);
+        console.error("[upload/site-image] Unhandled error:", err);
         return NextResponse.json(
             { error: err instanceof Error ? err.message : "Upload failed" },
             { status: 500 }
