@@ -69,7 +69,6 @@ export default async function AccountPage() {
     const { data: orders } = await supabase
         .from("orders")
         .select("id, created_at, status, payment_status, total_amount, currency, courier_name, tracking_number")
-        .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(10);
 

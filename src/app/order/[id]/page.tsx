@@ -78,7 +78,6 @@ export default async function OrderPage({
             "id,created_at,total_amount,status,payment_status,courier_name,tracking_number,shipped_at,full_name,email,phone,address_line1,razorpay_order_id",
         )
         .eq("id", params.id)
-        .eq("user_id", user.id)
         .maybeSingle();
 
     if (orderError) {
@@ -247,8 +246,8 @@ export default async function OrderPage({
                         {o.payment_status === "unpaid" ? (
                             <PayNowButton orderId={o.id} userEmail={o.email ?? undefined} />
                         ) : null}
-                        {isPaid ? <DownloadInvoiceButton orderId={o.id} /> : null}
-                        {(o.status === "pending" || o.status === "confirmed") ? (
+                        <DownloadInvoiceButton orderId={o.id} />
+                        {o.status === "confirmed" ? (
                             <CancelOrderButton orderId={o.id} />
                         ) : null}
                         <a

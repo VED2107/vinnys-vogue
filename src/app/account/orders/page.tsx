@@ -30,8 +30,7 @@ export default async function AccountOrdersPage() {
 
     const { data: orders } = await supabase
         .from("orders")
-        .select("id, created_at, status, payment_status, total_amount, currency")
-        .eq("user_id", user.id)
+        .select("*")
         .order("created_at", { ascending: false });
 
     const rows = (orders ?? []) as OrderRow[];
