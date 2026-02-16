@@ -11,7 +11,7 @@ export default function SignupPage() {
 
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
 
-  const [identifier, setIdentifier] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -24,18 +24,17 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      const isEmail = identifier.includes("@");
       const origin = window.location.origin;
 
-      const { data, error: signUpError } = await supabase.auth.signUp(
-        isEmail
-          ? { email: identifier, password, options: { emailRedirectTo: `${origin}/auth/callback?redirect=${encodeURIComponent(redirect)}` } }
-          : { phone: identifier, password },
-      );
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: email.trim().toLowerCase(),
+        password,
+        options: { emailRedirectTo: `${origin}/auth/callback?redirect=${encodeURIComponent(redirect)}` },
+      });
 
       if (signUpError) { setError(signUpError.message); return; }
 
-      if (isEmail && !data.session) {
+      if (!data.session) {
         setNotice("Account created. Please check your email to confirm, then sign in.");
         return;
       }
@@ -65,8 +64,8 @@ export default function SignupPage() {
 
           <form onSubmit={onSubmit} className="mt-8 space-y-5">
             <div className="space-y-2">
-              <label htmlFor="signup_identifier" className="text-[11px] font-medium tracking-[0.2em] text-muted uppercase">Email or phone</label>
-              <input id="signup_identifier" className={inputClass} value={identifier} onChange={(e) => setIdentifier(e.target.value)} autoComplete="username" placeholder="you@domain.com or +91xxxxxxxxxx" />
+              <label htmlFor="signup_email" className="text-[11px] font-medium tracking-[0.2em] text-muted uppercase">Email</label>
+              <input id="signup_email" type="email" className={inputClass} value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" placeholder="you@domain.com" required />
             </div>
 
             <div className="space-y-2">

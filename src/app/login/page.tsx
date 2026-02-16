@@ -11,14 +11,14 @@ export default function LoginPage() {
 
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
 
-  const [identifier, setIdentifier] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   function normalizeAuthError(message: string) {
     const m = message.toLowerCase();
-    if (m.includes("invalid login credentials")) return "Incorrect email/phone or password.";
+    if (m.includes("invalid login credentials")) return "Incorrect email or password.";
     if (m.includes("email not confirmed")) return "Please confirm your email, then try signing in again.";
     return message;
   }
@@ -29,9 +29,8 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const isEmail = identifier.includes("@");
       const { error: signInError } = await supabase.auth.signInWithPassword(
-        isEmail ? { email: identifier, password } : { phone: identifier, password },
+        { email: email.trim().toLowerCase(), password },
       );
 
       if (signInError) { setError(normalizeAuthError(signInError.message)); return; }
@@ -45,10 +44,9 @@ export default function LoginPage() {
 
   async function signInWithGoogle() {
     setError(null);
-    const origin = window.location.origin;
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${origin}/auth/callback?redirect=${encodeURIComponent(redirect)}` },
+      options: { redirectTo: `${location.origin}/auth/callback` },
     });
     if (oauthError) setError(oauthError.message);
   }
@@ -64,14 +62,14 @@ export default function LoginPage() {
             <div className="gold-divider" />
             <h1 className="font-serif text-2xl font-light tracking-[-0.02em] text-heading">Sign in</h1>
             <p className="text-[15px] leading-[1.7] text-muted">
-              Email + password, phone + password, or continue with Google.
+              Email + password, or continue with Google.
             </p>
           </div>
 
           <form onSubmit={onSubmit} className="mt-8 space-y-5">
             <div className="space-y-2">
-              <label className="text-[11px] font-medium tracking-[0.2em] text-muted uppercase">Email or phone</label>
-              <input className={inputClass} value={identifier} onChange={(e) => setIdentifier(e.target.value)} autoComplete="username" placeholder="you@domain.com or +91xxxxxxxxxx" />
+              <label className="text-[11px] font-medium tracking-[0.2em] text-muted uppercase">Email</label>
+              <input type="email" className={inputClass} value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" placeholder="you@domain.com" required />
             </div>
 
             <div className="space-y-2">
