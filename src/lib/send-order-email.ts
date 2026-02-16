@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { transporter, smtpConfigured, FROM_EMAIL } from "@/lib/email";
+import { getTransporter, FROM_EMAIL } from "@/lib/email";
 import { generateInvoiceNumber, renderInvoicePdfBuffer, type InvoiceOrderRow } from "@/lib/invoice-pdf";
 
 function getServiceRoleSupabase() {
@@ -26,6 +26,13 @@ function escapeHtml(input: string) {
 }
 
 export async function sendOrderConfirmation(orderId: string) {
+  try {
+  const transporter = getTransporter();
+  if (!transporter) {
+    console.warn("[sendOrderConfirmation] SMTP disabled — skipping order email");
+    return;
+  }
+
   const supabase = getServiceRoleSupabase();
 
   const { data: orderData, error: orderError } = await supabase
@@ -37,11 +44,13 @@ export async function sendOrderConfirmation(orderId: string) {
     .maybeSingle();
 
   if (orderError) {
-    throw new Error(orderError.message);
+    console.error("[sendOrderConfirmation] Order fetch error:", orderError.message);
+    return;
   }
 
   if (!orderData) {
-    throw new Error("Order not found");
+    console.error("[sendOrderConfirmation] Order not found:", orderId);
+    return;
   }
 
   const order: InvoiceOrderRow = {
@@ -74,12 +83,14 @@ export async function sendOrderConfirmation(orderId: string) {
     .maybeSingle<{ email: string | null }>();
 
   if (profileError) {
-    throw new Error(profileError.message);
+    console.error("[sendOrderConfirmation] Profile fetch error:", profileError.message);
+    return;
   }
 
   const toEmail = String(profile?.email ?? "").trim();
   if (!toEmail) {
-    throw new Error("Missing customer email");
+    console.error("[sendOrderConfirmation] Missing customer email for order:", orderId);
+    return;
   }
 
   const { data: existingInvoice, error: existingInvoiceError } = await supabase
@@ -89,7 +100,8 @@ export async function sendOrderConfirmation(orderId: string) {
     .maybeSingle<{ invoice_number: string }>();
 
   if (existingInvoiceError) {
-    throw new Error(existingInvoiceError.message);
+    console.error("[sendOrderConfirmation] Invoice fetch error:", existingInvoiceError.message);
+    return;
   }
 
   const invoiceNumber = existingInvoice?.invoice_number
@@ -150,27 +162,21 @@ export async function sendOrderConfirmation(orderId: string) {
   </div>
   `;
 
-  if (!transporter || !smtpConfigured) {
-    console.warn("[sendOrderConfirmation] SMTP not configured, skipping email for order:", orderId);
-    return;
-  }
+  await transporter.sendMail({
+    to: toEmail,
+    from: FROM_EMAIL || process.env.SMTP_USER || toEmail,
+    subject: "Your Order is Confirmed — Vinnys Vogue",
+    html,
+    attachments: [
+      {
+        filename: `invoice-${order.id.slice(0, 8)}.pdf`,
+        content: pdfBuffer,
+        contentType: "application/pdf",
+      },
+    ],
+  });
 
-  try {
-    await transporter.sendMail({
-      to: toEmail,
-      from: FROM_EMAIL || process.env.SMTP_USER || toEmail,
-      subject: "Your Order is Confirmed — Vinnys Vogue",
-      html,
-      attachments: [
-        {
-          filename: `invoice-${order.id.slice(0, 8)}.pdf`,
-          content: pdfBuffer,
-          contentType: "application/pdf",
-        },
-      ],
-    });
   } catch (err) {
-    console.error("[sendOrderConfirmation] SMTP error:", err);
-    throw err;
+    console.error("[sendOrderConfirmation] Failed:", err);
   }
 }

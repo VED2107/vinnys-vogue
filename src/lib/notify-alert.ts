@@ -1,4 +1,4 @@
-import { transporter, smtpConfigured, FROM_EMAIL } from "@/lib/email";
+import { getTransporter, FROM_EMAIL } from "@/lib/email";
 
 function formatAlertMessage(title: string, details: unknown) {
   const detailsJson = (() => {
@@ -37,14 +37,17 @@ export async function notifyCriticalAlert(title: string, details: unknown) {
   }
 
   const alertEmail = process.env.ALERT_EMAIL;
-  if (alertEmail && transporter && smtpConfigured) {
+  if (alertEmail) {
     try {
-      await transporter.sendMail({
-        to: alertEmail,
-        from: FROM_EMAIL || process.env.SMTP_USER || alertEmail,
-        subject: `Critical Alert: ${title}`,
-        text: message,
-      });
+      const transporter = getTransporter();
+      if (transporter) {
+        await transporter.sendMail({
+          to: alertEmail,
+          from: FROM_EMAIL || process.env.SMTP_USER || alertEmail,
+          subject: `Critical Alert: ${title}`,
+          text: message,
+        });
+      }
     } catch (err) {
       console.error("notifyCriticalAlert: email notify failed", err);
     }

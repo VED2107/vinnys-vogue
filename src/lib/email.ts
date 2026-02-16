@@ -1,38 +1,36 @@
-import nodemailer from "nodemailer";
+import nodemailer, { type Transporter } from "nodemailer";
 
-const SMTP_HOST = process.env.SMTP_HOST ?? "";
-const SMTP_PORT = process.env.SMTP_PORT ?? "587";
-const SMTP_USER = process.env.SMTP_USER ?? "";
-const SMTP_PASS = process.env.SMTP_PASS ?? "";
-const FROM_EMAIL = process.env.FROM_EMAIL ?? "";
+let cachedTransporter: Transporter | null = null;
 
-const smtpConfigured = !!(SMTP_HOST && SMTP_USER && SMTP_PASS && FROM_EMAIL);
+export const smtpConfigured =
+  !!process.env.SMTP_HOST &&
+  !!process.env.SMTP_PORT &&
+  !!process.env.SMTP_USER &&
+  !!process.env.SMTP_PASS;
 
-if (!smtpConfigured) {
-  console.warn(
-    "SMTP configuration missing. Email sending will be disabled. Set SMTP_HOST, SMTP_USER, SMTP_PASS, and FROM_EMAIL.",
-  );
-}
+export const FROM_EMAIL = process.env.FROM_EMAIL ?? "";
 
-const portNumber = Number(SMTP_PORT);
+export function getTransporter(): Transporter | null {
+  if (!smtpConfigured) return null;
 
-export const transporter = smtpConfigured
-  ? nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: portNumber,
-      secure: portNumber === 465,
+  if (cachedTransporter) return cachedTransporter;
+
+  try {
+    const port = Number(process.env.SMTP_PORT);
+
+    cachedTransporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port,
+      secure: port === 465,
       auth: {
-        user: SMTP_USER,
-        pass: SMTP_PASS,
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
       },
-    })
-  : null;
+    });
 
-if (transporter) {
-  transporter.verify().then(
-    () => console.log("SMTP transporter verified successfully"),
-    (err: unknown) => console.error("SMTP transporter verification failed:", err),
-  );
+    return cachedTransporter;
+  } catch (err) {
+    console.error("Failed to create SMTP transporter:", err);
+    return null;
+  }
 }
-
-export { FROM_EMAIL, smtpConfigured };

@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { transporter, smtpConfigured, FROM_EMAIL } from "@/lib/email";
+import { getTransporter, FROM_EMAIL } from "@/lib/email";
 
 function getServiceRoleSupabase() {
   return createClient(
@@ -25,6 +25,13 @@ function escapeHtml(input: string) {
 }
 
 export async function sendOrderCancellationEmail(orderId: string) {
+  try {
+  const transporter = getTransporter();
+  if (!transporter) {
+    console.warn("[sendOrderCancellationEmail] SMTP disabled — skipping email");
+    return;
+  }
+
   const supabase = getServiceRoleSupabase();
 
   const { data: order, error: orderError } = await supabase
@@ -52,13 +59,7 @@ export async function sendOrderCancellationEmail(orderId: string) {
     return;
   }
 
-  if (!transporter || !smtpConfigured) {
-    console.warn("[sendOrderCancellationEmail] SMTP not configured, skipping email for order:", orderId);
-    return;
-  }
-
-  try {
-    await transporter.sendMail({
+  await transporter.sendMail({
       to,
       from: FROM_EMAIL,
       subject: "Your Order Has Been Cancelled — Vinnys Vogue",
@@ -72,7 +73,8 @@ export async function sendOrderCancellationEmail(orderId: string) {
         </div>
       `,
     });
+
   } catch (err) {
-    console.error("[sendOrderCancellationEmail] SMTP error:", err);
+    console.error("[sendOrderCancellationEmail] Failed:", err);
   }
 }

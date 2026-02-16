@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { transporter, smtpConfigured, FROM_EMAIL } from "@/lib/email";
+import { getTransporter, FROM_EMAIL } from "@/lib/email";
 
 function getServiceRoleSupabase() {
   return createClient(
@@ -25,6 +25,13 @@ function escapeHtml(input: string) {
 }
 
 export async function sendShippingConfirmation(orderId: string) {
+  try {
+  const transporter = getTransporter();
+  if (!transporter) {
+    console.warn("[sendShippingConfirmation] SMTP disabled — skipping email");
+    return;
+  }
+
   const supabase = getServiceRoleSupabase();
 
   const { data: order, error: orderError } = await supabase
@@ -66,13 +73,7 @@ export async function sendShippingConfirmation(orderId: string) {
     return;
   }
 
-  if (!transporter || !smtpConfigured) {
-    console.warn("[sendShippingConfirmation] SMTP not configured, skipping email for order:", orderId);
-    return;
-  }
-
-  try {
-    await transporter.sendMail({
+  await transporter.sendMail({
       to,
       from: FROM_EMAIL,
       subject: "Your Order Has Been Shipped — Vinnys Vogue",
@@ -95,11 +96,16 @@ export async function sendShippingConfirmation(orderId: string) {
       order_id: orderId,
       status: "sent",
     });
+
   } catch (err) {
-    await supabase.from("shipping_email_logs").insert({
-      order_id: orderId,
-      status: "failed",
-      error: err instanceof Error ? err.message : String(err),
-    });
+    console.error("[sendShippingConfirmation] Failed:", err);
+    try {
+      const supabase = getServiceRoleSupabase();
+      await supabase.from("shipping_email_logs").insert({
+        order_id: orderId,
+        status: "failed",
+        error: err instanceof Error ? err.message : String(err),
+      });
+    } catch { /* ignore logging failure */ }
   }
 }
