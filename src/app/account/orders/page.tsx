@@ -75,6 +75,7 @@ export default async function AccountOrdersPage() {
                             <div className="flex-1 min-w-0">
                                 <div className="text-[13px] text-muted">
                                     {new Date(order.created_at).toLocaleDateString("en-IN", {
+                                        timeZone: "Asia/Kolkata",
                                         day: "numeric",
                                         month: "long",
                                         year: "numeric",

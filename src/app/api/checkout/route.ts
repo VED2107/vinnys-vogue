@@ -59,15 +59,13 @@ export async function POST(request: Request) {
         }
 
         // Create the order via the atomic RPC
-        const { data, error } = await supabase.rpc("checkout_cart", {
-            p_user_id: user.id,
-        });
+        const { data: orderId, error } = await supabase.rpc("checkout_cart");
 
         if (error) {
-            return NextResponse.json({ error: error.message }, { status: 500 });
+            return NextResponse.json({ error: error.message }, { status: 400 });
         }
 
-        const orderId = data as string;
+        const orderIdStr = orderId as string;
 
         // Update order with shipping details
         const { error: updateError } = await supabase
@@ -83,7 +81,7 @@ export async function POST(request: Request) {
                 state,
                 country: "India",
             })
-            .eq("id", orderId);
+            .eq("id", orderIdStr);
 
         if (updateError) {
             return NextResponse.json(
@@ -92,7 +90,7 @@ export async function POST(request: Request) {
             );
         }
 
-        return NextResponse.json({ orderId });
+        return NextResponse.json({ orderId: orderIdStr });
     } catch (err) {
         console.error("/api/checkout error:", err);
         return NextResponse.json(

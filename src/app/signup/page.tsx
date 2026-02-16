@@ -35,20 +35,6 @@ export default function SignupPage() {
 
       if (signUpError) { setError(signUpError.message); return; }
 
-      const user = data.user;
-      if (user) {
-        const { error: profileError } = await supabase.from("profiles").upsert(
-          { id: user.id, email: user.email ?? null, phone: user.phone ?? null, role: "user" },
-          { onConflict: "id" },
-        );
-
-        if (profileError) {
-
-          setError("Account created but profile setup failed. Please try signing in.");
-          return;
-        }
-      }
-
       if (isEmail && !data.session) {
         setNotice("Account created. Please check your email to confirm, then sign in.");
         return;

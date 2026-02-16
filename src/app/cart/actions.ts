@@ -186,9 +186,7 @@ export async function checkout(formData: FormData) {
   }
 
   // Create the order via the atomic RPC
-  const { data, error } = await supabase.rpc("checkout_cart", {
-    p_user_id: user.id,
-  });
+  const { data, error } = await supabase.rpc("checkout_cart");
 
   if (error) {
     throw new Error(error.message);

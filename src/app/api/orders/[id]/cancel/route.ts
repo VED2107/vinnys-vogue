@@ -26,52 +26,20 @@ export async function POST(
       return NextResponse.json({ error: "Invalid order id" }, { status: 400 });
     }
 
-    const { data: order, error: orderError } = await supabase
-      .from("orders")
-      .select("id,user_id,status,payment_status,shipped_at")
-      .eq("id", orderId)
-      .maybeSingle<{
-        id: string;
-        user_id: string;
-        status: string;
-        payment_status: string;
-        shipped_at: string | null;
-      }>();
-
-    if (orderError || !order) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 });
-    }
-
-    if (order.user_id !== user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    const canCancel =
-      order.payment_status === "paid" &&
-      order.status === "confirmed" &&
-      order.shipped_at == null;
-
-    if (!canCancel) {
-      return NextResponse.json(
-        {
-          error:
-            "Order cannot be cancelled. Only confirmed, paid, unshipped orders can be cancelled.",
-        },
-        { status: 400 },
-      );
-    }
-
-    const { error: rpcError } = await supabase.rpc("restore_order_stock", {
+    const { error: rpcError } = await supabase.rpc("cancel_order", {
       p_order_id: orderId,
-      p_user_id: user.id,
     });
 
     if (rpcError) {
-      await notifyCriticalAlert("restore_order_stock RPC failed", {
+      const msg = rpcError.message ?? "";
+      if (msg.includes("already cancelled") || msg.includes("cannot be cancelled") || msg.includes("Forbidden") || msg.includes("not found")) {
+        return NextResponse.json({ error: msg }, { status: 400 });
+      }
+      await notifyCriticalAlert("cancel_order RPC failed", {
         orderId,
         error: rpcError,
       });
-      return NextResponse.json({ error: rpcError.message }, { status: 500 });
+      return NextResponse.json({ error: msg }, { status: 500 });
     }
 
     try {

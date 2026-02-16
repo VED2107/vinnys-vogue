@@ -4,6 +4,7 @@ import { formatMoney } from "@/lib/format";
 import { getOrderStatusStyles } from "@/lib/order-status";
 import { getPaymentStatusStyles } from "@/lib/payment-status";
 import { FadeIn } from "@/components/fade-in";
+import AdminOrderRowActions from "@/components/admin-order-row-actions";
 
 type OrderRow = {
     id: string;
@@ -120,7 +121,8 @@ export default async function AdminOrdersPage({
                                             <div className="col-span-1 flex items-center">
                                                 <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium capitalize ${ps.bg} ${ps.text}`}>{o.payment_status}</span>
                                             </div>
-                                            <div className="col-span-3 flex items-center justify-end">
+                                            <div className="col-span-3 flex items-center justify-end gap-2">
+                                                <AdminOrderRowActions orderId={o.id} status={o.status} />
                                                 <a href={`/admin/orders/${o.id}`} className="h-9 rounded-full border border-[rgba(0,0,0,0.1)] px-4 text-[13px] text-heading transition hover:border-[rgba(0,0,0,0.2)] inline-flex items-center">View</a>
                                             </div>
                                         </div>

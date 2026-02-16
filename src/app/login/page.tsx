@@ -36,15 +36,6 @@ export default function LoginPage() {
 
       if (signInError) { setError(normalizeAuthError(signInError.message)); return; }
 
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (user) {
-        await supabase.from("profiles").upsert(
-          { id: user.id, email: user.email ?? null, phone: user.phone ?? null, role: "user" },
-          { onConflict: "id" },
-        );
-      }
-
       router.replace(redirect);
       router.refresh();
     } finally {

@@ -4,6 +4,7 @@ import { formatMoney } from "@/lib/format";
 import { SectionTitle } from "@/components/ui";
 import PayNowButton from "@/components/pay-now-button";
 import DownloadInvoiceButton from "@/components/download-invoice-button";
+import CancelOrderButton from "@/components/cancel-order-button";
 import { FadeIn } from "@/components/fade-in";
 import { getTrackingUrl } from "@/lib/tracking";
 
@@ -28,8 +29,8 @@ type OrderRow = {
 type OrderItemRow = {
     id: string;
     quantity: number;
-    unit_price: number;
-    products: { title: string } | null;
+    price: number;
+    products: { title: string; image_path: string | null } | null;
 };
 
 type OrderEventRow = {
@@ -49,6 +50,7 @@ function formatEventLabel(type: string) {
         case "DELIVERED":
             return "Delivered";
         case "CANCELLED":
+        case "ORDER_CANCELLED":
             return "Order Cancelled";
         default:
             return type;
@@ -90,7 +92,7 @@ export default async function OrderPage({
 
     const { data: orderItems } = await supabase
         .from("order_items")
-        .select("id,quantity,unit_price,products(title)")
+        .select("id,quantity,price,products(title,image_path)")
         .eq("order_id", o.id);
 
     const items = (orderItems ?? []) as unknown as OrderItemRow[];
@@ -157,7 +159,7 @@ export default async function OrderPage({
                                     <div className="text-heading">
                                         {(item.products as { title: string } | null)?.title ?? "Product"} × {item.quantity}
                                     </div>
-                                    <div className="font-serif font-light text-gold">{formatMoney(Number(item.unit_price) * item.quantity)}</div>
+                                    <div className="font-serif font-light text-gold">{formatMoney(Number(item.price) * item.quantity)}</div>
                                 </div>
                             ))}
                         </div>
@@ -170,7 +172,7 @@ export default async function OrderPage({
                         </div>
                     </div>
 
-                    {o.status === "shipping" && o.tracking_number && (
+                    {o.status === "shipped" && o.tracking_number && (
                         <div className="mt-8 border rounded-xl p-6 bg-neutral-50">
                             <h3 className="text-lg font-semibold mb-4">
                                 Shipment Details
@@ -190,7 +192,12 @@ export default async function OrderPage({
                                 {o.shipped_at && (
                                     <p>
                                         <span className="font-medium">Shipped On:</span>{" "}
-                                        {new Date(o.shipped_at).toLocaleDateString()}
+                                        {new Date(o.shipped_at).toLocaleDateString("en-IN", {
+                                            timeZone: "Asia/Kolkata",
+                                            day: "2-digit",
+                                            month: "short",
+                                            year: "numeric",
+                                        })}
                                     </p>
                                 )}
 
@@ -222,7 +229,14 @@ export default async function OrderPage({
                                     </p>
 
                                     <p className="text-xs text-neutral-500">
-                                        {new Date(event.created_at).toLocaleString()}
+                                        {new Date(event.created_at).toLocaleString("en-IN", {
+                                            timeZone: "Asia/Kolkata",
+                                            year: "numeric",
+                                            month: "short",
+                                            day: "2-digit",
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                        })}
                                     </p>
                                 </div>
                             ))}
@@ -234,6 +248,9 @@ export default async function OrderPage({
                             <PayNowButton orderId={o.id} userEmail={o.email ?? undefined} />
                         ) : null}
                         {isPaid ? <DownloadInvoiceButton orderId={o.id} /> : null}
+                        {(o.status === "pending" || o.status === "confirmed") ? (
+                            <CancelOrderButton orderId={o.id} />
+                        ) : null}
                         <a
                             href="/products"
                             className="inline-flex h-12 items-center rounded-full border border-[rgba(0,0,0,0.1)] px-8 text-[14px] text-heading transition-all duration-400 hover:border-[rgba(0,0,0,0.2)]"

@@ -82,7 +82,7 @@ export default async function AccountPage() {
             delivered: "bg-green-100 text-green-800",
             pending: "bg-yellow-100 text-yellow-800",
             payment_initiated: "bg-blue-100 text-blue-800",
-            shipping: "bg-blue-100 text-blue-800",
+            shipped: "bg-blue-100 text-blue-800",
             cancelled: "bg-red-100 text-red-800",
         };
         return colors[status] ?? "bg-gray-100 text-gray-800";
@@ -125,6 +125,7 @@ export default async function AccountPage() {
                                 <span className="text-muted">Member since</span>
                                 <span className="text-heading">
                                     {new Date(p.created_at).toLocaleDateString("en-IN", {
+                                        timeZone: "Asia/Kolkata",
                                         day: "numeric",
                                         month: "long",
                                         year: "numeric",
@@ -135,7 +136,8 @@ export default async function AccountPage() {
                                 <div className="flex justify-between">
                                     <span className="text-muted">Last login</span>
                                     <span className="text-heading">
-                                        {new Date(user.last_sign_in_at).toLocaleDateString("en-IN", {
+                                        {new Date(user.last_sign_in_at).toLocaleString("en-IN", {
+                                            timeZone: "Asia/Kolkata",
                                             day: "numeric",
                                             month: "long",
                                             year: "numeric",
@@ -206,6 +208,7 @@ export default async function AccountPage() {
                                         <div className="flex-1 min-w-0">
                                             <div className="text-[13px] text-muted">
                                                 {new Date(order.created_at).toLocaleDateString("en-IN", {
+                                                    timeZone: "Asia/Kolkata",
                                                     day: "numeric",
                                                     month: "long",
                                                     year: "numeric",
@@ -233,12 +236,12 @@ export default async function AccountPage() {
                     </section>
 
                     {/* ── E) Tracking Section ── */}
-                    {rows.some((o) => o.status === "shipping" && o.tracking_number) && (
+                    {rows.some((o) => o.status === "shipped" && o.tracking_number) && (
                         <section className="mt-12">
                             <h2 className="font-serif text-xl font-light text-heading">Shipment Tracking</h2>
                             <div className="mt-6 space-y-4">
                                 {rows
-                                    .filter((o) => o.status === "shipping" && o.tracking_number)
+                                    .filter((o) => o.status === "shipped" && o.tracking_number)
                                     .map((order) => (
                                         <div
                                             key={order.id}
