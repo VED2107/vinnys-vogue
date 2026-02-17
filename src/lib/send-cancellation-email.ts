@@ -26,47 +26,47 @@ function escapeHtml(input: string) {
 
 export async function sendOrderCancellationEmail(orderId: string) {
   try {
-  const transporter = getTransporter();
-  if (!transporter) {
-    console.warn("[sendOrderCancellationEmail] SMTP disabled — skipping email");
-    return;
-  }
+    const transporter = getTransporter();
+    if (!transporter) {
+      console.warn("[sendOrderCancellationEmail] SMTP disabled — skipping email");
+      return;
+    }
 
-  const supabase = getServiceRoleSupabase();
+    const supabase = getServiceRoleSupabase();
 
-  const { data: order, error: orderError } = await supabase
-    .from("orders")
-    .select("id,user_id,total_amount")
-    .eq("id", orderId)
-    .maybeSingle<{ id: string; user_id: string; total_amount: number }>();
+    const { data: order, error: orderError } = await supabase
+      .from("orders")
+      .select("id,user_id,total_amount")
+      .eq("id", orderId)
+      .maybeSingle<{ id: string; user_id: string; total_amount: number }>();
 
-  if (orderError || !order) {
-    return;
-  }
+    if (orderError || !order) {
+      return;
+    }
 
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("email")
-    .eq("id", order.user_id)
-    .maybeSingle<{ email: string | null }>();
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("id", order.user_id)
+      .maybeSingle<{ email: string | null }>();
 
-  if (profileError || !profile?.email) {
-    return;
-  }
+    if (profileError || !profile?.email) {
+      return;
+    }
 
-  const to = String(profile.email).trim();
-  if (!to) {
-    return;
-  }
+    const to = String(profile.email).trim();
+    if (!to) {
+      return;
+    }
 
-  await transporter.sendMail({
+    await transporter.sendMail({
       to,
       from: FROM_EMAIL,
       subject: "Your Order Has Been Cancelled — Vinnys Vogue",
       html: `
         <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111">
           <div style="text-align:center;margin-bottom:24px;">
-            <img src="https://www.vinnysvogue.in/favicon.ico" alt="Vinnys Vogue" style="width:32px;height:32px;" />
+            <img src="https://www.vinnysvogue.in/icon-512.png" width="120" alt="Vinnys Vogue" style="display:block;width:120px;height:auto;" />
           </div>
           <h2 style="margin:0 0 8px 0;">Your order has been cancelled</h2>
           <p style="margin:0 0 10px 0;">Order #${escapeHtml(order.id)}</p>

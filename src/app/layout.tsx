@@ -49,6 +49,8 @@ export const metadata: Metadata = {
     images: ["/og-banner.jpg"],
   },
 
+  manifest: "/manifest.json",
+
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },

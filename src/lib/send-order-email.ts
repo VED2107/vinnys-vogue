@@ -27,114 +27,114 @@ function escapeHtml(input: string) {
 
 export async function sendOrderConfirmation(orderId: string) {
   try {
-  const transporter = getTransporter();
-  if (!transporter) {
-    console.warn("[sendOrderConfirmation] SMTP disabled — skipping order email");
-    return;
-  }
+    const transporter = getTransporter();
+    if (!transporter) {
+      console.warn("[sendOrderConfirmation] SMTP disabled — skipping order email");
+      return;
+    }
 
-  const supabase = getServiceRoleSupabase();
+    const supabase = getServiceRoleSupabase();
 
-  const { data: orderData, error: orderError } = await supabase
-    .from("orders")
-    .select(
-      "id,user_id,created_at,payment_status,total_amount,full_name,phone,address_line1,address_line2,city,state,postal_code,country,order_items(quantity,price,products(title))",
-    )
-    .eq("id", orderId)
-    .maybeSingle();
+    const { data: orderData, error: orderError } = await supabase
+      .from("orders")
+      .select(
+        "id,user_id,created_at,payment_status,total_amount,full_name,phone,address_line1,address_line2,city,state,postal_code,country,order_items(quantity,price,products(title))",
+      )
+      .eq("id", orderId)
+      .maybeSingle();
 
-  if (orderError) {
-    console.error("[sendOrderConfirmation] Order fetch error:", orderError.message);
-    return;
-  }
+    if (orderError) {
+      console.error("[sendOrderConfirmation] Order fetch error:", orderError.message);
+      return;
+    }
 
-  if (!orderData) {
-    console.error("[sendOrderConfirmation] Order not found:", orderId);
-    return;
-  }
+    if (!orderData) {
+      console.error("[sendOrderConfirmation] Order not found:", orderId);
+      return;
+    }
 
-  const order: InvoiceOrderRow = {
-    id: String((orderData as any).id),
-    user_id: String((orderData as any).user_id),
-    created_at: String((orderData as any).created_at),
-    payment_status: String((orderData as any).payment_status),
-    total_amount: Number((orderData as any).total_amount ?? 0),
-    full_name: ((orderData as any).full_name ?? null) as string | null,
-    phone: ((orderData as any).phone ?? null) as string | null,
-    address_line1: ((orderData as any).address_line1 ?? null) as string | null,
-    address_line2: ((orderData as any).address_line2 ?? null) as string | null,
-    city: ((orderData as any).city ?? null) as string | null,
-    state: ((orderData as any).state ?? null) as string | null,
-    postal_code: ((orderData as any).postal_code ?? null) as string | null,
-    country: ((orderData as any).country ?? null) as string | null,
-    order_items: Array.isArray((orderData as any).order_items)
-      ? (orderData as any).order_items.map((i: any) => ({
+    const order: InvoiceOrderRow = {
+      id: String((orderData as any).id),
+      user_id: String((orderData as any).user_id),
+      created_at: String((orderData as any).created_at),
+      payment_status: String((orderData as any).payment_status),
+      total_amount: Number((orderData as any).total_amount ?? 0),
+      full_name: ((orderData as any).full_name ?? null) as string | null,
+      phone: ((orderData as any).phone ?? null) as string | null,
+      address_line1: ((orderData as any).address_line1 ?? null) as string | null,
+      address_line2: ((orderData as any).address_line2 ?? null) as string | null,
+      city: ((orderData as any).city ?? null) as string | null,
+      state: ((orderData as any).state ?? null) as string | null,
+      postal_code: ((orderData as any).postal_code ?? null) as string | null,
+      country: ((orderData as any).country ?? null) as string | null,
+      order_items: Array.isArray((orderData as any).order_items)
+        ? (orderData as any).order_items.map((i: any) => ({
           quantity: Number(i.quantity ?? 0),
           price: Number(i.price ?? 0),
           products: i.products ?? null,
         }))
-      : [],
-  };
+        : [],
+    };
 
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("email")
-    .eq("id", order.user_id)
-    .maybeSingle<{ email: string | null }>();
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("id", order.user_id)
+      .maybeSingle<{ email: string | null }>();
 
-  if (profileError) {
-    console.error("[sendOrderConfirmation] Profile fetch error:", profileError.message);
-    return;
-  }
+    if (profileError) {
+      console.error("[sendOrderConfirmation] Profile fetch error:", profileError.message);
+      return;
+    }
 
-  const toEmail = String(profile?.email ?? "").trim();
-  if (!toEmail) {
-    console.error("[sendOrderConfirmation] Missing customer email for order:", orderId);
-    return;
-  }
+    const toEmail = String(profile?.email ?? "").trim();
+    if (!toEmail) {
+      console.error("[sendOrderConfirmation] Missing customer email for order:", orderId);
+      return;
+    }
 
-  const { data: existingInvoice, error: existingInvoiceError } = await supabase
-    .from("invoices")
-    .select("invoice_number")
-    .eq("order_id", order.id)
-    .maybeSingle<{ invoice_number: string }>();
+    const { data: existingInvoice, error: existingInvoiceError } = await supabase
+      .from("invoices")
+      .select("invoice_number")
+      .eq("order_id", order.id)
+      .maybeSingle<{ invoice_number: string }>();
 
-  if (existingInvoiceError) {
-    console.error("[sendOrderConfirmation] Invoice fetch error:", existingInvoiceError.message);
-    return;
-  }
+    if (existingInvoiceError) {
+      console.error("[sendOrderConfirmation] Invoice fetch error:", existingInvoiceError.message);
+      return;
+    }
 
-  const invoiceNumber = existingInvoice?.invoice_number
-    ? String(existingInvoice.invoice_number)
-    : await generateInvoiceNumber({ supabase });
+    const invoiceNumber = existingInvoice?.invoice_number
+      ? String(existingInvoice.invoice_number)
+      : await generateInvoiceNumber({ supabase });
 
-  const pdfBuffer = await renderInvoicePdfBuffer({ invoiceNumber, order });
+    const pdfBuffer = await renderInvoicePdfBuffer({ invoiceNumber, order });
 
-  const addressLines = [
-    order.full_name,
-    order.phone,
-    order.address_line1,
-    order.address_line2,
-    [order.city, order.state, order.postal_code].filter(Boolean).join(" "),
-    order.country,
-  ].filter(Boolean) as string[];
+    const addressLines = [
+      order.full_name,
+      order.phone,
+      order.address_line1,
+      order.address_line2,
+      [order.city, order.state, order.postal_code].filter(Boolean).join(" "),
+      order.country,
+    ].filter(Boolean) as string[];
 
-  const itemsRows = (order.order_items ?? [])
-    .map((item) => {
-      const productRel = item.products;
-      const product = Array.isArray(productRel) ? productRel[0] : productRel;
-      const title = escapeHtml(String(product?.title ?? "Item"));
-      const qty = Number(item.quantity || 0);
-      const price = Number(item.price || 0);
-      const total = qty * price;
-      return `<tr><td style=\"padding:8px;border-bottom:1px solid #eee;\">${title}</td><td style=\"padding:8px;border-bottom:1px solid #eee;text-align:right;\">${qty}</td><td style=\"padding:8px;border-bottom:1px solid #eee;text-align:right;\">${price.toFixed(2)}</td><td style=\"padding:8px;border-bottom:1px solid #eee;text-align:right;\">${total.toFixed(2)}</td></tr>`;
-    })
-    .join("");
+    const itemsRows = (order.order_items ?? [])
+      .map((item) => {
+        const productRel = item.products;
+        const product = Array.isArray(productRel) ? productRel[0] : productRel;
+        const title = escapeHtml(String(product?.title ?? "Item"));
+        const qty = Number(item.quantity || 0);
+        const price = Number(item.price || 0);
+        const total = qty * price;
+        return `<tr><td style=\"padding:8px;border-bottom:1px solid #eee;\">${title}</td><td style=\"padding:8px;border-bottom:1px solid #eee;text-align:right;\">${qty}</td><td style=\"padding:8px;border-bottom:1px solid #eee;text-align:right;\">${price.toFixed(2)}</td><td style=\"padding:8px;border-bottom:1px solid #eee;text-align:right;\">${total.toFixed(2)}</td></tr>`;
+      })
+      .join("");
 
-  const html = `
+    const html = `
   <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111">
     <div style="text-align:center;margin-bottom:24px;">
-      <img src="https://www.vinnysvogue.in/favicon.ico" alt="Vinnys Vogue" style="width:32px;height:32px;" />
+      <img src="https://www.vinnysvogue.in/icon-512.png" width="120" alt="Vinnys Vogue" style="display:block;width:120px;height:auto;" />
     </div>
     <h2 style="margin:0 0 8px 0;">Your Order is Confirmed — Vinnys Vogue</h2>
     <p style="margin:0 0 16px 0;">Thank you for shopping with us. Your payment has been received and your order is confirmed.</p>
@@ -165,19 +165,19 @@ export async function sendOrderConfirmation(orderId: string) {
   </div>
   `;
 
-  await transporter.sendMail({
-    to: toEmail,
-    from: FROM_EMAIL || process.env.SMTP_USER || toEmail,
-    subject: "Your Order is Confirmed — Vinnys Vogue",
-    html,
-    attachments: [
-      {
-        filename: `invoice-${order.id.slice(0, 8)}.pdf`,
-        content: pdfBuffer,
-        contentType: "application/pdf",
-      },
-    ],
-  });
+    await transporter.sendMail({
+      to: toEmail,
+      from: FROM_EMAIL || process.env.SMTP_USER || toEmail,
+      subject: "Your Order is Confirmed — Vinnys Vogue",
+      html,
+      attachments: [
+        {
+          filename: `invoice-${order.id.slice(0, 8)}.pdf`,
+          content: pdfBuffer,
+          contentType: "application/pdf",
+        },
+      ],
+    });
 
   } catch (err) {
     console.error("[sendOrderConfirmation] Failed:", err);
