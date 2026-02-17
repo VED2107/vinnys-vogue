@@ -93,7 +93,7 @@ export default async function AccountPage() {
 
     return (
         <div className="relative min-h-screen overflow-hidden bg-bg-primary">
-            <MandalaBackground variant="lotus" position="top-right" />
+            <MandalaBackground variant="lotus" position="center" />
             <div className="relative z-10 mx-auto w-full max-w-[900px] px-6 py-20">
                 <FadeIn>
                     <h1 className="font-serif text-3xl font-light text-heading tracking-[-0.02em]">

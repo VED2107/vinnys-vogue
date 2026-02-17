@@ -42,6 +42,17 @@ export async function addToCart(productId: string, variantId?: string) {
     cartId = newCart.id;
   }
 
+  // Server-side stock guard — block adding out-of-stock items
+  const { data: productRow } = await supabase
+    .from("products")
+    .select("stock")
+    .eq("id", productId)
+    .maybeSingle();
+
+  if (!productRow || (productRow as { stock: number }).stock <= 0) {
+    return { error: "This item is currently out of stock." };
+  }
+
   // Call RPC with actual signature:
   // increment_cart_item(p_cart_id uuid, p_product_id uuid, p_quantity integer, p_variant_id uuid DEFAULT NULL)
   const rpcParams: {

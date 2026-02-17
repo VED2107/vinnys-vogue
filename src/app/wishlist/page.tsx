@@ -49,7 +49,7 @@ export default async function WishlistPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-bg-primary">
-      <MandalaBackground variant="lotus" position="bottom-right" />
+      <MandalaBackground variant="lotus" position="center" />
       <div className="relative z-10 w-full px-6 lg:px-16 xl:px-24 py-16">
         <FadeIn>
           <SectionTitle

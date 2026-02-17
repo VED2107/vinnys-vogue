@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatMoneyFromCents } from "@/lib/format";
-import { MandalaBackground } from "@/components/decorative";
+
 import { GoldDivider } from "@/components/section-divider";
 
 export const dynamic = "force-dynamic";
@@ -50,7 +50,7 @@ export default async function AccountOrdersPage() {
 
     return (
         <main className="relative mx-auto w-full max-w-[900px] px-6 py-20 overflow-hidden">
-            <MandalaBackground variant="lotus" position="bottom-left" />
+
             <h1 className="font-serif text-3xl font-light text-heading tracking-[-0.02em]">
                 My Orders
             </h1>

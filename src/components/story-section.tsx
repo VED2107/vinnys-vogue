@@ -73,19 +73,16 @@ export function StorySection({
         opacity: prefersReduced ? 1 : sectionOpacity,
         scale: prefersReduced ? 1 : sectionScale,
       }}
-      className="w-full py-28 px-6 lg:px-16 xl:px-24"
+      className="w-full py-16 sm:py-28 px-6 lg:px-16 xl:px-24"
     >
       <div
-        className={`grid lg:grid-cols-2 items-center gap-16 lg:gap-24 ${
-          reversed ? "direction-rtl" : ""
-        }`}
+        className={`flex flex-col sm:flex-row items-center gap-8 sm:gap-12 lg:gap-24 ${reversed ? "sm:flex-row-reverse" : ""
+          }`}
       >
         {/* Image with parallax */}
         <motion.div
           style={{ y: prefersReduced ? 0 : imageY }}
-          className={`relative aspect-[4/5] overflow-hidden rounded-xl bg-[#EDE8E0] ${
-            reversed ? "lg:order-2" : ""
-          }`}
+          className="relative w-full sm:w-[45%] flex-shrink-0 aspect-[4/5] sm:aspect-[3/4] max-h-[400px] sm:max-h-none overflow-hidden rounded-xl bg-[#EDE8E0]"
         >
           {image}
         </motion.div>
@@ -93,7 +90,7 @@ export function StorySection({
         {/* Text with staggered reveal */}
         <div
           ref={textRef}
-          className={`relative flex items-center lg:min-h-[560px] ${reversed ? "lg:order-1" : ""}`}
+          className="relative flex-1 flex items-center lg:min-h-[560px] overflow-hidden lg:overflow-visible"
         >
           {mandala}
           <div className="relative z-10 max-w-[480px]">

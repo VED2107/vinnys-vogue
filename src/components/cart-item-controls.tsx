@@ -7,13 +7,17 @@ import { updateCartItemQuantity, removeCartItem } from "@/app/cart/actions";
 export default function CartItemControls({
     cartItemId,
     currentQty,
+    availableStock,
 }: {
     cartItemId: string;
     currentQty: number;
+    availableStock: number;
 }) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState<string | null>(null);
+
+    const atStockLimit = availableStock > 0 && currentQty >= availableStock;
 
     function handleQty(delta: number) {
         setError(null);
@@ -54,7 +58,7 @@ export default function CartItemControls({
                         {currentQty}
                     </span>
                     <button
-                        disabled={isPending}
+                        disabled={isPending || atStockLimit}
                         onClick={() => handleQty(1)}
                         className="flex h-7 w-7 items-center justify-center rounded-r-full text-text-secondary transition hover:text-text-primary disabled:opacity-25"
                     >
@@ -69,6 +73,9 @@ export default function CartItemControls({
                     Remove
                 </button>
             </div>
+            {atStockLimit && (
+                <div className="text-[12px] text-gold">Only {availableStock} available</div>
+            )}
             {error ? <div className="text-[12px] text-red-600">{error}</div> : null}
         </div>
     );

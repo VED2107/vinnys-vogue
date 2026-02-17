@@ -65,6 +65,9 @@ export async function sendOrderCancellationEmail(orderId: string) {
       subject: "Your Order Has Been Cancelled — Vinnys Vogue",
       html: `
         <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111">
+          <div style="text-align:center;margin-bottom:24px;">
+            <img src="https://www.vinnysvogue.in/favicon.ico" alt="Vinnys Vogue" style="width:32px;height:32px;" />
+          </div>
           <h2 style="margin:0 0 8px 0;">Your order has been cancelled</h2>
           <p style="margin:0 0 10px 0;">Order #${escapeHtml(order.id)}</p>
           <p style="margin:0 0 16px 0;">No refund was initiated automatically. If you need assistance, please contact support.</p>

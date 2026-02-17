@@ -7,13 +7,14 @@ import { FadeIn } from "@/components/fade-in";
 import { PremiumButton } from "@/components/ui";
 import { MandalaBackground } from "@/components/decorative";
 import { GoldDivider } from "@/components/section-divider";
+import CartItemControls from "@/components/cart-item-controls";
 
 type CartItem = {
     id: string;
     quantity: number;
     product_id: string;
     variant_id: string | null;
-    products: { title: string; price_cents: number; currency: string; image_path: string | null };
+    products: { title: string; price_cents: number; currency: string; image_path: string | null; stock: number };
     product_variants: { size: string } | null;
 };
 
@@ -36,7 +37,7 @@ export default async function CartPage() {
     if (cart) {
         const { data } = await supabase
             .from("cart_items")
-            .select("id,quantity,product_id,variant_id,products(title,price_cents,currency,image_path),product_variants(size)")
+            .select("id,quantity,product_id,variant_id,products(title,price_cents,currency,image_path,stock),product_variants(size)")
             .eq("cart_id", cart.id);
 
         items = (data ?? []) as unknown as CartItem[];
@@ -104,6 +105,9 @@ export default async function CartPage() {
 
     const currency = items[0]?.products.currency ?? "INR";
 
+    const hasOutOfStock = items.some((i) => i.products.stock <= 0);
+    const hasOverStock = items.some((i) => i.products.stock > 0 && i.quantity > i.products.stock);
+
     return (
         <div className="relative min-h-screen overflow-hidden bg-bg-primary">
             <MandalaBackground variant="lotus" position="top-left" />
@@ -154,31 +158,25 @@ export default async function CartPage() {
                                                 <div className="font-serif text-[15px] font-light text-gold">
                                                     {formatMoneyFromCents(item.products.price_cents, item.products.currency)}
                                                 </div>
+                                                {item.products.stock <= 0 && (
+                                                    <div className="flex items-center gap-1.5 text-[12px] font-medium text-red-600">
+                                                        <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-500" />
+                                                        Out of stock — remove to proceed
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end sm:justify-between">
                                                 <form action={removeItem}>
                                                     <input type="hidden" name="itemId" value={item.id} />
                                                     <button className="text-[13px] text-muted transition hover:text-heading">Remove</button>
                                                 </form>
-                                                <div className="inline-flex items-center gap-3 rounded-full border border-[rgba(0,0,0,0.08)] bg-white px-4 py-2 shadow-sm">
-                                                    <form action={updateQuantity}>
-                                                        <input type="hidden" name="itemId" value={item.id} />
-                                                        <input type="hidden" name="direction" value="down" />
-                                                        <input type="hidden" name="current" value={String(item.quantity)} />
-                                                        <button className="flex h-7 w-7 items-center justify-center rounded-full text-[14px] text-heading transition hover:bg-[rgba(0,0,0,0.04)]">
-                                                            −
-                                                        </button>
-                                                    </form>
-                                                    <span className="w-6 text-center text-[14px] font-medium text-heading">{item.quantity}</span>
-                                                    <form action={updateQuantity}>
-                                                        <input type="hidden" name="itemId" value={item.id} />
-                                                        <input type="hidden" name="direction" value="up" />
-                                                        <input type="hidden" name="current" value={String(item.quantity)} />
-                                                        <button className="flex h-7 w-7 items-center justify-center rounded-full text-[14px] text-heading transition hover:bg-[rgba(0,0,0,0.04)]">
-                                                            +
-                                                        </button>
-                                                    </form>
-                                                </div>
+                                                {item.products.stock > 0 ? (
+                                                    <CartItemControls
+                                                        cartItemId={item.id}
+                                                        currentQty={item.quantity}
+                                                        availableStock={item.products.stock}
+                                                    />
+                                                ) : null}
                                             </div>
                                         </div>
                                     </div>
@@ -193,9 +191,22 @@ export default async function CartPage() {
                                         <span className="text-muted">Subtotal ({items.length} items)</span>
                                         <span className="font-serif font-light text-heading">{formatMoneyFromCents(totalCents, currency)}</span>
                                     </div>
-                                    <PremiumButton href="/checkout" className="w-full">
-                                        Proceed to Checkout
-                                    </PremiumButton>
+                                    {(hasOutOfStock || hasOverStock) && (
+                                        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-700">
+                                            {hasOutOfStock
+                                                ? "Some items are out of stock. Remove them to proceed."
+                                                : "Some items exceed available stock. Reduce quantity to proceed."}
+                                        </div>
+                                    )}
+                                    {hasOutOfStock || hasOverStock ? (
+                                        <div className="h-12 w-full flex items-center justify-center rounded-full bg-accent/40 text-[14px] font-medium text-white cursor-not-allowed">
+                                            Checkout Unavailable
+                                        </div>
+                                    ) : (
+                                        <PremiumButton href="/checkout" className="w-full">
+                                            Proceed to Checkout
+                                        </PremiumButton>
+                                    )}
                                 </div>
                             </div>
                         </div>

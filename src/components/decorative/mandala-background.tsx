@@ -49,8 +49,8 @@ export function MandalaBackground({
         viewBox="0 0 500 500"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="h-[600px] w-[600px] md:h-[750px] md:w-[750px] lg:h-[900px] lg:w-[900px] animate-[spin_180s_linear_infinite]"
-        style={{ opacity: opacity ?? 0.12 }}
+        className="h-[900px] w-[900px] md:h-[900px] md:w-[900px] lg:h-[1000px] lg:w-[1000px] animate-[spin_180s_linear_infinite] opacity-[0.35]"
+        style={opacity != null ? { opacity } : undefined}
       >
         <defs>
           <linearGradient id={uid} x1="0%" y1="0%" x2="100%" y2="100%">

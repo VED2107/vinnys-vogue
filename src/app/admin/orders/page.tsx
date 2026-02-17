@@ -93,7 +93,9 @@ export default async function AdminOrdersPage({
 
                 <FadeIn delay={0.1}>
                     <div className="mt-8 overflow-hidden rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-white">
-                        <div className="grid grid-cols-12 gap-4 border-b border-[rgba(0,0,0,0.06)] px-6 py-4 text-[11px] font-medium uppercase tracking-[0.15em] text-muted">
+
+                        {/* ── Desktop Table Header (hidden on mobile) ── */}
+                        <div className="hidden lg:grid grid-cols-12 gap-4 border-b border-[rgba(0,0,0,0.06)] px-6 py-4 text-[11px] font-medium uppercase tracking-[0.15em] text-muted">
                             <div className="col-span-2">Order ID</div>
                             <div className="col-span-2">Date</div>
                             <div className="col-span-2">Customer</div>
@@ -112,20 +114,43 @@ export default async function AdminOrdersPage({
                                     const ss = getOrderStatusStyles(o.status);
                                     const ps = getPaymentStatusStyles(o.payment_status);
                                     return (
-                                        <div key={o.id} className="grid grid-cols-12 gap-4 px-6 py-4">
-                                            <div className="col-span-2 flex items-center text-[14px] font-mono text-heading">{o.id.slice(0, 8).toUpperCase()}</div>
-                                            <div className="col-span-2 flex items-center text-[14px] text-muted">{date}</div>
-                                            <div className="col-span-2 flex items-center text-[14px] text-heading line-clamp-1">{o.full_name ?? "—"}</div>
-                                            <div className="col-span-1 flex items-center font-serif text-[14px] font-light text-gold">{formatMoney(o.total_amount)}</div>
-                                            <div className="col-span-1 flex items-center">
-                                                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium capitalize ${ss.bg} ${ss.text}`}>{o.status}</span>
+                                        <div key={o.id}>
+                                            {/* ── Mobile Card Layout ── */}
+                                            <div className="lg:hidden px-5 py-4 space-y-3">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="font-mono text-[14px] font-medium text-heading">{o.id.slice(0, 8).toUpperCase()}</span>
+                                                    <span className="text-[13px] text-muted">{date}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-[14px] text-heading">{o.full_name ?? "—"}</span>
+                                                    <span className="font-serif text-[14px] font-light text-gold">{formatMoney(o.total_amount)}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium capitalize ${ss.bg} ${ss.text}`}>{o.status}</span>
+                                                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium capitalize ${ps.bg} ${ps.text}`}>{o.payment_status}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 pt-1">
+                                                    <AdminOrderRowActions orderId={o.id} status={o.status} />
+                                                    <a href={`/admin/orders/${o.id}`} className="h-9 rounded-full border border-[rgba(0,0,0,0.1)] px-4 text-[13px] text-heading transition hover:border-[rgba(0,0,0,0.2)] inline-flex items-center">View</a>
+                                                </div>
                                             </div>
-                                            <div className="col-span-1 flex items-center">
-                                                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium capitalize ${ps.bg} ${ps.text}`}>{o.payment_status}</span>
-                                            </div>
-                                            <div className="col-span-3 flex items-center justify-end gap-2">
-                                                <AdminOrderRowActions orderId={o.id} status={o.status} />
-                                                <a href={`/admin/orders/${o.id}`} className="h-9 rounded-full border border-[rgba(0,0,0,0.1)] px-4 text-[13px] text-heading transition hover:border-[rgba(0,0,0,0.2)] inline-flex items-center">View</a>
+
+                                            {/* ── Desktop Row Layout ── */}
+                                            <div className="hidden lg:grid grid-cols-12 gap-4 px-6 py-4">
+                                                <div className="col-span-2 flex items-center text-[14px] font-mono text-heading">{o.id.slice(0, 8).toUpperCase()}</div>
+                                                <div className="col-span-2 flex items-center text-[14px] text-muted">{date}</div>
+                                                <div className="col-span-2 flex items-center text-[14px] text-heading line-clamp-1">{o.full_name ?? "—"}</div>
+                                                <div className="col-span-1 flex items-center font-serif text-[14px] font-light text-gold">{formatMoney(o.total_amount)}</div>
+                                                <div className="col-span-1 flex items-center">
+                                                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium capitalize ${ss.bg} ${ss.text}`}>{o.status}</span>
+                                                </div>
+                                                <div className="col-span-1 flex items-center">
+                                                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium capitalize ${ps.bg} ${ps.text}`}>{o.payment_status}</span>
+                                                </div>
+                                                <div className="col-span-3 flex items-center justify-end gap-2">
+                                                    <AdminOrderRowActions orderId={o.id} status={o.status} />
+                                                    <a href={`/admin/orders/${o.id}`} className="h-9 rounded-full border border-[rgba(0,0,0,0.1)] px-4 text-[13px] text-heading transition hover:border-[rgba(0,0,0,0.2)] inline-flex items-center">View</a>
+                                                </div>
                                             </div>
                                         </div>
                                     );

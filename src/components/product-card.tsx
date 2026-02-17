@@ -20,15 +20,17 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, imageUrl, initialInWishlist, onWishlistToggle }: ProductCardProps) {
+  const isSoldOut = (product.stock ?? 999) <= 0;
+
   return (
-    <Link href={`/product/${product.id}`} className="group block" prefetch={true}>
+    <Link href={`/product/${product.id}`} className="group block">
       <div className="relative overflow-hidden rounded-xl bg-[#EDE8E0] aspect-[4/5]">
         <Image
           src={imageUrl}
           alt={product.title}
           fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-          className="img-matte object-cover"
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          className={`img-matte object-cover transition-opacity ${isSoldOut ? "opacity-50" : ""}`}
         />
         <div className="glass-overlay pointer-events-none" />
 
@@ -37,6 +39,14 @@ export function ProductCard({ product, imageUrl, initialInWishlist, onWishlistTo
           isBestseller={product.is_bestseller ?? false}
           isNew={product.is_new ?? false}
         />
+
+        {isSoldOut && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/20 pointer-events-none">
+            <span className="rounded-full bg-white/90 px-4 py-1.5 text-[12px] font-semibold tracking-wide text-red-700 uppercase backdrop-blur-sm">
+              Sold Out
+            </span>
+          </div>
+        )}
 
         {initialInWishlist !== undefined ? (
           <WishlistToggle productId={product.id} initialInWishlist={initialInWishlist} onToggle={onWishlistToggle} />

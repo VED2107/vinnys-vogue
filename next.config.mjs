@@ -8,6 +8,8 @@ const nextConfig = {
                 "127.0.0.1:3000",
                 "localhost",
                 "127.0.0.1",
+                "www.vinnysvogue.in",
+                "vinnysvogue.in",
             ],
             bodySizeLimit: "2mb",
         },

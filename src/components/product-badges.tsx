@@ -9,6 +9,10 @@ export function ProductBadges({
 }) {
   const badges: { label: string; bg: string; text: string }[] = [];
 
+  if (stock <= 0) {
+    badges.push({ label: "Out of Stock", bg: "bg-red-100", text: "text-red-700" });
+  }
+
   if (isBestseller) {
     badges.push({ label: "Bestseller", bg: "bg-gold/10", text: "text-gold" });
   }
@@ -47,6 +51,10 @@ export function ProductCardBadges({
   isNew: boolean;
 }) {
   const badges: { label: string; bg: string; text: string }[] = [];
+
+  if (stock <= 0) {
+    badges.push({ label: "Sold Out", bg: "bg-red-600/90", text: "text-white" });
+  }
 
   if (isBestseller) {
     badges.push({ label: "Bestseller", bg: "bg-gold/90", text: "text-white" });

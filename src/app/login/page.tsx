@@ -60,7 +60,7 @@ export default function LoginPage() {
     <div className="relative min-h-screen overflow-hidden bg-bg-primary">
       <MandalaBackground variant="lotus" position="center" />
       <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center px-6 py-16">
-        <div className="rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-bg-card p-8">
+        <div className="rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-white/70 backdrop-blur-md p-8">
           <div className="space-y-3">
             <div className="gold-divider" />
             <h1 className="font-serif text-2xl font-light tracking-[-0.02em] text-heading">Sign in</h1>

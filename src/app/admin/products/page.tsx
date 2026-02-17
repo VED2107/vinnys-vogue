@@ -96,7 +96,9 @@ export default async function AdminProductsPage({
 
         <FadeIn delay={0.1}>
           <div className="mt-10 overflow-hidden rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-white">
-            <div className="grid grid-cols-12 gap-4 border-b border-[rgba(0,0,0,0.06)] px-6 py-4 text-[11px] font-medium uppercase tracking-[0.15em] text-muted">
+
+            {/* ── Desktop Header (hidden on mobile) ── */}
+            <div className="hidden lg:grid grid-cols-12 gap-4 border-b border-[rgba(0,0,0,0.06)] px-6 py-4 text-[11px] font-medium uppercase tracking-[0.15em] text-muted">
               <div className="col-span-4">Product</div>
               <div className="col-span-2">Category</div>
               <div className="col-span-2">Price</div>
@@ -107,36 +109,75 @@ export default async function AdminProductsPage({
 
             <div className="divide-y divide-[rgba(0,0,0,0.04)]">
               {products.map((p) => (
-                <div key={p.id} className="grid grid-cols-12 gap-4 px-6 py-4">
-                  <div className="col-span-4 flex items-center gap-4">
-                    <div className="h-14 w-12 overflow-hidden rounded-[10px] bg-[#EDE8E0]">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={getProductImagePublicUrl(supabase, p.image_path)} alt={p.title} className="h-full w-full object-cover" />
+                <div key={p.id}>
+                  {/* ── Mobile Card ── */}
+                  <div className="lg:hidden px-5 py-4 space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="h-16 w-14 flex-shrink-0 overflow-hidden rounded-[10px] bg-[#EDE8E0]">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={getProductImagePublicUrl(supabase, p.image_path)} alt={p.title} className="h-full w-full object-cover" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[14px] font-medium text-heading line-clamp-1">{p.title}</div>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          {p.category ? <span className="inline-flex items-center rounded-full bg-[#F4EFE8] px-2 py-0.5 text-[11px] text-heading">{getCategoryLabel(p.category)}</span> : null}
+                          {p.show_on_home ? <span className="inline-flex items-center gap-1 text-[11px] text-gold"><span className="inline-block h-1 w-1 rounded-full bg-gold" />Featured</span> : null}
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="text-[14px] font-medium text-heading line-clamp-1">{p.title}</div>
-                      {p.show_on_home ? <div className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-gold"><span className="inline-block h-1 w-1 rounded-full bg-gold" /> Featured</div> : null}
-                      {p.stock < 3 ? <div className="mt-1 inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-medium text-red-700">Low stock</div> : null}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="font-serif text-[14px] font-light text-gold">{formatMoneyFromCents(p.price_cents, p.currency)}</span>
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium ${p.active ? "bg-green-50 text-green-800" : "bg-[#F4EFE8] text-muted"}`}>{p.active ? "Active" : "Inactive"}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-[13px] ${p.stock < 3 ? "text-red-700 font-medium" : "text-muted"}`}>Stock: {p.stock}</span>
+                        {p.stock < 3 ? <span className="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-700">Low</span> : null}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 pt-1">
+                      <a href={`/admin/products/${p.id}`} className="h-8 rounded-full border border-[rgba(0,0,0,0.1)] px-3 text-[12px] text-heading transition hover:border-[rgba(0,0,0,0.2)] inline-flex items-center">Edit</a>
+                      <StockAdjustModal productId={p.id} productTitle={p.title} currentStock={p.stock} />
+                      <form action={toggleActive}>
+                        <input type="hidden" name="productId" value={p.id} />
+                        <input type="hidden" name="current" value={String(p.active)} />
+                        <button className="h-8 rounded-full bg-accent px-3 text-[12px] font-medium text-white hover:bg-accent-hover">Toggle</button>
+                      </form>
                     </div>
                   </div>
-                  <div className="col-span-2 flex items-center">
-                    {p.category ? <span className="inline-flex items-center rounded-full bg-[#F4EFE8] px-2.5 py-1 text-[12px] text-heading">{getCategoryLabel(p.category)}</span> : <span className="text-[12px] text-muted">—</span>}
-                  </div>
-                  <div className="col-span-2 flex items-center font-serif text-[14px] font-light text-gold">{formatMoneyFromCents(p.price_cents, p.currency)}</div>
-                  <div className="col-span-2 flex items-center">
-                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium ${p.active ? "bg-green-50 text-green-800" : "bg-[#F4EFE8] text-muted"}`}>{p.active ? "Active" : "Inactive"}</span>
-                  </div>
-                  <div className="col-span-1 flex items-center">
-                    <span className={`text-[14px] ${p.stock < 3 ? "text-red-700 font-medium" : "text-heading"}`}>{p.stock}</span>
-                  </div>
-                  <div className="col-span-1 flex items-center justify-end gap-2">
-                    <a href={`/admin/products/${p.id}`} className="h-8 rounded-full border border-[rgba(0,0,0,0.1)] px-3 text-[12px] text-heading transition hover:border-[rgba(0,0,0,0.2)] inline-flex items-center">Edit</a>
-                    <StockAdjustModal productId={p.id} productTitle={p.title} currentStock={p.stock} />
-                    <form action={toggleActive}>
-                      <input type="hidden" name="productId" value={p.id} />
-                      <input type="hidden" name="current" value={String(p.active)} />
-                      <button className="h-8 rounded-full bg-accent px-3 text-[12px] font-medium text-white hover:bg-accent-hover">Toggle</button>
-                    </form>
+
+                  {/* ── Desktop Row ── */}
+                  <div className="hidden lg:grid grid-cols-12 gap-4 px-6 py-4">
+                    <div className="col-span-4 flex items-center gap-4">
+                      <div className="h-14 w-12 overflow-hidden rounded-[10px] bg-[#EDE8E0]">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={getProductImagePublicUrl(supabase, p.image_path)} alt={p.title} className="h-full w-full object-cover" />
+                      </div>
+                      <div>
+                        <div className="text-[14px] font-medium text-heading line-clamp-1">{p.title}</div>
+                        {p.show_on_home ? <div className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-gold"><span className="inline-block h-1 w-1 rounded-full bg-gold" />Featured</div> : null}
+                        {p.stock < 3 ? <div className="mt-1 inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-medium text-red-700">Low stock</div> : null}
+                      </div>
+                    </div>
+                    <div className="col-span-2 flex items-center">
+                      {p.category ? <span className="inline-flex items-center rounded-full bg-[#F4EFE8] px-2.5 py-1 text-[12px] text-heading">{getCategoryLabel(p.category)}</span> : <span className="text-[12px] text-muted">—</span>}
+                    </div>
+                    <div className="col-span-2 flex items-center font-serif text-[14px] font-light text-gold">{formatMoneyFromCents(p.price_cents, p.currency)}</div>
+                    <div className="col-span-2 flex items-center">
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium ${p.active ? "bg-green-50 text-green-800" : "bg-[#F4EFE8] text-muted"}`}>{p.active ? "Active" : "Inactive"}</span>
+                    </div>
+                    <div className="col-span-1 flex items-center">
+                      <span className={`text-[14px] ${p.stock < 3 ? "text-red-700 font-medium" : "text-heading"}`}>{p.stock}</span>
+                    </div>
+                    <div className="col-span-1 flex items-center justify-end gap-2">
+                      <a href={`/admin/products/${p.id}`} className="h-8 rounded-full border border-[rgba(0,0,0,0.1)] px-3 text-[12px] text-heading transition hover:border-[rgba(0,0,0,0.2)] inline-flex items-center">Edit</a>
+                      <StockAdjustModal productId={p.id} productTitle={p.title} currentStock={p.stock} />
+                      <form action={toggleActive}>
+                        <input type="hidden" name="productId" value={p.id} />
+                        <input type="hidden" name="current" value={String(p.active)} />
+                        <button className="h-8 rounded-full bg-accent px-3 text-[12px] font-medium text-white hover:bg-accent-hover">Toggle</button>
+                      </form>
+                    </div>
                   </div>
                 </div>
               ))}

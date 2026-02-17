@@ -133,6 +133,9 @@ export async function sendOrderConfirmation(orderId: string) {
 
   const html = `
   <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111">
+    <div style="text-align:center;margin-bottom:24px;">
+      <img src="https://www.vinnysvogue.in/favicon.ico" alt="Vinnys Vogue" style="width:32px;height:32px;" />
+    </div>
     <h2 style="margin:0 0 8px 0;">Your Order is Confirmed — Vinnys Vogue</h2>
     <p style="margin:0 0 16px 0;">Thank you for shopping with us. Your payment has been received and your order is confirmed.</p>
 

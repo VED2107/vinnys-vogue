@@ -79,6 +79,9 @@ export async function sendShippingConfirmation(orderId: string) {
       subject: "Your Order Has Been Shipped — Vinnys Vogue",
       html: `
         <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111">
+          <div style="text-align:center;margin-bottom:24px;">
+            <img src="https://www.vinnysvogue.in/favicon.ico" alt="Vinnys Vogue" style="width:32px;height:32px;" />
+          </div>
           <h2 style="margin:0 0 8px 0;">Your order is on its way ✨</h2>
           <p style="margin:0 0 10px 0;">Order #${escapeHtml(order.id)}</p>
           <p style="margin:0 0 6px 0;"><strong>Courier:</strong> ${escapeHtml(courier)}</p>

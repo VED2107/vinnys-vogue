@@ -149,8 +149,8 @@ export default async function ProductDetailPage({
   const avgRating =
     reviewCount > 0
       ? Math.round(
-          (approvedReviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount) * 10,
-        ) / 10
+        (approvedReviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount) * 10,
+      ) / 10
       : 0;
 
   // ── Eligibility: has reviewed? eligible to review? ───
@@ -236,6 +236,7 @@ export default async function ProductDetailPage({
               <VariantSelector
                 productId={p.id}
                 variants={variantRows}
+                productStock={p.stock}
               />
             </div>
           </div>

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { PageMandala } from "@/components/decorative";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -50,9 +51,10 @@ export default function SignupPage() {
     "h-12 w-full rounded-full border border-[rgba(0,0,0,0.1)] bg-bg-card px-5 text-[15px] text-heading outline-none transition-all duration-300 focus:border-gold focus:ring-1 focus:ring-gold/15 placeholder:text-[rgba(0,0,0,0.25)]";
 
   return (
-    <div className="min-h-screen bg-bg-primary">
-      <div className="mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center px-6 py-16">
-        <div className="rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-bg-card p-8">
+    <div className="relative min-h-screen overflow-hidden bg-bg-primary">
+      <PageMandala size="md" />
+      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center px-6 py-16">
+        <div className="rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-white/70 backdrop-blur-md p-8">
           <div className="space-y-3">
             <div className="gold-divider" />
             <h1 className="font-serif text-2xl font-light tracking-[-0.02em] text-heading">Create account</h1>

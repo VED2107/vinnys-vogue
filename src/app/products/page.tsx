@@ -135,7 +135,7 @@ export default async function ProductsPage({
                 </div>
               </FadeIn>
             ) : (
-              <StaggerGrid className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-12" stagger={0.08}>
+              <StaggerGrid className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 lg:gap-6" stagger={0.08}>
                 {products.map((p) => (
                   <StaggerItem key={p.id}>
                     <ProductCard

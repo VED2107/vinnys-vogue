@@ -172,3 +172,170 @@ h2 {
 .animate-fadeIn {
   animation: fadeInLuxury 350ms ease forwards;
 }
+
+/* ——— Admin Mobile Bottom Tab Bar ——— */
+.admin-bottom-bar {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  padding-bottom: env(safe-area-inset-bottom, 8px);
+  padding-top: 6px;
+}
+
+.admin-tab-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex: 1;
+  padding: 6px 0 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all 200ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.admin-tab-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 28px;
+  border-radius: 14px;
+  color: #9B958E;
+  transition: all 250ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.admin-tab-icon-active {
+  background: rgba(28, 58, 42, 0.1);
+  color: #1C3A2A;
+}
+
+.admin-tab-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #9B958E;
+  transition: color 200ms ease;
+}
+
+.admin-tab-active .admin-tab-label {
+  color: #1C3A2A;
+  font-weight: 600;
+}
+
+/* ——— Full-Screen Overlay ——— */
+@keyframes overlayFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.admin-overlay-enter {
+  animation: overlayFadeIn 200ms ease forwards;
+}
+
+@keyframes menuSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-menu-slide-up {
+  animation: menuSlideUp 350ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* ——— Staggered section appearance ——— */
+@keyframes sectionFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-menu-section {
+  opacity: 0;
+  animation: sectionFadeIn 400ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* ——— Navigation Cards ——— */
+.admin-menu-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  transition: all 200ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.admin-menu-card:active {
+  transform: scale(0.97);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.admin-menu-card-active {
+  background: rgba(28, 58, 42, 0.06);
+  border-color: rgba(28, 58, 42, 0.12);
+}
+
+.admin-menu-card-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1C1A18;
+}
+
+.admin-menu-card-active .admin-menu-card-title {
+  color: #1C3A2A;
+  font-weight: 600;
+}
+
+.admin-menu-card-arrow {
+  color: #C6A756;
+  opacity: 0.5;
+  transition: transform 200ms ease, opacity 200ms ease;
+}
+
+.admin-menu-card:hover .admin-menu-card-arrow,
+.admin-menu-card:active .admin-menu-card-arrow {
+  opacity: 1;
+  transform: translateX(2px);
+}
+
+/* ——— Admin Drawer Slide (legacy, kept for reuse) ——— */
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 250ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
