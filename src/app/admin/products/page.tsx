@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { formatMoneyFromCents } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 import { getProductImagePublicUrl } from "@/lib/product-images";
 import { getCategoryLabel, PRODUCT_CATEGORIES } from "@/lib/categories";
 import StockAdjustModal from "@/components/admin/stock-adjust-modal";
@@ -9,7 +9,7 @@ import { FadeIn } from "@/components/fade-in";
 type ProductRow = {
   id: string;
   title: string;
-  price_cents: number;
+  price: number;
   currency: string;
   image_path: string | null;
   active: boolean;
@@ -47,7 +47,7 @@ export default async function AdminProductsPage({
 
   const filterCategory = searchParams?.category;
 
-  let query = supabase.from("products").select("id,title,price_cents,currency,image_path,active,category,show_on_home,display_order,stock,created_at").order("created_at", { ascending: false });
+  let query = supabase.from("products").select("id,title,price,currency,image_path,active,category,show_on_home,display_order,stock,created_at").order("created_at", { ascending: false });
   if (filterCategory) query = query.eq("category", filterCategory);
 
   const { data, error } = await query;
@@ -127,7 +127,7 @@ export default async function AdminProductsPage({
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="font-serif text-[14px] font-light text-gold">{formatMoneyFromCents(p.price_cents, p.currency)}</span>
+                        <span className="font-serif text-[14px] font-light text-gold">{formatMoney(p.price, p.currency)}</span>
                         <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium ${p.active ? "bg-green-50 text-green-800" : "bg-[#F4EFE8] text-muted"}`}>{p.active ? "Active" : "Inactive"}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
@@ -162,7 +162,7 @@ export default async function AdminProductsPage({
                     <div className="col-span-2 flex items-center">
                       {p.category ? <span className="inline-flex items-center rounded-full bg-[#F4EFE8] px-2.5 py-1 text-[12px] text-heading">{getCategoryLabel(p.category)}</span> : <span className="text-[12px] text-muted">—</span>}
                     </div>
-                    <div className="col-span-2 flex items-center font-serif text-[14px] font-light text-gold">{formatMoneyFromCents(p.price_cents, p.currency)}</div>
+                    <div className="col-span-2 flex items-center font-serif text-[14px] font-light text-gold">{formatMoney(p.price, p.currency)}</div>
                     <div className="col-span-2 flex items-center">
                       <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium ${p.active ? "bg-green-50 text-green-800" : "bg-[#F4EFE8] text-muted"}`}>{p.active ? "Active" : "Inactive"}</span>
                     </div>

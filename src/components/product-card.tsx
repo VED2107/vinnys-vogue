@@ -2,13 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import WishlistToggle from "./wishlist-toggle";
 import { ProductCardBadges } from "./product-badges";
-import { formatMoneyFromCents } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 
 interface ProductCardProps {
   product: {
     id: string;
     title: string;
-    price_cents: number;
+    price: number;
     currency: string;
     stock?: number;
     is_bestseller?: boolean;
@@ -58,7 +58,7 @@ export function ProductCard({ product, imageUrl, initialInWishlist, onWishlistTo
           {product.title}
         </div>
         <div className="text-[13px] text-gold">
-          {formatMoneyFromCents(product.price_cents, product.currency)}
+          {formatMoney(product.price, product.currency)}
         </div>
       </div>
     </Link>

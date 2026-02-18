@@ -57,19 +57,52 @@ export async function POST(req: Request) {
         }
 
         const eventName = typeof parsedBody?.event === "string" ? parsedBody.event : "";
+        const razorpayEventId = typeof parsedBody?.event_id === "string" ? parsedBody.event_id : null;
+
+        // Insert into webhook_events for dedup
+        if (razorpayEventId) {
+            const { error: insertError } = await supabase
+                .from("webhook_events")
+                .insert({
+                    razorpay_event_id: razorpayEventId,
+                    payload: parsedBody,
+                    status: "pending",
+                });
+
+            // UNIQUE violation = duplicate webhook, skip
+            if (insertError && insertError.code === "23505") {
+                console.log("Duplicate webhook event, skipping:", razorpayEventId);
+                return new NextResponse("OK", { status: 200 });
+            }
+        }
 
         if (eventName !== "payment.captured") {
+            if (razorpayEventId) {
+                await supabase
+                    .from("webhook_events")
+                    .update({ status: "processed", processed_at: new Date().toISOString() })
+                    .eq("razorpay_event_id", razorpayEventId);
+            }
             return new NextResponse("OK", { status: 200 });
         }
 
         const payment = parsedBody?.payload?.payment?.entity;
         const razorpayOrderId = typeof payment?.order_id === "string" ? payment.order_id : null;
+        const razorpayPaymentId = typeof payment?.id === "string" ? payment.id : null;
 
         console.log("Captured order id:", razorpayOrderId);
 
         if (!razorpayOrderId) {
             console.error("Webhook missing razorpay_order_id");
             return new NextResponse("OK", { status: 200 });
+        }
+
+        // Update webhook_events with razorpay_order_id
+        if (razorpayEventId) {
+            await supabase
+                .from("webhook_events")
+                .update({ razorpay_order_id: razorpayOrderId })
+                .eq("razorpay_event_id", razorpayEventId);
         }
 
         const { data: order, error: orderError } = await supabase
@@ -84,14 +117,33 @@ export async function POST(req: Request) {
             return new Response("Order not found", { status: 200 });
         }
 
+        const startMs = Date.now();
+
         try {
             const { error: rpcError } = await supabase.rpc("confirm_order_payment", {
                 p_order_id: order.id,
+                p_razorpay_payment_id: razorpayPaymentId ?? "unknown",
             });
+
+            const latencyMs = Date.now() - startMs;
 
             if (rpcError) {
                 console.error("RPC error:", rpcError);
+                if (razorpayEventId) {
+                    await supabase
+                        .from("webhook_events")
+                        .update({ status: "failed", last_error: rpcError.message, latency_ms: latencyMs })
+                        .eq("razorpay_event_id", razorpayEventId);
+                }
                 return new NextResponse("OK", { status: 200 });
+            }
+
+            // Mark webhook as processed
+            if (razorpayEventId) {
+                await supabase
+                    .from("webhook_events")
+                    .update({ status: "processed", processed_at: new Date().toISOString(), latency_ms: latencyMs })
+                    .eq("razorpay_event_id", razorpayEventId);
             }
 
             // Send confirmation email (best-effort — never blocks payment confirmation)

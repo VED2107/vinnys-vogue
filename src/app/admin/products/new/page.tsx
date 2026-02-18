@@ -5,7 +5,7 @@ import { PRODUCT_CATEGORIES } from "@/lib/categories";
 import VariantManager from "@/components/variant-manager";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
 
-function displayToCents(value: string) {
+function parsePrice(value: string) {
   const normalized = value.replace(/,/g, "").trim();
   const numberValue = Number.parseFloat(normalized);
 
@@ -13,7 +13,7 @@ function displayToCents(value: string) {
     return null;
   }
 
-  return Math.round(numberValue * 100);
+  return Math.round(numberValue * 100) / 100;
 }
 
 export default async function AdminNewProductPage() {
@@ -58,13 +58,13 @@ export default async function AdminNewProductPage() {
     const stock = parseInt(String(formData.get("stock") || "0"), 10) || 0;
 
     const priceDisplay = String(formData.get("price") || "");
-    const price_cents = displayToCents(priceDisplay);
+    const price = parsePrice(priceDisplay);
 
     if (!title) {
       throw new Error("Title is required.");
     }
 
-    if (price_cents === null) {
+    if (price === null) {
       throw new Error("Please enter a valid price.");
     }
 
@@ -101,7 +101,7 @@ export default async function AdminNewProductPage() {
       image_path,
       category,
       currency,
-      price_cents,
+      price,
       active,
       show_on_home,
       display_order,

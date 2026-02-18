@@ -20,7 +20,7 @@ export default async function WishlistPage() {
 
   const { data: rows, error: wishlistError } = await supabase
     .from("wishlist")
-    .select("product_id, products(id,title,price_cents,currency,image_path,active)")
+    .select("product_id, products(id,title,price,currency,image_path,active)")
     .eq("user_id", user.id);
 
   if (wishlistError) {
@@ -36,13 +36,13 @@ export default async function WishlistPage() {
   }
 
   const products = (rows ?? [])
-    .map((r) => (r as unknown as { products: { id: string; title: string; price_cents: number; currency: string; image_path: string | null; active: boolean } | null }).products)
-    .filter(Boolean) as { id: string; title: string; price_cents: number; currency: string; image_path: string | null; active: boolean }[];
+    .map((r) => (r as unknown as { products: { id: string; title: string; price: number; currency: string; image_path: string | null; active: boolean } | null }).products)
+    .filter(Boolean) as { id: string; title: string; price: number; currency: string; image_path: string | null; active: boolean }[];
 
   const productsWithUrls = products.map((p) => ({
     id: p.id,
     title: p.title,
-    price_cents: p.price_cents,
+    price: p.price,
     currency: p.currency,
     imageUrl: getProductImagePublicUrl(supabase, p.image_path),
   }));

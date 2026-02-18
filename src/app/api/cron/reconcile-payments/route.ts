@@ -72,14 +72,17 @@ export async function GET(req: Request) {
           ? (paymentsResp as any).items
           : [];
 
-        const hasCaptured = items.some((p: any) => p && p.status === "captured");
+        const capturedPayment = items.find((p: any) => p && p.status === "captured");
 
-        if (!hasCaptured) {
+        if (!capturedPayment) {
           continue;
         }
 
+        const razorpayPaymentId = typeof capturedPayment.id === "string" ? capturedPayment.id : "reconcile_unknown";
+
         const { error: rpcError } = await supabase.rpc("confirm_order_payment", {
           p_order_id: order.id,
+          p_razorpay_payment_id: razorpayPaymentId,
         });
 
         if (rpcError) {

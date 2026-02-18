@@ -19,7 +19,7 @@ type ProductRow = {
   title: string;
   description: string | null;
   category: string | null;
-  price_cents: number;
+  price: number;
   currency: string;
   image_path: string | null;
   active: boolean;
@@ -30,11 +30,7 @@ type ProductRow = {
   product_variants: VariantRow[];
 };
 
-function centsToDisplay(priceCents: number) {
-  return (priceCents / 100).toFixed(2);
-}
-
-function displayToCents(value: string) {
+function parsePrice(value: string) {
   const normalized = value.replace(/,/g, "").trim();
   const numberValue = Number.parseFloat(normalized);
 
@@ -42,7 +38,7 @@ function displayToCents(value: string) {
     return null;
   }
 
-  return Math.round(numberValue * 100);
+  return Math.round(numberValue * 100) / 100;
 }
 
 export default async function AdminEditProductPage({
@@ -73,7 +69,7 @@ export default async function AdminEditProductPage({
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id,title,description,category,price_cents,currency,image_path,active,show_on_home,display_order,has_variants,stock,product_variants(id,size,stock)",
+      "id,title,description,category,price,currency,image_path,active,show_on_home,display_order,has_variants,stock,product_variants(id,size,stock)",
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -119,13 +115,13 @@ export default async function AdminEditProductPage({
     const newImage = formData.get("image") as File | null;
 
     const priceDisplay = String(formData.get("price") || "");
-    const nextPriceCents = displayToCents(priceDisplay);
+    const nextPrice = parsePrice(priceDisplay);
 
     if (!title) {
       throw new Error("Title is required.");
     }
 
-    if (nextPriceCents === null) {
+    if (nextPrice === null) {
       throw new Error("Please enter a valid price.");
     }
 
@@ -187,7 +183,7 @@ export default async function AdminEditProductPage({
         active,
         show_on_home,
         display_order,
-        price_cents: nextPriceCents,
+        price: nextPrice,
         has_variants,
         stock: has_variants ? 0 : stock,
       })
@@ -373,11 +369,11 @@ export default async function AdminEditProductPage({
                 name="price"
                 type="text"
                 inputMode="decimal"
-                defaultValue={centsToDisplay(product.price_cents)}
+                defaultValue={String(product.price)}
                 className="h-11 w-full rounded-xl border border-zinc-200 bg-white px-4 text-sm text-zinc-900 outline-none transition focus:border-zinc-400"
               />
               <div className="text-xs text-zinc-500">
-                Stored as cents ({product.currency}). Example: 24999.00
+                Stored in rupees ({product.currency}). Example: 249.99
               </div>
             </div>
 

@@ -62,18 +62,18 @@ export async function POST(request: Request) {
     // Get cart items for the email
     const { data: cartItems } = await admin
       .from("cart_items")
-      .select("quantity, products(title, price_cents)")
+      .select("quantity, products(title, price)")
       .eq("cart_id", cart_id);
 
     const items = (cartItems ?? []) as unknown as {
       quantity: number;
-      products: { title: string; price_cents: number } | null;
+      products: { title: string; price: number } | null;
     }[];
 
     const itemListHtml = items
       .map((i) => {
         const title = i.products?.title ?? "Product";
-        const price = ((i.products?.price_cents ?? 0) / 100).toFixed(2);
+        const price = (i.products?.price ?? 0).toFixed(2);
         return `<li>${title} × ${i.quantity} — ₹${price}</li>`;
       })
       .join("");

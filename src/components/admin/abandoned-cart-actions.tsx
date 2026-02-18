@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 type CartItem = {
   quantity: number;
   product_title: string;
-  price_cents: number;
+  price: number;
 };
 
 type AbandonedCart = {
@@ -119,7 +119,7 @@ export default function AbandonedCartActions() {
                   <div className="mt-2 space-y-1">
                     {cart.items.map((item, idx) => (
                       <div key={idx} className="text-[13px] text-muted">
-                        {item.product_title} × {item.quantity} — ₹{(item.price_cents / 100).toFixed(2)}
+                        {item.product_title} × {item.quantity} — ₹{item.price.toFixed(2)}
                       </div>
                     ))}
                   </div>

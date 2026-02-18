@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { formatMoneyFromCents } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 import { revalidatePath } from "next/cache";
 import { getProductImagePublicUrl } from "@/lib/product-images";
 import { FadeIn } from "@/components/fade-in";
@@ -14,7 +14,7 @@ type CartItem = {
     quantity: number;
     product_id: string;
     variant_id: string | null;
-    products: { title: string; price_cents: number; currency: string; image_path: string | null; stock: number };
+    products: { title: string; price: number; currency: string; image_path: string | null; stock: number };
     product_variants: { size: string } | null;
 };
 
@@ -37,7 +37,7 @@ export default async function CartPage() {
     if (cart) {
         const { data } = await supabase
             .from("cart_items")
-            .select("id,quantity,product_id,variant_id,products(title,price_cents,currency,image_path,stock),product_variants(size)")
+            .select("id,quantity,product_id,variant_id,products(title,price,currency,image_path,stock),product_variants(size)")
             .eq("cart_id", cart.id);
 
         items = (data ?? []) as unknown as CartItem[];
@@ -99,7 +99,7 @@ export default async function CartPage() {
     }
 
     const totalCents = items.reduce(
-        (sum, item) => sum + item.products.price_cents * item.quantity,
+        (sum, item) => sum + item.products.price * item.quantity,
         0,
     );
 
@@ -156,7 +156,7 @@ export default async function CartPage() {
                                                     <div className="text-[13px] text-muted">Size: {item.product_variants.size}</div>
                                                 ) : null}
                                                 <div className="font-serif text-[15px] font-light text-gold">
-                                                    {formatMoneyFromCents(item.products.price_cents, item.products.currency)}
+                                                    {formatMoney(item.products.price, item.products.currency)}
                                                 </div>
                                                 {item.products.stock <= 0 && (
                                                     <div className="flex items-center gap-1.5 text-[12px] font-medium text-red-600">
@@ -189,7 +189,7 @@ export default async function CartPage() {
                                     <div className="gold-divider-gradient" />
                                     <div className="flex justify-between text-[15px]">
                                         <span className="text-muted">Subtotal ({items.length} items)</span>
-                                        <span className="font-serif font-light text-heading">{formatMoneyFromCents(totalCents, currency)}</span>
+                                        <span className="font-serif font-light text-heading">{formatMoney(totalCents, currency)}</span>
                                     </div>
                                     {(hasOutOfStock || hasOverStock) && (
                                         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-700">

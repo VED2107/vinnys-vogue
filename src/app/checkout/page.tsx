@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { formatMoneyFromCents } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 import { getProductImagePublicUrl } from "@/lib/product-images";
 import CheckoutForm from "@/components/checkout-form";
 import { FadeIn } from "@/components/fade-in";
@@ -27,19 +27,19 @@ export default async function CheckoutPage() {
 
     const { data } = await supabase
         .from("cart_items")
-        .select("id,quantity,product_id,variant_id,products(title,price_cents,currency,image_path),product_variants(size)")
+        .select("id,quantity,product_id,variant_id,products(title,price,currency,image_path),product_variants(size)")
         .eq("cart_id", cart.id);
 
     // Safely filter: keep only items where the joined product still exists
     const validItems = (data ?? []).filter(
-        (row): row is typeof row & { products: { title: string; price_cents: number; currency: string; image_path: string | null } } =>
+        (row): row is typeof row & { products: { title: string; price: number; currency: string; image_path: string | null } } =>
             row.products != null,
     );
 
     if (validItems.length === 0) redirect("/cart");
 
     const totalCents = validItems.reduce(
-        (sum, item) => sum + (item.products as { price_cents: number }).price_cents * item.quantity,
+        (sum, item) => sum + (item.products as { price: number }).price * item.quantity,
         0,
     );
     const currency = (validItems[0].products as { currency: string }).currency ?? "INR";
@@ -74,7 +74,7 @@ export default async function CheckoutPage() {
                                                 <div className="mt-1 text-[13px] text-muted">Qty: {item.quantity}</div>
                                             </div>
                                             <div className="font-serif text-[14px] font-light text-gold">
-                                                {formatMoneyFromCents((item.products as { price_cents: number }).price_cents * item.quantity, (item.products as { currency: string }).currency)}
+                                                {formatMoney((item.products as { price: number }).price * item.quantity, (item.products as { currency: string }).currency)}
                                             </div>
                                         </div>
                                     ))}
@@ -83,7 +83,7 @@ export default async function CheckoutPage() {
                                 <div className="mt-4 flex justify-between text-[15px]">
                                     <span className="font-medium text-heading">Total</span>
                                     <span className="font-serif text-lg font-light text-gold">
-                                        {formatMoneyFromCents(totalCents, currency)}
+                                        {formatMoney(totalCents, currency)}
                                     </span>
                                 </div>
                             </div>

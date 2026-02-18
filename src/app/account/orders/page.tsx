@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { formatMoneyFromCents } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 
 import { GoldDivider } from "@/components/section-divider";
 
@@ -95,8 +95,8 @@ export default async function AccountOrdersPage() {
                                     {order.status.replace(/_/g, " ")}
                                 </span>
                                 <div className="font-serif text-[16px] font-light text-gold whitespace-nowrap">
-                                    {formatMoneyFromCents(
-                                        Math.round(Number(order.total_amount) * 100),
+                                    {formatMoney(
+                                        Number(order.total_amount),
                                         order.currency || "INR",
                                     )}
                                 </div>

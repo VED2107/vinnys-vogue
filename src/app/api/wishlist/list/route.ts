@@ -6,7 +6,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 type WishlistProductRow = {
   id: string;
   title: string;
-  price_cents: number;
+  price: number;
   currency: string;
   image_path: string | null;
 };
@@ -30,7 +30,7 @@ export async function GET() {
 
     const { data, error } = await supabase
       .from("wishlist")
-      .select("product_id, products(id, title, price_cents, currency, image_path)")
+      .select("product_id, products(id, title, price, currency, image_path)")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
@@ -47,7 +47,7 @@ export async function GET() {
         return {
           id: product.id,
           title: product.title,
-          price_cents: product.price_cents,
+          price: product.price,
           currency: product.currency,
           image_path: product.image_path,
         };

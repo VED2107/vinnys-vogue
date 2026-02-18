@@ -10,7 +10,7 @@ import { GoldDivider } from "@/components/section-divider";
 type ProductRow = {
   id: string;
   title: string;
-  price_cents: number;
+  price: number;
   currency: string;
   image_path: string | null;
   active: boolean;
@@ -34,7 +34,7 @@ export default async function ProductsPage({
 
   let query = supabase
     .from("products")
-    .select("id,title,price_cents,currency,image_path,active,stock,is_bestseller,is_new")
+    .select("id,title,price,currency,image_path,active,stock,is_bestseller,is_new")
     .eq("active", true)
     .order("created_at", { ascending: false });
 

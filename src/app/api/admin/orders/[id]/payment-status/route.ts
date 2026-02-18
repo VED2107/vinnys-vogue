@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createClient } from "@supabase/supabase-js";
 import { isValidPaymentStatus } from "@/lib/payment-status";
 
 export async function PATCH(
@@ -45,8 +46,16 @@ export async function PATCH(
     }
 
     if (payment_status === "paid") {
-        const { error } = await supabase.rpc("confirm_order_payment", {
+        // confirm_order_payment is GRANTED ONLY TO service_role
+        const serviceClient = createClient(
+            process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!,
+            { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } },
+        );
+
+        const { error } = await serviceClient.rpc("confirm_order_payment", {
             p_order_id: params.id,
+            p_razorpay_payment_id: "admin_override",
         });
 
         if (error) {

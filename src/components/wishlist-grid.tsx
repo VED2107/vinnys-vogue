@@ -6,7 +6,7 @@ import { ProductCard } from "@/components/product-card";
 type WishlistProduct = {
     id: string;
     title: string;
-    price_cents: number;
+    price: number;
     currency: string;
     imageUrl: string;
 };

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 // revalidatePath used by reconfirmPayment server action
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createClient } from "@supabase/supabase-js";
 import { formatMoney } from "@/lib/format";
 import { getProductImagePublicUrl } from "@/lib/product-images";
 import OrderStatusUpdater from "@/components/order-status-updater";
@@ -71,8 +72,16 @@ export default async function AdminOrderDetailPage({
             throw new Error("Forbidden");
         }
 
-        const { error } = await supabase.rpc("confirm_order_payment", {
+        // confirm_order_payment is GRANTED ONLY TO service_role
+        const serviceClient = createClient(
+            process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!,
+            { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } },
+        );
+
+        const { error } = await serviceClient.rpc("confirm_order_payment", {
             p_order_id: orderId,
+            p_razorpay_payment_id: "admin_reconfirm",
         });
 
         if (error) throw new Error("Reconfirmation failed");

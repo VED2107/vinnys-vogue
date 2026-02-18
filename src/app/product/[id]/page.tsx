@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getProductImagePublicUrl } from "@/lib/product-images";
-import { formatMoneyFromCents } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 import { getCategoryLabel } from "@/lib/categories";
 import VariantSelector from "@/components/variant-selector";
 import { FadeIn } from "@/components/fade-in";
@@ -22,7 +22,7 @@ export async function generateMetadata({
   const supabase = createSupabaseServerClient();
   const { data: product } = await supabase
     .from("products")
-    .select("title, description, price_cents, currency, image_path")
+    .select("title, description, price, currency, image_path")
     .eq("id", params.id)
     .eq("active", true)
     .maybeSingle();
@@ -34,7 +34,7 @@ export async function generateMetadata({
   const p = product as {
     title: string;
     description: string | null;
-    price_cents: number;
+    price: number;
     currency: string;
     image_path: string | null;
   };
@@ -43,7 +43,7 @@ export async function generateMetadata({
     ? getProductImagePublicUrl(supabase, p.image_path)
     : undefined;
 
-  const price = formatMoneyFromCents(p.price_cents, p.currency);
+  const price = formatMoney(p.price, p.currency);
   const desc = p.description
     ? `${p.description.slice(0, 150)}…`
     : `Shop ${p.title} — ${price} at Vinnys Vogue.`;
@@ -71,7 +71,7 @@ type ProductRow = {
   id: string;
   title: string;
   description: string | null;
-  price_cents: number;
+  price: number;
   currency: string;
   image_path: string | null;
   active: boolean;
@@ -100,7 +100,7 @@ export default async function ProductDetailPage({
 
   const { data: product } = await supabase
     .from("products")
-    .select("id,title,description,price_cents,currency,image_path,active,category,stock,is_bestseller,is_new")
+    .select("id,title,description,price,currency,image_path,active,category,stock,is_bestseller,is_new")
     .eq("id", params.id)
     .maybeSingle();
 
@@ -224,7 +224,7 @@ export default async function ProductDetailPage({
               <div className="gold-divider" />
 
               <div className="font-serif text-[24px] font-light text-gold">
-                {formatMoneyFromCents(p.price_cents, p.currency)}
+                {formatMoney(p.price, p.currency)}
               </div>
 
               {p.description ? (

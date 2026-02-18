@@ -47,7 +47,7 @@ export async function GET() {
     // Get carts older than 24h that have items
     const { data: carts, error: cartsError } = await admin
       .from("carts")
-      .select("id, user_id, created_at, cart_items(id, quantity, products(title, price_cents))")
+      .select("id, user_id, created_at, cart_items(id, quantity, products(title, price))")
       .lt("created_at", cutoff);
 
     if (cartsError) {
@@ -121,7 +121,7 @@ export async function GET() {
       items: c.cart_items.map((i: any) => ({
         quantity: i.quantity,
         product_title: i.products?.title ?? "Unknown",
-        price_cents: i.products?.price_cents ?? 0,
+        price: i.products?.price ?? 0,
       })),
       reminder_sent: sentSet.has(c.id),
     }));

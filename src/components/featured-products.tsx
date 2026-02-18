@@ -6,7 +6,7 @@ import { StaggerGrid, StaggerItem } from "@/components/fade-in";
 type ProductRow = {
   id: string;
   title: string;
-  price_cents: number;
+  price: number;
   currency: string;
   image_path: string | null;
   active: boolean;
@@ -37,7 +37,7 @@ export async function FeaturedProducts() {
 
   const { data } = await supabase
     .from("products")
-    .select("id,title,price_cents,currency,image_path,active,stock,is_bestseller,is_new")
+    .select("id,title,price,currency,image_path,active,stock,is_bestseller,is_new")
     .eq("active", true)
     .eq("show_on_home", true)
     .order("display_order", { ascending: true })

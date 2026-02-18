@@ -113,8 +113,12 @@ export async function processWebhookEvent(webhookEventId: string) {
       return;
     }
 
+    const razorpayPaymentId =
+      paymentEntity && typeof paymentEntity.id === "string" ? paymentEntity.id : "unknown";
+
     const { error: rpcError } = await supabase.rpc("confirm_order_payment", {
       p_order_id: order.id,
+      p_razorpay_payment_id: razorpayPaymentId,
     });
 
     if (rpcError) {
