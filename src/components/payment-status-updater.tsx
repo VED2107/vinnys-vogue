@@ -67,9 +67,17 @@ export default function PaymentStatusUpdater({
                 <button
                     onClick={handleUpdate}
                     disabled={isPending || paymentStatus === currentPaymentStatus}
-                    className="h-10 rounded-xl bg-zinc-900 px-4 text-sm font-medium text-zinc-50 transition hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="h-10 rounded-xl bg-zinc-900 px-4 text-sm font-medium text-zinc-50 transition hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                    {isPending ? "Updating…" : "Update"}
+                    {isPending ? (
+                        <>
+                            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                            </svg>
+                            Updating…
+                        </>
+                    ) : "Update"}
                 </button>
             </div>
 

@@ -141,7 +141,7 @@ export function ChangePasswordButton({ email }: { email: string }) {
         startTransition(async () => {
             const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
             const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: `${siteUrl}/update-password`,
+                redirectTo: `${siteUrl}/auth/callback?type=recovery`,
             });
 
             if (resetError) {
@@ -159,8 +159,14 @@ export function ChangePasswordButton({ email }: { email: string }) {
                 type="button"
                 onClick={handleClick}
                 disabled={isPending}
-                className="h-12 rounded-full border border-[rgba(0,0,0,0.1)] px-8 text-[14px] text-heading transition-all duration-300 hover:border-[rgba(0,0,0,0.2)] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="h-12 rounded-full border border-[rgba(0,0,0,0.1)] px-8 text-[14px] text-heading transition-all duration-300 hover:border-[rgba(0,0,0,0.2)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
+                {isPending && (
+                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                )}
                 {isPending ? "Sending…" : "Send Password Reset Email"}
             </button>
 

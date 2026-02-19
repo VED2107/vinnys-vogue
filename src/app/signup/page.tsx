@@ -25,12 +25,10 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      const origin = window.location.origin;
-
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password,
-        options: { emailRedirectTo: `${origin}/auth/callback?redirect=${encodeURIComponent(redirect)}` },
+        options: { emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback` },
       });
 
       if (signUpError) { setError(signUpError.message); return; }
@@ -83,8 +81,16 @@ export default function SignupPage() {
               <div className="rounded-[20px] border border-gold/20 bg-gold/5 px-5 py-3 text-[14px] text-heading">{notice}</div>
             ) : null}
 
-            <button type="submit" disabled={loading} className="h-12 w-full rounded-full bg-accent text-[14px] font-medium tracking-wide text-white hover-lift hover:bg-accent-hover disabled:opacity-60">
-              {loading ? "Creating…" : "Create account"}
+            <button type="submit" disabled={loading} className="h-12 w-full rounded-full bg-accent text-[14px] font-medium tracking-wide text-white hover-lift hover:bg-accent-hover disabled:opacity-60 flex items-center justify-center gap-2">
+              {loading ? (
+                <>
+                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                  </svg>
+                  Creating…
+                </>
+              ) : "Create account"}
             </button>
 
             <div className="pt-4 text-center text-[14px] text-muted">

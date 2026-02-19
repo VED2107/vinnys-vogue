@@ -128,9 +128,17 @@ export default function ProductReviewForm({
       <button
         type="submit"
         disabled={submitting}
-        className="h-10 rounded-full bg-accent px-6 text-[13px] font-medium text-white transition hover:bg-accent-hover disabled:opacity-50"
+        className="h-10 rounded-full bg-accent px-6 text-[13px] font-medium text-white transition hover:bg-accent-hover disabled:opacity-50 flex items-center gap-2"
       >
-        {submitting ? "Submitting..." : "Submit Review"}
+        {submitting ? (
+          <>
+            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+            </svg>
+            Submitting…
+          </>
+        ) : "Submit Review"}
       </button>
     </form>
   );

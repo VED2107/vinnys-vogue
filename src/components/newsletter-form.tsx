@@ -60,10 +60,16 @@ export function NewsletterForm() {
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="group relative h-12 rounded-full bg-[#0F2E22] px-6 text-[14px] font-medium text-white overflow-hidden transition-all duration-300 hover:bg-[#1C3A2A] hover:shadow-[0_4px_16px_rgba(15,46,34,0.2)] disabled:opacity-60"
+                    className="group relative h-12 rounded-full bg-[#0F2E22] px-6 text-[14px] font-medium text-white overflow-hidden transition-all duration-300 hover:bg-[#1C3A2A] hover:shadow-[0_4px_16px_rgba(15,46,34,0.2)] disabled:opacity-60 flex items-center gap-2"
                 >
                     <span className="glass-overlay pointer-events-none" />
-                    <span className="relative z-10">
+                    <span className="relative z-10 flex items-center gap-2">
+                        {isPending && (
+                            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                            </svg>
+                        )}
                         {isPending ? "Subscribing…" : "Subscribe"}
                     </span>
                 </button>

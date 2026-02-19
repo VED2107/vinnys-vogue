@@ -72,9 +72,17 @@ export default function AdminOrderRowActions({ orderId, status }: Props) {
                             setShowShipForm(true);
                         }}
                         disabled={isPending}
-                        className="h-9 rounded-full bg-zinc-900 px-4 text-[13px] text-white transition hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="h-9 rounded-full bg-zinc-900 px-4 text-[13px] text-white transition hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                     >
-                        {isPending ? "Updating..." : "Ship"}
+                        {isPending ? (
+                            <>
+                                <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                                </svg>
+                                Updating…
+                            </>
+                        ) : "Ship"}
                     </button>
                 ) : (
                     <div className="w-[260px] rounded-xl border border-zinc-200 bg-white p-3 shadow-sm">
@@ -118,9 +126,17 @@ export default function AdminOrderRowActions({ orderId, status }: Props) {
                                         });
                                     }}
                                     disabled={isPending}
-                                    className="h-8 rounded-md bg-zinc-900 px-3 text-[12px] text-white disabled:opacity-50"
+                                    className="h-8 rounded-md bg-zinc-900 px-3 text-[12px] text-white disabled:opacity-50 flex items-center gap-1.5"
                                 >
-                                    {isPending ? "Saving..." : "Confirm Ship"}
+                                    {isPending ? (
+                                        <>
+                                            <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                                            </svg>
+                                            Saving…
+                                        </>
+                                    ) : "Confirm Ship"}
                                 </button>
                             </div>
                         </div>
@@ -136,9 +152,17 @@ export default function AdminOrderRowActions({ orderId, status }: Props) {
             <button
                 onClick={() => updateStatus(next.value)}
                 disabled={isPending}
-                className="h-9 rounded-full bg-zinc-900 px-4 text-[13px] text-white transition hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="h-9 rounded-full bg-zinc-900 px-4 text-[13px] text-white transition hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
             >
-                {isPending ? "Updating..." : next.label}
+                {isPending ? (
+                    <>
+                        <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                        </svg>
+                        Updating…
+                    </>
+                ) : next.label}
             </button>
             {error ? <p className="max-w-[220px] text-right text-[12px] text-red-600">{error}</p> : null}
         </div>

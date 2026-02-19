@@ -3,14 +3,16 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
+
   const code = searchParams.get("code");
+  const type = searchParams.get("type");
+  const next = searchParams.get("next");
 
   if (!code) {
     return NextResponse.redirect(`${origin}/login`);
   }
 
   const supabase = createSupabaseServerClient();
-
   const { error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
@@ -18,15 +20,16 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/login?error=auth_failed`);
   }
 
-  // Verify session actually exists
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.redirect(`${origin}/login?error=session_missing`);
+  // Password recovery → send to update-password page
+  if (type === "recovery") {
+    return NextResponse.redirect(`${origin}/update-password`);
   }
 
-  // SUCCESS → user is now authenticated
+  // Custom next param (e.g. deep-link back to a specific page)
+  if (next) {
+    return NextResponse.redirect(`${origin}${next}`);
+  }
+
+  // Default: signup confirm, email change confirm, OAuth, magic link → account
   return NextResponse.redirect(`${origin}/account`);
 }
