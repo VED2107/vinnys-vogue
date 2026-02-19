@@ -4,6 +4,7 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ScrollHeader } from "@/components/scroll-header";
 import { GoldenBackground } from "@/components/golden-background";
+import { PageTransition } from "@/components/page-transition";
 import "./globals.css";
 
 const inter = Inter({
@@ -75,9 +76,9 @@ export default function RootLayout({
         <ScrollHeader>
           <Header />
         </ScrollHeader>
-        <div className="animate-fadeIn">
+        <PageTransition>
           {children}
-        </div>
+        </PageTransition>
         <Footer />
       </body>
     </html>

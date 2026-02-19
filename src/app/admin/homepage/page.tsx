@@ -16,6 +16,7 @@ import {
 import { ImageUploadInput } from "@/components/admin/image-upload-input";
 import { SaveContentForm } from "@/components/admin/save-content-form";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
+import { AdminSubmitButton } from "@/components/ui/AdminSubmitButton";
 
 export default async function AdminHomepagePage({
     searchParams,
@@ -143,7 +144,7 @@ export default async function AdminHomepagePage({
                             label="Hero Image"
                             sublabel="public URL or upload"
                         />
-                        <button type="submit" className={saveBtn}>Save Hero</button>
+                        <AdminSubmitButton className={saveBtn} pendingText="Saving…">Save Hero</AdminSubmitButton>
                     </div>
                 </SaveContentForm>
 
@@ -203,7 +204,7 @@ export default async function AdminHomepagePage({
                             </div>
                         ))}
 
-                        <button type="submit" className={saveBtn}>Save All Stories</button>
+                        <AdminSubmitButton className={saveBtn} pendingText="Saving…">Save All Stories</AdminSubmitButton>
                     </div>
                 </SaveContentForm>
 
@@ -261,7 +262,7 @@ export default async function AdminHomepagePage({
                             <label className={labelClass}>CTA Link Text</label>
                             <input name="field_cta_text" defaultValue={craft.cta_text} className={inputClass} />
                         </div>
-                        <button type="submit" className={saveBtn}>Save Craftsmanship</button>
+                        <AdminSubmitButton className={saveBtn} pendingText="Saving…">Save Craftsmanship</AdminSubmitButton>
                     </div>
                 </SaveContentForm>
 
@@ -282,7 +283,7 @@ export default async function AdminHomepagePage({
                             <label className={labelClass}>Description</label>
                             <RichTextEditor name="field_description" defaultValue={newsletter.description} />
                         </div>
-                        <button type="submit" className={saveBtn}>Save Newsletter</button>
+                        <AdminSubmitButton className={saveBtn} pendingText="Saving…">Save Newsletter</AdminSubmitButton>
                     </div>
                 </SaveContentForm>
 
@@ -304,7 +305,7 @@ export default async function AdminHomepagePage({
                             <ImageUploadInput name="field_mehendi_image" defaultValue={collections.mehendi_image} label="Mehendi Ceremony" />
                             <ImageUploadInput name="field_sangeet_image" defaultValue={collections.sangeet_image} label="Sangeet" />
                         </div>
-                        <button type="submit" className={saveBtn}>Save Collection Images</button>
+                        <AdminSubmitButton className={saveBtn} pendingText="Saving…">Save Collection Images</AdminSubmitButton>
                     </div>
                 </SaveContentForm>
             </div>

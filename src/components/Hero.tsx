@@ -251,15 +251,14 @@ export default function Hero({
         />
 
         {/* Subtext */}
-        <motion.p
+        <motion.div
           initial={prefersReduced ? false : { opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.6, ease: EASE_LUXURY, delay: 1.0 }}
-          className="max-w-[420px] text-[15px] leading-[1.75] font-light"
+          className="max-w-[420px] text-[15px] leading-[1.75] font-light [&>p]:m-0"
           style={{ color: "#6B6560" }}
-        >
-          {subtext}
-        </motion.p>
+          dangerouslySetInnerHTML={{ __html: subtext }}
+        />
 
         {/* CTA */}
         <motion.div

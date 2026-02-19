@@ -7,6 +7,7 @@ import {
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
 import VariantManager from "@/components/variant-manager";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
+import { AdminSubmitButton } from "@/components/ui/AdminSubmitButton";
 
 type VariantRow = {
   id: string;
@@ -514,9 +515,9 @@ export default async function AdminEditProductPage({
               >
                 Cancel
               </a>
-              <button className="h-11 rounded-xl bg-zinc-900 px-5 text-sm font-medium text-zinc-50 transition hover:bg-zinc-800">
+              <AdminSubmitButton className="h-11 rounded-xl bg-zinc-900 px-5 text-sm font-medium text-zinc-50 transition hover:bg-zinc-800" pendingText="Saving…">
                 Save changes
-              </button>
+              </AdminSubmitButton>
             </div>
           </div>
         </form>
@@ -531,12 +532,9 @@ export default async function AdminEditProductPage({
           </div>
           <form action={deleteProduct} className="mt-4">
             <input type="hidden" name="product_id" value={product.id} />
-            <button
-              type="submit"
-              className="h-11 rounded-xl bg-red-600 px-5 text-sm font-medium text-white transition hover:bg-red-700"
-            >
+            <AdminSubmitButton className="h-11 rounded-xl bg-red-600 px-5 text-sm font-medium text-white transition hover:bg-red-700" pendingText="Deleting…">
               Delete Product
-            </button>
+            </AdminSubmitButton>
           </form>
         </div>
       </div>

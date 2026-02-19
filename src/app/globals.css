@@ -148,12 +148,45 @@ h2 {
 
 /* ——— Button Styles ——— */
 .btn-luxury {
-  transition: all 300ms ease;
+  transition: all 300ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .btn-luxury:hover {
-  transform: translateY(-1px);
+  transform: translateY(-1px) scale(1.02);
   box-shadow: 0 6px 20px rgba(28, 58, 42, 0.15);
+}
+
+.btn-luxury:active {
+  transform: translateY(0) scale(0.97);
+  transition-duration: 100ms;
+}
+
+/* ——— Button Scale Micro-interactions ——— */
+.btn-micro {
+  transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 300ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.btn-micro:hover {
+  transform: scale(1.02);
+}
+
+.btn-micro:active {
+  transform: scale(0.97);
+  transition-duration: 100ms;
+}
+
+/* ——— Product Card Hover Lift ——— */
+.product-card-lift {
+  transition: transform 500ms cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 500ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.product-card-lift:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
 }
 
 /* ——— Soft Page Load ——— */

@@ -89,7 +89,7 @@ export function BtnPrimary(props: BtnProps) {
     return (
         <ButtonShell
             {...props}
-            base="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#C6A75E] to-[#E8D4A2] px-8 py-3 text-sm font-medium tracking-wide text-white shadow-[0_2px_12px_rgba(198,167,94,0.25)] transition-all duration-300 hover:shadow-[0_4px_20px_rgba(198,167,94,0.35)] hover:-translate-y-0.5"
+            base="btn-micro inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#C6A75E] to-[#E8D4A2] px-8 py-3 text-sm font-medium tracking-wide text-white shadow-[0_2px_12px_rgba(198,167,94,0.25)] transition-all duration-300 hover:shadow-[0_4px_20px_rgba(198,167,94,0.35)] hover:-translate-y-0.5"
         />
     );
 }
@@ -99,7 +99,7 @@ export function BtnSecondary(props: BtnProps) {
     return (
         <ButtonShell
             {...props}
-            base="inline-flex items-center justify-center rounded-full bg-[#0F2E22] px-8 py-3 text-sm font-medium tracking-wide text-white transition-all duration-300 hover:bg-[#1C3A2A] hover:-translate-y-0.5"
+            base="btn-micro inline-flex items-center justify-center rounded-full bg-[#0F2E22] px-8 py-3 text-sm font-medium tracking-wide text-white transition-all duration-300 hover:bg-[#1C3A2A] hover:-translate-y-0.5"
         />
     );
 }
@@ -109,7 +109,7 @@ export function BtnOutline(props: BtnProps) {
     return (
         <ButtonShell
             {...props}
-            base="inline-flex items-center justify-center rounded-full border border-[#C6A75E] px-8 py-3 text-sm font-medium tracking-wide text-[#C6A75E] transition-all duration-300 ease-[cubic-bezier(.22,1,.36,1)] hover:bg-[#C6A75E]/8 hover:-translate-y-0.5"
+            base="btn-micro inline-flex items-center justify-center rounded-full border border-[#C6A75E] px-8 py-3 text-sm font-medium tracking-wide text-[#C6A75E] transition-all duration-300 ease-[cubic-bezier(.22,1,.36,1)] hover:bg-[#C6A75E]/8 hover:-translate-y-0.5"
         />
     );
 }
@@ -127,7 +127,7 @@ export function GlassButton({ children, href, type, disabled, onClick, className
             disabled={disabled}
             onClick={onClick}
             className={className}
-            base="inline-flex items-center justify-center rounded-full backdrop-blur-md bg-white/20 border border-white/30 px-8 py-3 text-sm font-medium tracking-wide text-[#1C3A2A] shadow-lg transition-all duration-300 hover:bg-white/30"
+            base="btn-micro inline-flex items-center justify-center rounded-full backdrop-blur-md bg-white/20 border border-white/30 px-8 py-3 text-sm font-medium tracking-wide text-[#1C3A2A] shadow-lg transition-all duration-300 hover:bg-white/30"
         >
             {children}
         </ButtonShell>

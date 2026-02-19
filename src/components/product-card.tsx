@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { FadeImage } from "./fade-image";
 import Link from "next/link";
 import WishlistToggle from "./wishlist-toggle";
 import { ProductCardBadges } from "./product-badges";
@@ -23,14 +23,14 @@ export function ProductCard({ product, imageUrl, initialInWishlist, onWishlistTo
   const isSoldOut = (product.stock ?? 999) <= 0;
 
   return (
-    <Link href={`/product/${product.id}`} className="group block">
+    <Link href={`/product/${product.id}`} className="group block product-card-lift">
       <div className="relative overflow-hidden rounded-xl bg-[#EDE8E0] aspect-[4/5]">
-        <Image
+        <FadeImage
           src={imageUrl}
           alt={product.title}
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          className={`img-matte object-cover transition-opacity ${isSoldOut ? "opacity-50" : ""}`}
+          className={`img-matte object-cover ${isSoldOut ? "opacity-50" : ""}`}
         />
         <div className="glass-overlay pointer-events-none" />
 

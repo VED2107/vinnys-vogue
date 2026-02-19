@@ -4,6 +4,7 @@ import { PRODUCT_IMAGE_BUCKET } from "@/lib/product-images";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
 import VariantManager from "@/components/variant-manager";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
+import { AdminSubmitButton } from "@/components/ui/AdminSubmitButton";
 
 function parsePrice(value: string) {
   const normalized = value.replace(/,/g, "").trim();
@@ -350,9 +351,9 @@ export default async function AdminNewProductPage() {
               >
                 Dashboard
               </a>
-              <button className="h-11 rounded-xl bg-zinc-900 px-5 text-sm font-medium text-zinc-50 transition hover:bg-zinc-800">
+              <AdminSubmitButton className="h-11 rounded-xl bg-zinc-900 px-5 text-sm font-medium text-zinc-50 transition hover:bg-zinc-800" pendingText="Creating…">
                 Create product
-              </button>
+              </AdminSubmitButton>
             </div>
           </div>
         </form>

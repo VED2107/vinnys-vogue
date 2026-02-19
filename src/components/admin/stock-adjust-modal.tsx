@@ -187,11 +187,16 @@ export default function StockAdjustModal({
                   type="button"
                   disabled={!canSubmit || isPending}
                   onClick={submit}
-                  className={`h-11 w-full rounded-xl px-4 text-sm font-medium text-white transition ${
-                    !canSubmit || isPending ? "bg-zinc-400" : "bg-zinc-900 hover:bg-zinc-800"
-                  }`}
+                  className={`h-11 w-full rounded-xl px-4 text-sm font-medium text-white transition inline-flex items-center justify-center gap-2 ${!canSubmit || isPending ? "bg-zinc-400" : "bg-zinc-900 hover:bg-zinc-800"
+                    }`}
                 >
-                  Save Adjustment
+                  {isPending && (
+                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                  )}
+                  {isPending ? "Saving…" : "Save Adjustment"}
                 </button>
               </div>
 
@@ -222,11 +227,10 @@ export default function StockAdjustModal({
                               </div>
                             </div>
                             <div
-                              className={`flex-shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
-                                l.change >= 0
+                              className={`flex-shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${l.change >= 0
                                   ? "bg-emerald-50 text-emerald-700"
                                   : "bg-red-50 text-red-700"
-                              }`}
+                                }`}
                             >
                               {l.change >= 0 ? `+${l.change}` : l.change}
                             </div>

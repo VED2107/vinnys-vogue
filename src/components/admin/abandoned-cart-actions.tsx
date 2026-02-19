@@ -133,9 +133,15 @@ export default function AbandonedCartActions() {
                     <button
                       onClick={() => sendReminder(cart)}
                       disabled={sending === cart.cart_id}
-                      className="h-9 rounded-full bg-accent px-5 text-[13px] font-medium text-white hover:bg-accent-hover disabled:opacity-50"
+                      className="h-9 rounded-full bg-accent px-5 text-[13px] font-medium text-white hover:bg-accent-hover disabled:opacity-50 inline-flex items-center gap-1.5"
                     >
-                      {sending === cart.cart_id ? "Sending..." : "Send Reminder"}
+                      {sending === cart.cart_id && (
+                        <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                        </svg>
+                      )}
+                      {sending === cart.cart_id ? "Sending…" : "Send Reminder"}
                     </button>
                   ) : cart.reminder_sent ? (
                     <span className="text-[13px] text-green-700">Sent</span>

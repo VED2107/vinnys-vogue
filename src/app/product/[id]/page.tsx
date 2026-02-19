@@ -1,6 +1,6 @@
 import { redirect, notFound } from "next/navigation";
 import type { Metadata } from "next";
-import Image from "next/image";
+import { FadeImage } from "@/components/fade-image";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getProductImagePublicUrl } from "@/lib/product-images";
 import { formatMoney } from "@/lib/format";
@@ -187,7 +187,7 @@ export default async function ProductDetailPage({
         <FadeIn>
           <div className="grid grid-cols-1 gap-20 md:grid-cols-2">
             <div className="relative overflow-hidden rounded-[20px] bg-[#EDE8E0] aspect-[3/4]">
-              <Image
+              <FadeImage
                 src={imageUrl}
                 alt={p.title}
                 fill
@@ -228,9 +228,10 @@ export default async function ProductDetailPage({
               </div>
 
               {p.description ? (
-                <p className="text-[15px] leading-[1.7] text-muted whitespace-pre-line">
-                  {p.description}
-                </p>
+                <div
+                  className="text-[15px] leading-[1.7] text-muted [&>p]:m-0 [&>ul]:list-disc [&>ul]:pl-5 [&>ol]:list-decimal [&>ol]:pl-5"
+                  dangerouslySetInnerHTML={{ __html: p.description }}
+                />
               ) : null}
 
               <VariantSelector

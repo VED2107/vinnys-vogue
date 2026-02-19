@@ -88,3 +88,6 @@ export function StaggerItem({
         </motion.div>
     );
 }
+
+/** Alias for FadeIn — semantic name for scroll-reveal sections. */
+export const FadeInSection = FadeIn;

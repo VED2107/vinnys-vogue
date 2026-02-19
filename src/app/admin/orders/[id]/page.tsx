@@ -8,6 +8,7 @@ import { getProductImagePublicUrl } from "@/lib/product-images";
 import OrderStatusUpdater from "@/components/order-status-updater";
 import PaymentStatusUpdater from "@/components/payment-status-updater";
 import { MandalaBackground } from "@/components/decorative";
+import { AdminSubmitButton } from "@/components/ui/AdminSubmitButton";
 
 type OrderItemProduct = {
     id: string;
@@ -172,12 +173,12 @@ export default async function AdminOrderDetailPage({
                     </a>
                     {order.payment_status !== "paid" && (
                         <form action={reconfirmPayment}>
-                            <button
-                                type="submit"
+                            <AdminSubmitButton
                                 className="h-10 w-full sm:w-auto px-4 bg-neutral-900 text-white text-sm font-medium rounded-xl transition hover:bg-neutral-800"
+                                pendingText="Reconfirming…"
                             >
                                 Reconfirm Payment
-                            </button>
+                            </AdminSubmitButton>
                         </form>
                     )}
                 </div>

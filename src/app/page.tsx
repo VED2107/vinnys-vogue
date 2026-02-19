@@ -172,8 +172,8 @@ export default async function Home() {
             headline={renderHighlight(story.title, story.highlight)}
             paragraphs={
               <>
-                <p>{story.paragraph_1}</p>
-                <p>{story.paragraph_2}</p>
+                <div dangerouslySetInnerHTML={{ __html: story.paragraph_1 }} className="[&>p]:m-0" />
+                <div dangerouslySetInnerHTML={{ __html: story.paragraph_2 }} className="[&>p]:m-0" />
               </>
             }
             cta={
@@ -232,8 +232,8 @@ export default async function Home() {
                 </h2>
                 <div className="mt-5 w-10 h-[1px] bg-gold opacity-60" />
                 <div className="mt-5 space-y-3 text-[15px] leading-[1.7] text-neutral-600">
-                  <p>{craft.paragraph_1}</p>
-                  <p>{craft.paragraph_2}</p>
+                  <div dangerouslySetInnerHTML={{ __html: craft.paragraph_1 }} className="[&>p]:m-0" />
+                  <div dangerouslySetInnerHTML={{ __html: craft.paragraph_2 }} className="[&>p]:m-0" />
                 </div>
                 <a
                   href="/about"
@@ -267,9 +267,7 @@ export default async function Home() {
               <h3 className="mt-2 font-serif text-2xl lg:text-3xl font-light text-heading">
                 {newsletter.title}
               </h3>
-              <p className="mt-3 text-[14px] leading-[1.7] text-neutral-600">
-                {newsletter.description}
-              </p>
+              <div className="mt-3 text-[14px] leading-[1.7] text-neutral-600 [&>p]:m-0" dangerouslySetInnerHTML={{ __html: newsletter.description }} />
               <div className="mt-6 flex justify-center">
                 <NewsletterForm />
               </div>
