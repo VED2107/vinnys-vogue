@@ -3,7 +3,8 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createClient } from "@supabase/supabase-js";
-import { getTransporter, FROM_EMAIL } from "@/lib/email";
+import { sendResendEmail, SITE_URL } from "@/lib/email";
+import { buildEmailLayout, escapeHtml } from "@/lib/emailTemplates";
 
 function getServiceRoleSupabase() {
   return createClient(
@@ -59,6 +60,21 @@ export async function POST(request: Request) {
 
     const admin = getServiceRoleSupabase();
 
+    // Check if reminder already sent for this cart
+    const { data: existingLog } = await admin
+      .from("abandoned_cart_email_logs")
+      .select("id")
+      .eq("cart_id", cart_id)
+      .eq("status", "sent")
+      .maybeSingle();
+
+    if (existingLog) {
+      return NextResponse.json(
+        { error: "Reminder already sent for this cart" },
+        { status: 409 },
+      );
+    }
+
     // Get cart items for the email
     const { data: cartItems } = await admin
       .from("cart_items")
@@ -72,63 +88,64 @@ export async function POST(request: Request) {
 
     const itemListHtml = items
       .map((i) => {
-        const title = i.products?.title ?? "Product";
+        const title = escapeHtml(i.products?.title ?? "Product");
         const price = (i.products?.price ?? 0).toFixed(2);
-        return `<li>${title} × ${i.quantity} — ₹${price}</li>`;
+        return `<tr>
+          <td style="padding:8px 4px;border-bottom:1px solid #E8E4DF;font-size:13px;color:#333;">${title}</td>
+          <td style="padding:8px 4px;border-bottom:1px solid #E8E4DF;text-align:center;font-size:13px;color:#333;">${i.quantity}</td>
+          <td style="padding:8px 4px;border-bottom:1px solid #E8E4DF;text-align:right;font-size:13px;color:#333;">₹${price}</td>
+        </tr>`;
       })
       .join("");
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.vinnysvogue.in";
+    const bodyHtml = `
+      <p style="margin:0 0 16px 0;">You left some beautiful items in your cart. They're still waiting for you!</p>
 
-    const transporter = getTransporter();
-    if (!transporter) {
-      return NextResponse.json({ error: "SMTP not configured" }, { status: 500 });
-    }
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;margin-bottom:16px;">
+        <thead>
+          <tr style="background:#F8F5F0;">
+            <th style="padding:8px 4px;text-align:left;font-size:12px;font-weight:600;color:#1C3A2A;border-bottom:2px solid #1C3A2A;">Item</th>
+            <th style="padding:8px 4px;text-align:center;font-size:12px;font-weight:600;color:#1C3A2A;border-bottom:2px solid #1C3A2A;">Qty</th>
+            <th style="padding:8px 4px;text-align:right;font-size:12px;font-weight:600;color:#1C3A2A;border-bottom:2px solid #1C3A2A;">Price</th>
+          </tr>
+        </thead>
+        <tbody>${itemListHtml}</tbody>
+      </table>
+    `;
 
-    try {
-      await transporter.sendMail({
+    const html = buildEmailLayout({
+      title: "You Left Something Behind ✨",
+      bodyHtml,
+      ctaText: "Complete Your Purchase",
+      ctaUrl: `${SITE_URL}/cart`,
+      footerNote: "If you no longer wish to purchase these items, you can safely ignore this email.",
+    });
+
+    const sent = await sendResendEmail(
+      {
         to: email,
-        from: FROM_EMAIL,
+        from: "support@vinnysvogue.in",
         subject: "You left something behind — Vinnys Vogue",
-        html: `
-          <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111;max-width:560px">
-            <h2 style="font-size:20px;margin-bottom:16px">Your cart is waiting</h2>
-            <p>You have items in your cart that you haven't checked out yet:</p>
-            <ul style="padding-left:20px;margin:16px 0">${itemListHtml}</ul>
-            <p>Complete your purchase before they're gone!</p>
-            <a href="${siteUrl}/cart"
-               style="display:inline-block;margin-top:16px;padding:12px 24px;background:#1C1A18;color:#fff;text-decoration:none;border-radius:8px;font-size:14px">
-              Return to Cart
-            </a>
-            <p style="margin-top:24px;font-size:12px;color:#888">
-              If you no longer wish to purchase these items, you can ignore this email.
-            </p>
-          </div>
-        `,
-      });
+        html,
+      },
+      "cart_abandonment",
+    );
 
-      await admin.from("abandoned_cart_email_logs").insert({
-        cart_id,
-        user_id,
-        email,
-        status: "sent",
-      });
+    await admin.from("abandoned_cart_email_logs").insert({
+      cart_id,
+      user_id,
+      email,
+      status: sent ? "sent" : "failed",
+    });
 
-      return NextResponse.json({ success: true });
-    } catch (emailErr) {
-      await admin.from("abandoned_cart_email_logs").insert({
-        cart_id,
-        user_id,
-        email,
-        status: "failed",
-        error: emailErr instanceof Error ? emailErr.message : String(emailErr),
-      });
-
+    if (!sent) {
       return NextResponse.json(
         { error: "Failed to send email" },
         { status: 500 },
       );
     }
+
+    return NextResponse.json({ success: true });
   } catch (err) {
     console.error("/api/admin/abandoned-carts/send-reminder error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

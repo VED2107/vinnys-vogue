@@ -22,7 +22,7 @@ export function GoldenBackground() {
         viewBox="0 0 500 500"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="absolute -top-32 -right-32 h-[500px] w-[500px] lg:h-[700px] lg:w-[700px] animate-[spin_150s_linear_infinite]"
+        className="absolute -top-32 -right-32 w-[70vw] max-w-[700px] h-auto hidden sm:block animate-[spin_150s_linear_infinite]"
         style={{ opacity: 0.045 }}
       >
         <defs>
@@ -51,7 +51,7 @@ export function GoldenBackground() {
         viewBox="0 0 400 400"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="absolute -bottom-24 -left-24 h-[400px] w-[400px] lg:h-[550px] lg:w-[550px] animate-[spin_180s_linear_infinite_reverse]"
+        className="absolute -bottom-24 -left-24 w-[55vw] max-w-[550px] h-auto hidden sm:block animate-[spin_180s_linear_infinite_reverse]"
         style={{ opacity: 0.035 }}
       >
         <defs>

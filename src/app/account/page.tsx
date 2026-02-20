@@ -173,7 +173,7 @@ export default async function AccountPage() {
                     <section className="mt-12">
                         <h2 className="font-serif text-xl font-light text-heading">Change Password</h2>
                         <div className="mt-6 rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-bg-card p-6">
-                            <ChangePasswordButton email={user.email ?? ""} />
+                            <ChangePasswordButton />
                         </div>
                     </section>
 

@@ -1,4 +1,4 @@
-import { getTransporter, FROM_EMAIL } from "@/lib/email";
+import { sendResendEmail } from "@/lib/email";
 
 function formatAlertMessage(title: string, details: unknown) {
   const detailsJson = (() => {
@@ -21,14 +21,13 @@ function formatAlertMessage(title: string, details: unknown) {
 export async function notifyCriticalAlert(title: string, details: unknown) {
   const message = formatAlertMessage(title, details);
 
+  // Slack webhook (unchanged)
   const slackWebhookUrl = process.env.SLACK_WEBHOOK_URL;
   if (slackWebhookUrl) {
     try {
       await fetch(slackWebhookUrl, {
         method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ text: message }),
       });
     } catch (err) {
@@ -36,20 +35,23 @@ export async function notifyCriticalAlert(title: string, details: unknown) {
     }
   }
 
+  // Email alert via Resend
   const alertEmail = process.env.ALERT_EMAIL;
   if (alertEmail) {
-    try {
-      const transporter = getTransporter();
-      if (transporter) {
-        await transporter.sendMail({
-          to: alertEmail,
-          from: FROM_EMAIL || process.env.SMTP_USER || alertEmail,
-          subject: `Critical Alert: ${title}`,
-          text: message,
-        });
-      }
-    } catch (err) {
-      console.error("notifyCriticalAlert: email notify failed", err);
-    }
+    const escapedMessage = message
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll("\n", "<br/>");
+
+    await sendResendEmail(
+      {
+        to: alertEmail,
+        from: "no-reply@vinnysvogue.in",
+        subject: `Critical Alert: ${title}`,
+        html: `<div style="font-family:monospace;font-size:13px;padding:16px;background:#fff;color:#111;">${escapedMessage}</div>`,
+      },
+      "critical_alert",
+    );
   }
 }

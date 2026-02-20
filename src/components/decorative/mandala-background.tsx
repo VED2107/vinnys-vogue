@@ -42,14 +42,14 @@ export function MandalaBackground({
       initial={{ opacity: 0 }}
       animate={isInView ? { opacity: 1 } : undefined}
       transition={{ duration: 2, ease: EASE_LUXURY }}
-      className={`pointer-events-none absolute ${posMap[position]} z-0 ${className}`}
+      className={`pointer-events-none absolute ${posMap[position]} z-0 overflow-hidden hidden sm:block ${className}`}
       aria-hidden="true"
     >
       <svg
         viewBox="0 0 500 500"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="h-[900px] w-[900px] md:h-[900px] md:w-[900px] lg:h-[1000px] lg:w-[1000px] animate-[spin_180s_linear_infinite] opacity-[0.35]"
+        className="w-full max-w-[600px] md:max-w-[800px] lg:max-w-[900px] h-auto animate-[spin_180s_linear_infinite] opacity-[0.35]"
         style={opacity != null ? { opacity } : undefined}
       >
         <defs>

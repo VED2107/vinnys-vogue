@@ -1,36 +1,101 @@
-import nodemailer, { type Transporter } from "nodemailer";
+import { createClient } from "@supabase/supabase-js";
 
-let cachedTransporter: Transporter | null = null;
+/* ── Resend ─────────────────────────────────────────────── */
 
-export const smtpConfigured =
-  !!process.env.SMTP_HOST &&
-  !!process.env.SMTP_PORT &&
-  !!process.env.SMTP_USER &&
-  !!process.env.SMTP_PASS;
+const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
 
-export const FROM_EMAIL = process.env.FROM_EMAIL ?? "";
+export const resendConfigured = !!RESEND_API_KEY;
 
-export function getTransporter(): Transporter | null {
-  if (!smtpConfigured) return null;
+export const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://www.vinnysvogue.in";
 
-  if (cachedTransporter) return cachedTransporter;
+/* ── Service-role Supabase (for monitoring_events) ──────── */
+
+function getMonitoringSupabase() {
+  return createClient(
+    process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+    },
+  );
+}
+
+/* ── Central send helper ────────────────────────────────── */
+
+export type ResendEmailPayload = {
+  to: string;
+  from: string;
+  subject: string;
+  html: string;
+  attachments?: { filename: string; content: string }[];
+};
+
+/**
+ * Send an email via Resend API.
+ * - Always wrapped in try/catch — never throws.
+ * - Logs failures to `monitoring_events`.
+ * - Returns `true` on success, `false` on failure.
+ */
+export async function sendResendEmail(
+  payload: ResendEmailPayload,
+  context: string = "unknown",
+): Promise<boolean> {
+  if (!resendConfigured) {
+    console.warn(`[sendResendEmail][${context}] RESEND_API_KEY not set — skipping`);
+    return false;
+  }
 
   try {
-    const port = Number(process.env.SMTP_PORT);
-
-    cachedTransporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port,
-      secure: port === 465,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify({
+        from: payload.from,
+        to: [payload.to],
+        subject: payload.subject,
+        html: payload.html,
+        attachments: payload.attachments,
+      }),
     });
 
-    return cachedTransporter;
+    if (!res.ok) {
+      const errBody = await res.text().catch(() => "");
+      console.error(`[sendResendEmail][${context}] Resend ${res.status}:`, errBody);
+
+      await logEmailError(context, `Resend HTTP ${res.status}: ${errBody}`, payload.to);
+      return false;
+    }
+
+    return true;
   } catch (err) {
-    console.error("Failed to create SMTP transporter:", err);
-    return null;
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`[sendResendEmail][${context}] Exception:`, message);
+
+    await logEmailError(context, message, payload.to);
+    return false;
+  }
+}
+
+/* ── Error logging to monitoring_events ─────────────────── */
+
+async function logEmailError(context: string, error: string, to: string) {
+  try {
+    const supabase = getMonitoringSupabase();
+    await supabase.from("monitoring_events").insert({
+      type: "email_send_failed",
+      severity: "warning",
+      message: `Email send failed [${context}]`,
+      metadata: { context, error, to },
+    });
+  } catch (logErr) {
+    console.error("[sendResendEmail] Failed to log to monitoring_events:", logErr);
   }
 }

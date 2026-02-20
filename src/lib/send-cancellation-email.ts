@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
-import { getTransporter, FROM_EMAIL } from "@/lib/email";
+import { sendResendEmail } from "@/lib/email";
+import { buildEmailLayout, escapeHtml } from "@/lib/emailTemplates";
 
 function getServiceRoleSupabase() {
   return createClient(
@@ -15,23 +16,8 @@ function getServiceRoleSupabase() {
   );
 }
 
-function escapeHtml(input: string) {
-  return input
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
 export async function sendOrderCancellationEmail(orderId: string) {
   try {
-    const transporter = getTransporter();
-    if (!transporter) {
-      console.warn("[sendOrderCancellationEmail] SMTP disabled — skipping email");
-      return;
-    }
-
     const supabase = getServiceRoleSupabase();
 
     const { data: order, error: orderError } = await supabase
@@ -40,43 +26,40 @@ export async function sendOrderCancellationEmail(orderId: string) {
       .eq("id", orderId)
       .maybeSingle<{ id: string; user_id: string; total_amount: number }>();
 
-    if (orderError || !order) {
-      return;
-    }
+    if (orderError || !order) return;
 
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile } = await supabase
       .from("profiles")
       .select("email")
       .eq("id", order.user_id)
       .maybeSingle<{ email: string | null }>();
 
-    if (profileError || !profile?.email) {
-      return;
-    }
+    const to = String(profile?.email ?? "").trim();
+    if (!to) return;
 
-    const to = String(profile.email).trim();
-    if (!to) {
-      return;
-    }
+    const bodyHtml = `
+      <p style="margin:0 0 4px 0;font-size:13px;color:#666;">Order ID</p>
+      <p style="margin:0 0 16px 0;font-size:15px;font-weight:600;color:#1C3A2A;">${escapeHtml(order.id)}</p>
 
-    await transporter.sendMail({
-      to,
-      from: FROM_EMAIL,
-      subject: "Your Order Has Been Cancelled — Vinnys Vogue",
-      html: `
-        <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111">
-          <div style="text-align:center;margin-bottom:24px;">
-            <img src="https://www.vinnysvogue.in/icon-512.png" width="120" alt="Vinnys Vogue" style="display:block;width:120px;height:auto;" />
-          </div>
-          <h2 style="margin:0 0 8px 0;">Your order has been cancelled</h2>
-          <p style="margin:0 0 10px 0;">Order #${escapeHtml(order.id)}</p>
-          <p style="margin:0 0 16px 0;">No refund was initiated automatically. If you need assistance, please contact support.</p>
-          <hr style="border:none;border-top:1px solid #eee;margin:16px 0;"/>
-          <p style="margin:0;color:#666;font-size:12px;">© Vinnys Vogue — Where fashion meets elegance</p>
-        </div>
-      `,
+      <p style="margin:0 0 16px 0;">Your order has been cancelled. If a payment was made, any applicable refund will be processed according to our refund policy.</p>
+
+      <p style="margin:0;font-size:13px;color:#666;">If you did not request this cancellation or need assistance, please contact us at <a href="mailto:support@vinnysvogue.in" style="color:#1C3A2A;text-decoration:none;">support@vinnysvogue.in</a>.</p>
+    `;
+
+    const html = buildEmailLayout({
+      title: "Order Cancelled",
+      bodyHtml,
     });
 
+    await sendResendEmail(
+      {
+        to,
+        from: "support@vinnysvogue.in",
+        subject: "Your Order Has Been Cancelled — Vinnys Vogue",
+        html,
+      },
+      "order_cancellation",
+    );
   } catch (err) {
     console.error("[sendOrderCancellationEmail] Failed:", err);
   }

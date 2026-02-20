@@ -78,6 +78,11 @@ export default function LoginPage() {
             <div className="space-y-2">
               <label className="text-[11px] font-medium tracking-[0.2em] text-muted uppercase">Password</label>
               <input type="password" className={inputClass} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
+              <div className="text-right">
+                <a href="/change-password" className="text-[13px] text-muted underline underline-offset-4 hover:text-heading">
+                  Forgot password?
+                </a>
+              </div>
             </div>
 
             {error ? (

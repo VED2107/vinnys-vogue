@@ -128,59 +128,13 @@ export function UpdateProfileForm({ profile }: { profile: ProfileData }) {
     );
 }
 
-export function ChangePasswordButton({ email }: { email: string }) {
-    const supabase = createSupabaseBrowserClient();
-    const [isPending, startTransition] = useTransition();
-    const [success, setSuccess] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
-    function handleClick() {
-        setSuccess(false);
-        setError(null);
-
-        startTransition(async () => {
-            const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
-            const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: `${siteUrl}/auth/callback?type=recovery`,
-            });
-
-            if (resetError) {
-                setError(resetError.message);
-            } else {
-                setSuccess(true);
-                setTimeout(() => setSuccess(false), 5000);
-            }
-        });
-    }
-
+export function ChangePasswordButton() {
     return (
-        <div className="space-y-3">
-            <button
-                type="button"
-                onClick={handleClick}
-                disabled={isPending}
-                className="h-12 rounded-full border border-[rgba(0,0,0,0.1)] px-8 text-[14px] text-heading transition-all duration-300 hover:border-[rgba(0,0,0,0.2)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-                {isPending && (
-                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                    </svg>
-                )}
-                {isPending ? "Sending…" : "Send Password Reset Email"}
-            </button>
-
-            {error && (
-                <div className="rounded-[20px] border border-red-200 bg-red-50 px-5 py-3 text-[14px] text-red-700">
-                    {error}
-                </div>
-            )}
-
-            {success && (
-                <div className="rounded-[20px] border border-green-200 bg-green-50 px-5 py-3 text-[14px] text-green-800">
-                    Password reset email sent to {email}. Check your inbox.
-                </div>
-            )}
-        </div>
+        <a
+            href="/change-password"
+            className="inline-flex h-12 items-center rounded-full border border-[rgba(0,0,0,0.1)] px-8 text-[14px] text-heading transition-all duration-300 hover:border-[rgba(0,0,0,0.2)]"
+        >
+            Change Password
+        </a>
     );
 }

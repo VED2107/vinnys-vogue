@@ -90,7 +90,7 @@ export function StorySection({
         {/* Text with staggered reveal */}
         <div
           ref={textRef}
-          className="relative flex-1 flex items-center lg:min-h-[560px] overflow-hidden lg:overflow-visible"
+          className="relative flex-1 flex items-center lg:min-h-[560px] overflow-hidden"
         >
           {mandala}
           <div className="relative z-10 max-w-[480px]">

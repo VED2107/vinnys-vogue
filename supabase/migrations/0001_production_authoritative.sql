@@ -212,6 +212,7 @@ create table if not exists public.orders (
   email text,
   phone text,
   address_line1 text,
+  address_line2 text,
   postal_code text,
   city text,
   state text,
@@ -396,10 +397,10 @@ create index if not exists idx_reviews_product
 on public.reviews(product_id, created_at desc);
 
 -- ==========================================================
--- WISHLIST
+-- WISHLIST (table name = "wishlist", not "wishlists")
 -- ==========================================================
 
-create table if not exists public.wishlists (
+create table if not exists public.wishlist (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete cascade,
   product_id uuid references public.products(id) on delete cascade,
@@ -407,18 +408,18 @@ create table if not exists public.wishlists (
   unique(user_id,product_id)
 );
 
-alter table public.wishlists enable row level security;
+alter table public.wishlist enable row level security;
 
-drop policy if exists wishlist_policy on public.wishlists;
+drop policy if exists wishlist_policy on public.wishlist;
 
 create policy wishlist_policy
-on public.wishlists
+on public.wishlist
 for all
 using (user_id = auth.uid())
 with check (user_id = auth.uid());
 
 create index if not exists idx_wishlist_user
-on public.wishlists(user_id);
+on public.wishlist(user_id);
 
 -- ==========================================================
 -- NEWSLETTER
@@ -430,8 +431,180 @@ create table if not exists public.newsletter_subscribers (
   created_at timestamptz default now()
 );
 
+alter table public.newsletter_subscribers enable row level security;
+
+drop policy if exists newsletter_select on public.newsletter_subscribers;
+drop policy if exists newsletter_insert on public.newsletter_subscribers;
+drop policy if exists newsletter_admin on public.newsletter_subscribers;
+
+create policy newsletter_insert
+on public.newsletter_subscribers for insert
+with check (true);
+
+create policy newsletter_select
+on public.newsletter_subscribers for select
+using (public.is_admin());
+
+create policy newsletter_admin
+on public.newsletter_subscribers for all
+using (public.is_admin())
+with check (public.is_admin());
+
 create index if not exists idx_newsletter_email
 on public.newsletter_subscribers(email);
+
+-- ==========================================================
+-- SITE CONTENT (CMS)
+-- ==========================================================
+
+create table if not exists public.site_content (
+  id uuid primary key default gen_random_uuid(),
+  key text unique not null,
+  value jsonb not null default '{}'::jsonb,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table public.site_content enable row level security;
+
+drop policy if exists site_content_public_read on public.site_content;
+drop policy if exists site_content_admin on public.site_content;
+
+create policy site_content_public_read
+on public.site_content for select
+using (true);
+
+create policy site_content_admin
+on public.site_content for all
+using (public.is_admin())
+with check (public.is_admin());
+
+-- ==========================================================
+-- INVOICES
+-- ==========================================================
+
+create table if not exists public.invoices (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid references public.orders(id) on delete cascade,
+  invoice_number text unique not null,
+  created_at timestamptz default now()
+);
+
+alter table public.invoices enable row level security;
+
+drop policy if exists invoices_select on public.invoices;
+drop policy if exists invoices_admin on public.invoices;
+
+create policy invoices_select
+on public.invoices for select
+using (
+  order_id in (select id from public.orders where user_id = auth.uid())
+  or public.is_admin()
+);
+
+create policy invoices_admin
+on public.invoices for all
+using (public.is_admin() or auth.role() = 'service_role')
+with check (public.is_admin() or auth.role() = 'service_role');
+
+create index if not exists idx_invoices_order
+on public.invoices(order_id);
+
+-- ==========================================================
+-- ORDER EMAIL LOGS
+-- ==========================================================
+
+create table if not exists public.order_email_logs (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid references public.orders(id) on delete cascade,
+  status text not null default 'pending',
+  error text,
+  created_at timestamptz default now()
+);
+
+alter table public.order_email_logs enable row level security;
+
+drop policy if exists order_email_logs_service on public.order_email_logs;
+
+create policy order_email_logs_service
+on public.order_email_logs
+for all
+using (auth.role() = 'service_role' or public.is_admin())
+with check (auth.role() = 'service_role' or public.is_admin());
+
+create index if not exists idx_order_email_logs_order
+on public.order_email_logs(order_id);
+
+-- ==========================================================
+-- SHIPPING EMAIL LOGS
+-- ==========================================================
+
+create table if not exists public.shipping_email_logs (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid references public.orders(id) on delete cascade,
+  status text not null default 'pending',
+  error text,
+  created_at timestamptz default now()
+);
+
+alter table public.shipping_email_logs enable row level security;
+
+drop policy if exists shipping_email_logs_service on public.shipping_email_logs;
+
+create policy shipping_email_logs_service
+on public.shipping_email_logs
+for all
+using (auth.role() = 'service_role' or public.is_admin())
+with check (auth.role() = 'service_role' or public.is_admin());
+
+create index if not exists idx_shipping_email_logs_order
+on public.shipping_email_logs(order_id);
+
+-- ==========================================================
+-- MONITORING EVENTS
+-- ==========================================================
+
+create table if not exists public.monitoring_events (
+  id uuid primary key default gen_random_uuid(),
+  type text not null,
+  severity text not null default 'info',
+  message text,
+  metadata jsonb,
+  created_at timestamptz default now()
+);
+
+alter table public.monitoring_events enable row level security;
+
+drop policy if exists monitoring_events_service on public.monitoring_events;
+
+create policy monitoring_events_service
+on public.monitoring_events
+for all
+using (auth.role() = 'service_role' or public.is_admin())
+with check (auth.role() = 'service_role' or public.is_admin());
+
+create index if not exists idx_monitoring_events_created
+on public.monitoring_events(created_at desc);
+
+-- ==========================================================
+-- SYSTEM STATE (key-value store for cron state, etc.)
+-- ==========================================================
+
+create table if not exists public.system_state (
+  key text primary key,
+  value jsonb not null default '{}'::jsonb,
+  updated_at timestamptz default now()
+);
+
+alter table public.system_state enable row level security;
+
+drop policy if exists system_state_service on public.system_state;
+
+create policy system_state_service
+on public.system_state
+for all
+using (auth.role() = 'service_role' or public.is_admin())
+with check (auth.role() = 'service_role' or public.is_admin());
 
 -- ==========================================================
 -- ANALYTICS VIEW
@@ -454,3 +627,496 @@ select
   count(*) filter (where payment_status = 'failed') as failed_count,
   count(*) filter (where payment_status = 'refunded') as refunded_count
 from public.orders;
+
+-- ==========================================================
+-- PASSWORD RESET OTP SYSTEM
+-- ==========================================================
+
+create table if not exists public.password_otps (
+  id uuid primary key default gen_random_uuid(),
+  email text not null,
+  otp_hash text not null,
+  expires_at timestamptz not null,
+  attempts int not null default 0,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_password_otps_email
+on public.password_otps(email);
+
+create index if not exists idx_password_otps_expires
+on public.password_otps(expires_at);
+
+-- ==========================================================
+-- OTP RATE LIMITS
+-- ==========================================================
+
+create table if not exists public.otp_rate_limits (
+  id uuid primary key default gen_random_uuid(),
+  email text,
+  ip_address text,
+  created_at timestamptz default now()
+);
+
+create index if not exists idx_otp_rate_email
+on public.otp_rate_limits(email);
+
+create index if not exists idx_otp_rate_ip
+on public.otp_rate_limits(ip_address);
+
+-- ==========================================================
+-- OTP RLS (service_role only)
+-- ==========================================================
+
+alter table public.password_otps enable row level security;
+alter table public.otp_rate_limits enable row level security;
+
+drop policy if exists "no direct access password_otps" on public.password_otps;
+create policy "no direct access password_otps"
+on public.password_otps
+for all
+using (false);
+
+drop policy if exists "no direct access otp_rate_limits" on public.otp_rate_limits;
+create policy "no direct access otp_rate_limits"
+on public.otp_rate_limits
+for all
+using (false);
+
+-- ==========================================================
+-- SIGNUP OTP SYSTEM
+-- ==========================================================
+
+create table if not exists public.signup_otps (
+  id uuid primary key default gen_random_uuid(),
+  email text not null,
+  otp_hash text not null,
+  expires_at timestamptz not null,
+  attempts int not null default 0,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_signup_otps_email
+on public.signup_otps(email);
+
+create index if not exists idx_signup_otps_expires
+on public.signup_otps(expires_at);
+
+alter table public.signup_otps enable row level security;
+
+drop policy if exists "no direct access signup_otps" on public.signup_otps;
+create policy "no direct access signup_otps"
+on public.signup_otps
+for all
+using (false);
+
+-- ==========================================================
+-- OTP CLEANUP FUNCTION (covers password + signup otps)
+-- ==========================================================
+
+create or replace function public.cleanup_expired_otps()
+returns void
+language plpgsql
+as $$
+begin
+  delete from public.password_otps
+  where expires_at < now();
+
+  delete from public.signup_otps
+  where expires_at < now();
+
+  delete from public.otp_rate_limits
+  where created_at < now() - interval '24 hours';
+end;
+$$;
+
+-- ==========================================================
+-- RPC: increment_cart_item
+-- Increments cart item quantity or inserts a new row.
+-- ==========================================================
+
+create or replace function public.increment_cart_item(
+  p_cart_id uuid,
+  p_product_id uuid,
+  p_quantity integer,
+  p_variant_id uuid default null
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_existing_id uuid;
+begin
+  -- Look for an existing cart item matching product + variant
+  select id into v_existing_id
+  from public.cart_items
+  where cart_id = p_cart_id
+    and product_id = p_product_id
+    and (variant_id is not distinct from p_variant_id)
+  limit 1;
+
+  if v_existing_id is not null then
+    update public.cart_items
+    set quantity = quantity + p_quantity
+    where id = v_existing_id;
+  else
+    insert into public.cart_items (cart_id, product_id, variant_id, quantity)
+    values (p_cart_id, p_product_id, p_variant_id, p_quantity);
+  end if;
+end;
+$$;
+
+-- ==========================================================
+-- RPC: checkout_cart
+-- Atomically converts the current user's cart into an order.
+-- Returns the new order UUID.
+-- ==========================================================
+
+create or replace function public.checkout_cart()
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user_id uuid;
+  v_cart_id uuid;
+  v_order_id uuid;
+  v_total numeric(12,2) := 0;
+  v_item record;
+begin
+  v_user_id := auth.uid();
+  if v_user_id is null then
+    raise exception 'Not authenticated';
+  end if;
+
+  -- Find the user's cart
+  select id into v_cart_id
+  from public.carts
+  where user_id = v_user_id;
+
+  if v_cart_id is null then
+    raise exception 'Cart is empty';
+  end if;
+
+  -- Ensure the cart has items
+  if not exists (select 1 from public.cart_items where cart_id = v_cart_id) then
+    raise exception 'Cart is empty';
+  end if;
+
+  -- Create the order
+  insert into public.orders (user_id, status, payment_status)
+  values (v_user_id, 'pending', 'unpaid')
+  returning id into v_order_id;
+
+  -- Copy cart items → order items, decrement stock
+  for v_item in
+    select ci.product_id, ci.variant_id, ci.quantity, p.price, p.title, p.image_path, p.stock
+    from public.cart_items ci
+    join public.products p on p.id = ci.product_id
+    where ci.cart_id = v_cart_id
+  loop
+    if v_item.stock < v_item.quantity then
+      raise exception 'Insufficient stock for %', v_item.title;
+    end if;
+
+    insert into public.order_items (order_id, product_id, quantity, price, product_name, image_url)
+    values (v_order_id, v_item.product_id, v_item.quantity, v_item.price, v_item.title, v_item.image_path);
+
+    update public.products
+    set stock = stock - v_item.quantity,
+        updated_at = now()
+    where id = v_item.product_id;
+
+    v_total := v_total + (v_item.price * v_item.quantity);
+  end loop;
+
+  -- Set total
+  update public.orders
+  set total_amount = v_total, updated_at = now()
+  where id = v_order_id;
+
+  -- Clear the cart
+  delete from public.cart_items where cart_id = v_cart_id;
+
+  return v_order_id;
+end;
+$$;
+
+-- ==========================================================
+-- RPC: confirm_order_payment
+-- Marks an order as paid + status = confirmed.
+-- GRANT to service_role only.
+-- ==========================================================
+
+create or replace function public.confirm_order_payment(
+  p_order_id uuid,
+  p_razorpay_payment_id text
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update public.orders
+  set payment_status = 'paid',
+      status = 'confirmed',
+      razorpay_payment_id = p_razorpay_payment_id,
+      updated_at = now()
+  where id = p_order_id
+    and payment_status != 'paid';
+
+  -- Log the event
+  insert into public.order_events (order_id, event_type, event_data)
+  values (
+    p_order_id,
+    'payment_confirmed',
+    jsonb_build_object('razorpay_payment_id', p_razorpay_payment_id, 'confirmed_at', now())
+  );
+end;
+$$;
+
+-- Restrict confirm_order_payment to service_role only
+revoke execute on function public.confirm_order_payment(uuid, text) from public;
+revoke execute on function public.confirm_order_payment(uuid, text) from authenticated;
+grant execute on function public.confirm_order_payment(uuid, text) to service_role;
+
+-- ==========================================================
+-- RPC: update_order_status
+-- Admin-only: progresses order status, optionally sets
+-- shipping details.
+-- ==========================================================
+
+create or replace function public.update_order_status(
+  p_order_id uuid,
+  p_new_status text,
+  p_tracking_number text default null,
+  p_courier_name text default null
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  -- Admin check
+  if not public.is_admin() then
+    raise exception 'Forbidden';
+  end if;
+
+  update public.orders
+  set status = p_new_status::order_status,
+      tracking_number = coalesce(p_tracking_number, tracking_number),
+      courier_name = coalesce(p_courier_name, courier_name),
+      shipped_at = case when p_new_status = 'shipped' then now() else shipped_at end,
+      delivered_at = case when p_new_status = 'delivered' then now() else delivered_at end,
+      updated_at = now()
+  where id = p_order_id;
+
+  insert into public.order_events (order_id, event_type, event_data)
+  values (
+    p_order_id,
+    'status_changed',
+    jsonb_build_object('new_status', p_new_status, 'tracking_number', p_tracking_number, 'courier_name', p_courier_name)
+  );
+end;
+$$;
+
+-- ==========================================================
+-- RPC: cancel_order
+-- Cancels an order and restores stock.
+-- ==========================================================
+
+create or replace function public.cancel_order(
+  p_order_id uuid
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_order record;
+  v_item record;
+begin
+  select id, user_id, status, payment_status
+  into v_order
+  from public.orders
+  where id = p_order_id;
+
+  if v_order is null then
+    raise exception 'Order not found';
+  end if;
+
+  -- Allow owner or admin
+  if v_order.user_id != auth.uid() and not public.is_admin() then
+    raise exception 'Forbidden';
+  end if;
+
+  if v_order.status::text = 'cancelled' then
+    raise exception 'Order already cancelled';
+  end if;
+
+  if v_order.status::text in ('shipped', 'delivered') then
+    raise exception 'Order cannot be cancelled — already %', v_order.status;
+  end if;
+
+  -- Restore stock
+  for v_item in
+    select product_id, quantity
+    from public.order_items
+    where order_id = p_order_id
+  loop
+    update public.products
+    set stock = stock + v_item.quantity,
+        updated_at = now()
+    where id = v_item.product_id;
+  end loop;
+
+  -- Update order
+  update public.orders
+  set status = 'cancelled',
+      updated_at = now()
+  where id = p_order_id;
+
+  insert into public.order_events (order_id, event_type, event_data)
+  values (
+    p_order_id,
+    'cancelled',
+    jsonb_build_object('cancelled_at', now(), 'cancelled_by', auth.uid())
+  );
+end;
+$$;
+
+-- ==========================================================
+-- RPC: submit_review
+-- Inserts a review for a product. Returns the review UUID.
+-- ==========================================================
+
+create or replace function public.submit_review(
+  p_product_id uuid,
+  p_rating integer,
+  p_review_text text default null
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user_id uuid;
+  v_review_id uuid;
+begin
+  v_user_id := auth.uid();
+  if v_user_id is null then
+    raise exception 'Not authenticated';
+  end if;
+
+  if p_rating < 1 or p_rating > 5 then
+    raise exception 'Rating must be between 1 and 5';
+  end if;
+
+  -- Check if user already reviewed this product
+  if exists (
+    select 1 from public.reviews
+    where product_id = p_product_id and user_id = v_user_id
+  ) then
+    raise exception 'You have already reviewed this product';
+  end if;
+
+  insert into public.reviews (product_id, user_id, rating, comment)
+  values (p_product_id, v_user_id, p_rating, p_review_text)
+  returning id into v_review_id;
+
+  return v_review_id;
+end;
+$$;
+
+-- ==========================================================
+-- RPC: admin_adjust_product_stock
+-- Admin-only: adjusts stock and logs the change.
+-- ==========================================================
+
+create or replace function public.admin_adjust_product_stock(
+  p_product_id uuid,
+  p_change integer,
+  p_reason text
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not public.is_admin() then
+    raise exception 'Forbidden';
+  end if;
+
+  update public.products
+  set stock = stock + p_change,
+      updated_at = now()
+  where id = p_product_id;
+
+  -- The stock check constraint will raise if stock goes negative
+
+  insert into public.inventory_logs (product_id, change, reason)
+  values (p_product_id, p_change, p_reason);
+end;
+$$;
+
+-- ==========================================================
+-- EMAIL LOG TABLES
+-- ==========================================================
+
+create table if not exists public.shipping_email_logs (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid references public.orders(id) on delete cascade,
+  status text not null default 'pending',
+  error text,
+  created_at timestamptz default now()
+);
+alter table public.shipping_email_logs enable row level security;
+drop policy if exists shipping_email_logs_admin on public.shipping_email_logs;
+create policy shipping_email_logs_admin on public.shipping_email_logs for all using (public.is_admin());
+
+create table if not exists public.order_email_logs (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid references public.orders(id) on delete cascade,
+  status text not null default 'pending',
+  error text,
+  created_at timestamptz default now()
+);
+alter table public.order_email_logs enable row level security;
+drop policy if exists order_email_logs_admin on public.order_email_logs;
+create policy order_email_logs_admin on public.order_email_logs for all using (public.is_admin());
+
+create table if not exists public.abandoned_cart_email_logs (
+  id uuid primary key default gen_random_uuid(),
+  cart_id uuid references public.carts(id) on delete cascade,
+  user_id uuid references auth.users(id) on delete cascade,
+  email text not null,
+  status text not null default 'pending',
+  error text,
+  created_at timestamptz default now()
+);
+alter table public.abandoned_cart_email_logs enable row level security;
+drop policy if exists abandoned_cart_email_logs_admin on public.abandoned_cart_email_logs;
+create policy abandoned_cart_email_logs_admin on public.abandoned_cart_email_logs for all using (public.is_admin());
+
+-- ==========================================================
+-- STOCK NON-NEGATIVE CONSTRAINT
+-- ==========================================================
+
+do $$ begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'stock_non_negative'
+      and conrelid = 'public.products'::regclass
+  ) then
+    alter table public.products
+    add constraint stock_non_negative check (stock >= 0);
+  end if;
+end $$;

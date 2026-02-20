@@ -1,6 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
-import { getTransporter, FROM_EMAIL } from "@/lib/email";
-import { generateInvoiceNumber, renderInvoicePdfBuffer, type InvoiceOrderRow } from "@/lib/invoice-pdf";
+import { sendResendEmail } from "@/lib/email";
+import { buildEmailLayout, escapeHtml } from "@/lib/emailTemplates";
+import {
+  generateInvoiceNumber,
+  renderInvoicePdfBuffer,
+  type InvoiceOrderRow,
+} from "@/lib/invoice-pdf";
 
 function getServiceRoleSupabase() {
   return createClient(
@@ -16,40 +21,20 @@ function getServiceRoleSupabase() {
   );
 }
 
-function escapeHtml(input: string) {
-  return input
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
 export async function sendOrderConfirmation(orderId: string) {
   try {
-    const transporter = getTransporter();
-    if (!transporter) {
-      console.warn("[sendOrderConfirmation] SMTP disabled — skipping order email");
-      return;
-    }
-
     const supabase = getServiceRoleSupabase();
 
     const { data: orderData, error: orderError } = await supabase
       .from("orders")
       .select(
-        "id,user_id,created_at,payment_status,total_amount,full_name,phone,address_line1,address_line2,city,state,postal_code,country,order_items(quantity,price,products(title))",
+        "id,user_id,created_at,payment_status,total_amount,razorpay_payment_id,full_name,phone,address_line1,address_line2,city,state,postal_code,country,order_items(quantity,price,products(title))",
       )
       .eq("id", orderId)
       .maybeSingle();
 
-    if (orderError) {
-      console.error("[sendOrderConfirmation] Order fetch error:", orderError.message);
-      return;
-    }
-
-    if (!orderData) {
-      console.error("[sendOrderConfirmation] Order not found:", orderId);
+    if (orderError || !orderData) {
+      console.error("[sendOrderConfirmation] Order fetch error:", orderError?.message ?? "not found");
       return;
     }
 
@@ -76,16 +61,11 @@ export async function sendOrderConfirmation(orderId: string) {
         : [],
     };
 
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile } = await supabase
       .from("profiles")
       .select("email")
       .eq("id", order.user_id)
       .maybeSingle<{ email: string | null }>();
-
-    if (profileError) {
-      console.error("[sendOrderConfirmation] Profile fetch error:", profileError.message);
-      return;
-    }
 
     const toEmail = String(profile?.email ?? "").trim();
     if (!toEmail) {
@@ -93,32 +73,26 @@ export async function sendOrderConfirmation(orderId: string) {
       return;
     }
 
-    const { data: existingInvoice, error: existingInvoiceError } = await supabase
+    // Invoice number
+    const { data: existingInvoice } = await supabase
       .from("invoices")
       .select("invoice_number")
       .eq("order_id", order.id)
       .maybeSingle<{ invoice_number: string }>();
 
-    if (existingInvoiceError) {
-      console.error("[sendOrderConfirmation] Invoice fetch error:", existingInvoiceError.message);
-      return;
-    }
-
     const invoiceNumber = existingInvoice?.invoice_number
       ? String(existingInvoice.invoice_number)
       : await generateInvoiceNumber({ supabase });
 
-    const pdfBuffer = await renderInvoicePdfBuffer({ invoiceNumber, order });
+    // If no existing invoice record, create one
+    if (!existingInvoice) {
+      await supabase.from("invoices").insert({
+        order_id: order.id,
+        invoice_number: invoiceNumber,
+      });
+    }
 
-    const addressLines = [
-      order.full_name,
-      order.phone,
-      order.address_line1,
-      order.address_line2,
-      [order.city, order.state, order.postal_code].filter(Boolean).join(" "),
-      order.country,
-    ].filter(Boolean) as string[];
-
+    // Build items table
     const itemsRows = (order.order_items ?? [])
       .map((item) => {
         const productRel = item.products;
@@ -127,58 +101,86 @@ export async function sendOrderConfirmation(orderId: string) {
         const qty = Number(item.quantity || 0);
         const price = Number(item.price || 0);
         const total = qty * price;
-        return `<tr><td style=\"padding:8px;border-bottom:1px solid #eee;\">${title}</td><td style=\"padding:8px;border-bottom:1px solid #eee;text-align:right;\">${qty}</td><td style=\"padding:8px;border-bottom:1px solid #eee;text-align:right;\">${price.toFixed(2)}</td><td style=\"padding:8px;border-bottom:1px solid #eee;text-align:right;\">${total.toFixed(2)}</td></tr>`;
+        return `<tr>
+          <td style="padding:8px 4px;border-bottom:1px solid #E8E4DF;font-size:13px;color:#333;">${title}</td>
+          <td style="padding:8px 4px;border-bottom:1px solid #E8E4DF;text-align:center;font-size:13px;color:#333;">${qty}</td>
+          <td style="padding:8px 4px;border-bottom:1px solid #E8E4DF;text-align:right;font-size:13px;color:#333;">₹${price.toFixed(2)}</td>
+          <td style="padding:8px 4px;border-bottom:1px solid #E8E4DF;text-align:right;font-size:13px;color:#333;">₹${total.toFixed(2)}</td>
+        </tr>`;
       })
       .join("");
 
-    const html = `
-  <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111">
-    <div style="text-align:center;margin-bottom:24px;">
-      <img src="https://www.vinnysvogue.in/icon-512.png" width="120" alt="Vinnys Vogue" style="display:block;width:120px;height:auto;" />
-    </div>
-    <h2 style="margin:0 0 8px 0;">Your Order is Confirmed — Vinnys Vogue</h2>
-    <p style="margin:0 0 16px 0;">Thank you for shopping with us. Your payment has been received and your order is confirmed.</p>
+    // Address block
+    const addressLines = [
+      order.full_name,
+      order.phone,
+      order.address_line1,
+      order.address_line2,
+      [order.city, order.state, order.postal_code].filter(Boolean).join(", "),
+      order.country,
+    ].filter(Boolean) as string[];
 
-    <p style="margin:0 0 8px 0;"><strong>Order ID:</strong> ${escapeHtml(order.id)}</p>
+    const paymentId = (orderData as any).razorpay_payment_id ?? "—";
 
-    <h3 style="margin:16px 0 8px 0;">Items</h3>
-    <table style="border-collapse:collapse;width:100%;max-width:640px;">
-      <thead>
-        <tr>
-          <th style="text-align:left;padding:8px;border-bottom:2px solid #ddd;">Item</th>
-          <th style="text-align:right;padding:8px;border-bottom:2px solid #ddd;">Qty</th>
-          <th style="text-align:right;padding:8px;border-bottom:2px solid #ddd;">Price</th>
-          <th style="text-align:right;padding:8px;border-bottom:2px solid #ddd;">Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${itemsRows}
-      </tbody>
-    </table>
+    const bodyHtml = `
+      <p style="margin:0 0 4px 0;font-size:13px;color:#666;">Order ID</p>
+      <p style="margin:0 0 16px 0;font-size:15px;font-weight:600;color:#1C3A2A;">${escapeHtml(order.id)}</p>
 
-    <p style="margin:16px 0 0 0;"><strong>Total:</strong> ${order.total_amount.toFixed(2)}</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;margin-bottom:16px;">
+        <thead>
+          <tr style="background:#F8F5F0;">
+            <th style="padding:8px 4px;text-align:left;font-size:12px;font-weight:600;color:#1C3A2A;border-bottom:2px solid #1C3A2A;">Item</th>
+            <th style="padding:8px 4px;text-align:center;font-size:12px;font-weight:600;color:#1C3A2A;border-bottom:2px solid #1C3A2A;">Qty</th>
+            <th style="padding:8px 4px;text-align:right;font-size:12px;font-weight:600;color:#1C3A2A;border-bottom:2px solid #1C3A2A;">Price</th>
+            <th style="padding:8px 4px;text-align:right;font-size:12px;font-weight:600;color:#1C3A2A;border-bottom:2px solid #1C3A2A;">Total</th>
+          </tr>
+        </thead>
+        <tbody>${itemsRows}</tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3" style="padding:10px 4px 0 4px;text-align:right;font-size:14px;font-weight:700;color:#1C3A2A;">Total</td>
+            <td style="padding:10px 4px 0 4px;text-align:right;font-size:14px;font-weight:700;color:#1C3A2A;">₹${order.total_amount.toFixed(2)}</td>
+          </tr>
+        </tfoot>
+      </table>
 
-    <h3 style="margin:16px 0 8px 0;">Shipping Address</h3>
-    <p style="margin:0;white-space:pre-line;">${escapeHtml(addressLines.length ? addressLines.join("\n") : "—")}</p>
+      <p style="margin:0 0 4px 0;font-size:13px;color:#666;">Shipping Address</p>
+      <p style="margin:0 0 16px 0;font-size:13px;color:#333;white-space:pre-line;">${escapeHtml(addressLines.length ? addressLines.join("\n") : "—")}</p>
 
-    <p style="margin:24px 0 0 0;color:#666;font-size:12px;">© Vinnys Vogue — Where fashion meets elegance</p>
-  </div>
-  `;
+      <p style="margin:0 0 4px 0;font-size:13px;color:#666;">Payment ID</p>
+      <p style="margin:0;font-size:13px;color:#333;">${escapeHtml(String(paymentId))}</p>
+    `;
 
-    await transporter.sendMail({
-      to: toEmail,
-      from: FROM_EMAIL || process.env.SMTP_USER || toEmail,
-      subject: "Your Order is Confirmed — Vinnys Vogue",
-      html,
-      attachments: [
-        {
-          filename: `invoice-${order.id.slice(0, 8)}.pdf`,
-          content: pdfBuffer,
-          contentType: "application/pdf",
-        },
-      ],
+    const html = buildEmailLayout({
+      title: "Your Order is Confirmed ✨",
+      bodyHtml,
+      footerNote: "Thank you for shopping with us. Your invoice is attached to this email.",
     });
 
+    // Generate PDF — if it fails, send email without attachment
+    let attachments: { filename: string; content: string }[] | undefined;
+    try {
+      const pdfBuffer = await renderInvoicePdfBuffer({ invoiceNumber, order });
+      attachments = [
+        {
+          filename: `invoice-${order.id.slice(0, 8)}.pdf`,
+          content: pdfBuffer.toString("base64"),
+        },
+      ];
+    } catch (pdfErr) {
+      console.error("[sendOrderConfirmation] Invoice PDF failed — sending without attachment:", pdfErr);
+    }
+
+    await sendResendEmail(
+      {
+        to: toEmail,
+        from: "support@vinnysvogue.in",
+        subject: "Your Order is Confirmed — Vinnys Vogue",
+        html,
+        attachments,
+      },
+      "order_confirmation",
+    );
   } catch (err) {
     console.error("[sendOrderConfirmation] Failed:", err);
   }

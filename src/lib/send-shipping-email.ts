@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
-import { getTransporter, FROM_EMAIL } from "@/lib/email";
+import { sendResendEmail } from "@/lib/email";
+import { buildEmailLayout, escapeHtml } from "@/lib/emailTemplates";
 
 function getServiceRoleSupabase() {
   return createClient(
@@ -15,23 +16,8 @@ function getServiceRoleSupabase() {
   );
 }
 
-function escapeHtml(input: string) {
-  return input
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
 export async function sendShippingConfirmation(orderId: string) {
   try {
-    const transporter = getTransporter();
-    if (!transporter) {
-      console.warn("[sendShippingConfirmation] SMTP disabled — skipping email");
-      return;
-    }
-
     const supabase = getServiceRoleSupabase();
 
     const { data: order, error: orderError } = await supabase
@@ -46,60 +32,76 @@ export async function sendShippingConfirmation(orderId: string) {
         shipped_at: string | null;
       }>();
 
-    if (orderError || !order) {
-      return;
-    }
+    if (orderError || !order) return;
 
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile } = await supabase
       .from("profiles")
       .select("email")
       .eq("id", order.user_id)
       .maybeSingle<{ email: string | null }>();
 
-    if (profileError || !profile?.email) {
-      return;
-    }
-
-    const to = String(profile.email).trim();
-    if (!to) {
-      return;
-    }
+    const to = String(profile?.email ?? "").trim();
+    if (!to) return;
 
     const courier = String(order.courier_name ?? "").trim();
     const tracking = String(order.tracking_number ?? "").trim();
     const shippedAt = order.shipped_at ? new Date(order.shipped_at) : null;
 
-    if (!courier || !tracking || !shippedAt) {
-      return;
+    if (!courier || !tracking || !shippedAt) return;
+
+    // Build tracking URL (best-effort for common couriers)
+    let trackingUrl = "";
+    const courierLower = courier.toLowerCase();
+    if (courierLower.includes("delhivery")) {
+      trackingUrl = `https://www.delhivery.com/track/package/${tracking}`;
+    } else if (courierLower.includes("dtdc")) {
+      trackingUrl = `https://www.dtdc.in/tracking.asp?strCnno=${tracking}`;
+    } else if (courierLower.includes("bluedart")) {
+      trackingUrl = `https://www.bluedart.com/tracking?handler=tnt&action=awbquery&awb=${tracking}`;
+    } else if (courierLower.includes("india post")) {
+      trackingUrl = `https://www.indiapost.gov.in/_layouts/15/dop.portal.tracking/trackconsignment.aspx`;
     }
 
-    await transporter.sendMail({
-      to,
-      from: FROM_EMAIL,
-      subject: "Your Order Has Been Shipped — Vinnys Vogue",
-      html: `
-        <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111">
-          <div style="text-align:center;margin-bottom:24px;">
-            <img src="https://www.vinnysvogue.in/icon-512.png" width="120" alt="Vinnys Vogue" style="display:block;width:120px;height:auto;" />
-          </div>
-          <h2 style="margin:0 0 8px 0;">Your order is on its way ✨</h2>
-          <p style="margin:0 0 10px 0;">Order #${escapeHtml(order.id)}</p>
-          <p style="margin:0 0 6px 0;"><strong>Courier:</strong> ${escapeHtml(courier)}</p>
-          <p style="margin:0 0 6px 0;"><strong>Tracking Number:</strong> ${escapeHtml(tracking)}</p>
-          <p style="margin:0 0 16px 0;"><strong>Shipped on:</strong> ${escapeHtml(
-        shippedAt.toLocaleDateString("en-IN"),
-      )}</p>
-          <hr style="border:none;border-top:1px solid #eee;margin:16px 0;"/>
-          <p style="margin:0;color:#666;font-size:12px;">© Vinnys Vogue — Where fashion meets elegance</p>
-        </div>
-      `,
+    const bodyHtml = `
+      <p style="margin:0 0 16px 0;">Great news! Your order has been shipped and is on its way to you.</p>
+
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F8F5F0;border-radius:8px;margin-bottom:16px;">
+        <tr>
+          <td style="padding:16px;">
+            <p style="margin:0 0 8px 0;font-size:13px;color:#666;">Order ID</p>
+            <p style="margin:0 0 12px 0;font-size:14px;font-weight:600;color:#1C3A2A;">${escapeHtml(order.id)}</p>
+            <p style="margin:0 0 4px 0;font-size:13px;color:#666;">Courier</p>
+            <p style="margin:0 0 12px 0;font-size:14px;font-weight:600;color:#333;">${escapeHtml(courier)}</p>
+            <p style="margin:0 0 4px 0;font-size:13px;color:#666;">Tracking Number</p>
+            <p style="margin:0 0 12px 0;font-size:14px;font-weight:600;color:#333;">${escapeHtml(tracking)}</p>
+            <p style="margin:0 0 4px 0;font-size:13px;color:#666;">Shipped On</p>
+            <p style="margin:0;font-size:14px;color:#333;">${escapeHtml(shippedAt.toLocaleDateString("en-IN", { year: "numeric", month: "short", day: "2-digit" }))}</p>
+          </td>
+        </tr>
+      </table>
+    `;
+
+    const html = buildEmailLayout({
+      title: "Your Order Has Been Shipped 🚚",
+      bodyHtml,
+      ctaText: trackingUrl ? "Track Package" : undefined,
+      ctaUrl: trackingUrl || undefined,
     });
+
+    const sent = await sendResendEmail(
+      {
+        to,
+        from: "support@vinnysvogue.in",
+        subject: "Your Order Has Been Shipped — Vinnys Vogue",
+        html,
+      },
+      "shipping_confirmation",
+    );
 
     await supabase.from("shipping_email_logs").insert({
       order_id: orderId,
-      status: "sent",
+      status: sent ? "sent" : "failed",
     });
-
   } catch (err) {
     console.error("[sendShippingConfirmation] Failed:", err);
     try {
@@ -109,6 +111,8 @@ export async function sendShippingConfirmation(orderId: string) {
         status: "failed",
         error: err instanceof Error ? err.message : String(err),
       });
-    } catch { /* ignore logging failure */ }
+    } catch {
+      /* ignore logging failure */
+    }
   }
 }

@@ -35,7 +35,7 @@ export function GoldMandala({
         viewBox="0 0 500 500"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="h-[550px] w-[550px] lg:h-[750px] lg:w-[750px] animate-[spin_180s_linear_infinite]"
+        className="w-full max-w-[450px] lg:max-w-[650px] h-auto animate-[spin_180s_linear_infinite]"
         aria-hidden="true"
         style={{ opacity: 0.12 }}
       >
