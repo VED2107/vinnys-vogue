@@ -33,18 +33,19 @@ export function ShufflingImages({
 }: ShufflingImagesProps) {
   const validImages = images.filter(Boolean) as string[];
 
-  // order[slotIdx] → imageIdx.  Shuffled on mount.
+  // Start with deterministic order to avoid hydration mismatch (Math.random differs server vs client)
   const [order, setOrder] = useState<number[]>(() =>
-    fisherYates(validImages.map((_, i) => i))
+    validImages.map((_, i) => i)
   );
 
   const shuffle = useCallback(() => {
     setOrder((prev) => fisherYates(prev));
   }, []);
 
-  // Shuffle on mount (randomise initial order) + interval
+  // Shuffle on mount (client only — no hydration mismatch) + interval
   useEffect(() => {
     if (validImages.length < 2) return;
+    shuffle(); // initial shuffle on client
     const id = setInterval(shuffle, SHUFFLE_INTERVAL);
     return () => clearInterval(id);
   }, [shuffle, validImages.length]);

@@ -255,10 +255,11 @@ export default function Hero({
           initial={prefersReduced ? false : { opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.6, ease: EASE_LUXURY, delay: 1.0 }}
-          className="max-w-[420px] text-[15px] leading-[1.75] font-light [&>p]:m-0"
+          className="max-w-[420px] text-[15px] leading-[1.75] font-light"
           style={{ color: "#6B6560" }}
-          dangerouslySetInnerHTML={{ __html: subtext }}
-        />
+        >
+          <p>{subtext}</p>
+        </motion.div>
 
         {/* CTA */}
         <motion.div

@@ -11,22 +11,14 @@ const EASE_LUXURY: [number, number, number, number] = [0.22, 1, 0.36, 1];
  * Use inside a `relative overflow-hidden` wrapper.
  */
 export function PageMandala({
-    size = "md",
     className = "",
 }: {
-    size?: "sm" | "md" | "lg";
     className?: string;
 }) {
     const ref = useRef<HTMLDivElement>(null);
     const isInView = useInView(ref, { once: true, margin: "100px" });
 
-    const sizeMap = {
-        sm: "h-[350px] w-[350px] sm:h-[400px] sm:w-[400px]",
-        md: "h-[450px] w-[450px] sm:h-[550px] sm:w-[550px]",
-        lg: "h-[550px] w-[550px] sm:h-[650px] sm:w-[650px]",
-    };
-
-    const uid = `pm-${size}`;
+    const uid = "pm";
 
     return (
         <motion.div
@@ -34,14 +26,15 @@ export function PageMandala({
             initial={{ opacity: 0 }}
             animate={isInView ? { opacity: 1 } : undefined}
             transition={{ duration: 2, ease: EASE_LUXURY }}
-            className={`pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-0 ${className}`}
+            className={`pointer-events-none absolute inset-0 z-0 flex items-center justify-center ${className}`}
             aria-hidden="true"
         >
             <svg
                 viewBox="0 0 500 500"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                className={`${sizeMap[size]} animate-[spin_180s_linear_infinite] opacity-[0.35]`}
+                className="w-full h-auto animate-[spin_180s_linear_infinite]"
+                style={{ opacity: 0.5 }}
             >
                 <defs>
                     <linearGradient id={uid} x1="0%" y1="0%" x2="100%" y2="100%">

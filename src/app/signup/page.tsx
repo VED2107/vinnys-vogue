@@ -169,7 +169,7 @@ export default function SignupPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-bg-primary">
-      <PageMandala size="md" />
+      <PageMandala />
       <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center px-6 py-16">
         <div className="rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-white/70 backdrop-blur-md p-8">
           {/* ── step indicator ── */}
