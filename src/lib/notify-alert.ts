@@ -47,7 +47,7 @@ export async function notifyCriticalAlert(title: string, details: unknown) {
     await sendResendEmail(
       {
         to: alertEmail,
-        from: "no-reply@vinnysvogue.in",
+        from: "support@vinnysvogue.in",
         subject: `Critical Alert: ${title}`,
         html: `<div style="font-family:monospace;font-size:13px;padding:16px;background:#fff;color:#111;">${escapedMessage}</div>`,
       },

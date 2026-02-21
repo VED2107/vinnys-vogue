@@ -91,9 +91,9 @@ export async function POST(request: Request) {
         const title = escapeHtml(i.products?.title ?? "Product");
         const price = (i.products?.price ?? 0).toFixed(2);
         return `<tr>
-          <td style="padding:8px 4px;border-bottom:1px solid #E8E4DF;font-size:13px;color:#333;">${title}</td>
-          <td style="padding:8px 4px;border-bottom:1px solid #E8E4DF;text-align:center;font-size:13px;color:#333;">${i.quantity}</td>
-          <td style="padding:8px 4px;border-bottom:1px solid #E8E4DF;text-align:right;font-size:13px;color:#333;">₹${price}</td>
+          <td style="padding:8px 4px;border-bottom:1px solid #333;font-size:13px;color:#ccc;">${title}</td>
+          <td style="padding:8px 4px;border-bottom:1px solid #333;text-align:center;font-size:13px;color:#ccc;">${i.quantity}</td>
+          <td style="padding:8px 4px;border-bottom:1px solid #333;text-align:right;font-size:13px;color:#ccc;">₹${price}</td>
         </tr>`;
       })
       .join("");
@@ -103,7 +103,7 @@ export async function POST(request: Request) {
 
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;margin-bottom:16px;">
         <thead>
-          <tr style="background:#F8F5F0;">
+          <tr style="background:#2a2a2a;">
             <th style="padding:8px 4px;text-align:left;font-size:12px;font-weight:600;color:#1C3A2A;border-bottom:2px solid #1C3A2A;">Item</th>
             <th style="padding:8px 4px;text-align:center;font-size:12px;font-weight:600;color:#1C3A2A;border-bottom:2px solid #1C3A2A;">Qty</th>
             <th style="padding:8px 4px;text-align:right;font-size:12px;font-weight:600;color:#1C3A2A;border-bottom:2px solid #1C3A2A;">Price</th>

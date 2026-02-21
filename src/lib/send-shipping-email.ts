@@ -65,17 +65,17 @@ export async function sendShippingConfirmation(orderId: string) {
     const bodyHtml = `
       <p style="margin:0 0 16px 0;">Great news! Your order has been shipped and is on its way to you.</p>
 
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F8F5F0;border-radius:8px;margin-bottom:16px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#2a2a2a;border-radius:8px;margin-bottom:16px;">
         <tr>
           <td style="padding:16px;">
-            <p style="margin:0 0 8px 0;font-size:13px;color:#666;">Order ID</p>
-            <p style="margin:0 0 12px 0;font-size:14px;font-weight:600;color:#1C3A2A;">${escapeHtml(order.id)}</p>
-            <p style="margin:0 0 4px 0;font-size:13px;color:#666;">Courier</p>
-            <p style="margin:0 0 12px 0;font-size:14px;font-weight:600;color:#333;">${escapeHtml(courier)}</p>
-            <p style="margin:0 0 4px 0;font-size:13px;color:#666;">Tracking Number</p>
-            <p style="margin:0 0 12px 0;font-size:14px;font-weight:600;color:#333;">${escapeHtml(tracking)}</p>
-            <p style="margin:0 0 4px 0;font-size:13px;color:#666;">Shipped On</p>
-            <p style="margin:0;font-size:14px;color:#333;">${escapeHtml(shippedAt.toLocaleDateString("en-IN", { year: "numeric", month: "short", day: "2-digit" }))}</p>
+            <p style="margin:0 0 8px 0;font-size:13px;color:#999;">Order ID</p>
+            <p style="margin:0 0 12px 0;font-size:14px;font-weight:600;color:#ccc;">${escapeHtml(order.id)}</p>
+            <p style="margin:0 0 4px 0;font-size:13px;color:#999;">Courier</p>
+            <p style="margin:0 0 12px 0;font-size:14px;font-weight:600;color:#ccc;">${escapeHtml(courier)}</p>
+            <p style="margin:0 0 4px 0;font-size:13px;color:#999;">Tracking Number</p>
+            <p style="margin:0 0 12px 0;font-size:14px;font-weight:600;color:#ccc;">${escapeHtml(tracking)}</p>
+            <p style="margin:0 0 4px 0;font-size:13px;color:#999;">Shipped On</p>
+            <p style="margin:0;font-size:14px;color:#ccc;">${escapeHtml(shippedAt.toLocaleDateString("en-IN", { year: "numeric", month: "short", day: "2-digit" }))}</p>
           </td>
         </tr>
       </table>

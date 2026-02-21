@@ -102,10 +102,10 @@ export async function sendOrderConfirmation(orderId: string) {
         const price = Number(item.price || 0);
         const total = qty * price;
         return `<tr>
-          <td style="padding:8px 4px;border-bottom:1px solid #E8E4DF;font-size:13px;color:#333;">${title}</td>
-          <td style="padding:8px 4px;border-bottom:1px solid #E8E4DF;text-align:center;font-size:13px;color:#333;">${qty}</td>
-          <td style="padding:8px 4px;border-bottom:1px solid #E8E4DF;text-align:right;font-size:13px;color:#333;">₹${price.toFixed(2)}</td>
-          <td style="padding:8px 4px;border-bottom:1px solid #E8E4DF;text-align:right;font-size:13px;color:#333;">₹${total.toFixed(2)}</td>
+          <td style="padding:8px 4px;border-bottom:1px solid #333;font-size:13px;color:#ccc;">${title}</td>
+          <td style="padding:8px 4px;border-bottom:1px solid #333;text-align:center;font-size:13px;color:#ccc;">${qty}</td>
+          <td style="padding:8px 4px;border-bottom:1px solid #333;text-align:right;font-size:13px;color:#ccc;">₹${price.toFixed(2)}</td>
+          <td style="padding:8px 4px;border-bottom:1px solid #333;text-align:right;font-size:13px;color:#ccc;">₹${total.toFixed(2)}</td>
         </tr>`;
       })
       .join("");
@@ -123,12 +123,12 @@ export async function sendOrderConfirmation(orderId: string) {
     const paymentId = (orderData as any).razorpay_payment_id ?? "—";
 
     const bodyHtml = `
-      <p style="margin:0 0 4px 0;font-size:13px;color:#666;">Order ID</p>
-      <p style="margin:0 0 16px 0;font-size:15px;font-weight:600;color:#1C3A2A;">${escapeHtml(order.id)}</p>
+      <p style="margin:0 0 4px 0;font-size:13px;color:#999;">Order ID</p>
+      <p style="margin:0 0 16px 0;font-size:15px;font-weight:600;color:#ccc;">${escapeHtml(order.id)}</p>
 
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;margin-bottom:16px;">
         <thead>
-          <tr style="background:#F8F5F0;">
+          <tr style="background:#2a2a2a;">
             <th style="padding:8px 4px;text-align:left;font-size:12px;font-weight:600;color:#1C3A2A;border-bottom:2px solid #1C3A2A;">Item</th>
             <th style="padding:8px 4px;text-align:center;font-size:12px;font-weight:600;color:#1C3A2A;border-bottom:2px solid #1C3A2A;">Qty</th>
             <th style="padding:8px 4px;text-align:right;font-size:12px;font-weight:600;color:#1C3A2A;border-bottom:2px solid #1C3A2A;">Price</th>
@@ -144,11 +144,11 @@ export async function sendOrderConfirmation(orderId: string) {
         </tfoot>
       </table>
 
-      <p style="margin:0 0 4px 0;font-size:13px;color:#666;">Shipping Address</p>
-      <p style="margin:0 0 16px 0;font-size:13px;color:#333;white-space:pre-line;">${escapeHtml(addressLines.length ? addressLines.join("\n") : "—")}</p>
+      <p style="margin:0 0 4px 0;font-size:13px;color:#999;">Shipping Address</p>
+      <p style="margin:0 0 16px 0;font-size:13px;color:#ccc;white-space:pre-line;">${escapeHtml(addressLines.length ? addressLines.join("\n") : "—")}</p>
 
-      <p style="margin:0 0 4px 0;font-size:13px;color:#666;">Payment ID</p>
-      <p style="margin:0;font-size:13px;color:#333;">${escapeHtml(String(paymentId))}</p>
+      <p style="margin:0 0 4px 0;font-size:13px;color:#999;">Payment ID</p>
+      <p style="margin:0;font-size:13px;color:#ccc;">${escapeHtml(String(paymentId))}</p>
     `;
 
     const html = buildEmailLayout({

@@ -38,12 +38,12 @@ export async function sendOrderCancellationEmail(orderId: string) {
     if (!to) return;
 
     const bodyHtml = `
-      <p style="margin:0 0 4px 0;font-size:13px;color:#666;">Order ID</p>
-      <p style="margin:0 0 16px 0;font-size:15px;font-weight:600;color:#1C3A2A;">${escapeHtml(order.id)}</p>
+      <p style="margin:0 0 4px 0;font-size:13px;color:#999;">Order ID</p>
+      <p style="margin:0 0 16px 0;font-size:15px;font-weight:600;color:#ccc;">${escapeHtml(order.id)}</p>
 
       <p style="margin:0 0 16px 0;">Your order has been cancelled. If a payment was made, any applicable refund will be processed according to our refund policy.</p>
 
-      <p style="margin:0;font-size:13px;color:#666;">If you did not request this cancellation or need assistance, please contact us at <a href="mailto:support@vinnysvogue.in" style="color:#1C3A2A;text-decoration:none;">support@vinnysvogue.in</a>.</p>
+      <p style="margin:0;font-size:13px;color:#999;">If you did not request this cancellation or need assistance, please contact us at <a href="mailto:support@vinnysvogue.in" style="color:#1C3A2A;text-decoration:none;">support@vinnysvogue.in</a>.</p>
     `;
 
     const html = buildEmailLayout({

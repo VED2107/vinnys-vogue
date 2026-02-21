@@ -118,25 +118,25 @@ Deno.serve(async (req: Request) => {
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        from: "Vinnys Vogue <no-reply@vinnysvogue.in>",
+                        from: "Vinnys Vogue <support@vinnysvogue.in>",
                         to: [email],
                         subject: "Verify Your Email — Vinnys Vogue",
                         html: `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
-<body style="margin:0;padding:0;background:#F8F5F0;font-family:Arial,Helvetica,sans-serif;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F8F5F0;">
-<tr><td align="center" style="padding:40px 16px;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="520" style="max-width:520px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;">
-<tr><td align="center" style="padding:32px 32px 0 32px;"><img src="https://www.vinnysvogue.in/icon-512.png" width="72" height="72" alt="Vinnys Vogue" style="display:block;width:72px;height:72px;border-radius:12px;" /></td></tr>
-<tr><td align="center" style="padding:20px 32px 0 32px;"><h1 style="margin:0;font-size:22px;font-weight:700;color:#1C3A2A;">Verify Your Email</h1></td></tr>
-<tr><td style="padding:16px 32px 0 32px;"><div style="border-top:1px solid #E8E4DF;"></div></td></tr>
-<tr><td style="padding:20px 32px 0 32px;font-size:14px;line-height:1.7;color:#333;">
-<p style="margin:0 0 16px 0;">Welcome to Vinnys Vogue! Enter this code to verify your email:</p>
-<div style="background:#F8F5F0;border-radius:12px;padding:24px;text-align:center;margin:0 0 16px 0;">
-<span style="font-size:36px;font-weight:700;letter-spacing:10px;color:#1C3A2A;">${otpCode}</span>
+<body bgcolor="#000000" style="margin:0;padding:0;background-color:#000000;font-family:Arial,Helvetica,sans-serif;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#000000" style="background-color:#000000;">
+<tr><td align="center" bgcolor="#000000" style="padding:40px 16px;background-color:#000000;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="520" bgcolor="#1a1a1a" style="max-width:520px;width:100%;background-color:#1a1a1a;border-radius:16px;overflow:hidden;">
+<tr><td align="center" bgcolor="#1a1a1a" style="padding:36px 32px 0 32px;background-color:#1a1a1a;"><img src="https://www.vinnysvogue.in/icon-512.png" width="72" height="72" alt="Vinnys Vogue" style="display:block;width:72px;height:72px;border-radius:14px;" /></td></tr>
+<tr><td align="center" bgcolor="#1a1a1a" style="padding:24px 32px 0 32px;background-color:#1a1a1a;"><h1 style="margin:0;font-size:24px;font-weight:700;color:#1C3A2A;">Verify Your Email</h1></td></tr>
+<tr><td bgcolor="#1a1a1a" style="padding:20px 32px 0 32px;background-color:#1a1a1a;"><div style="border-top:1px solid #333;"></div></td></tr>
+<tr><td bgcolor="#1a1a1a" style="padding:24px 32px 0 32px;font-size:15px;line-height:1.7;color:#cccccc;background-color:#1a1a1a;">
+<p style="margin:0 0 20px 0;">Welcome to Vinnys Vogue! Enter this code to verify your email:</p>
+<div bgcolor="#2a2a2a" style="background-color:#2a2a2a;border-radius:12px;padding:28px;text-align:center;margin:0 0 20px 0;">
+<span style="font-size:40px;font-weight:700;letter-spacing:12px;color:#ffffff;">${otpCode}</span>
 </div>
-<p style="margin:0;font-size:13px;color:#999;">This code expires in <strong>10 minutes</strong>. If you didn't request this, please ignore this email.</p>
+<p style="margin:0;font-size:13px;color:#888;">This code expires in <strong style="color:#ccc;">10 minutes</strong>. If you didn't request this, please ignore this email.</p>
 </td></tr>
-<tr><td style="padding:28px 32px 32px 32px;"><div style="border-top:1px solid #E8E4DF;padding-top:16px;font-size:11px;color:#AAA;text-align:center;">© ${new Date().getFullYear()} Vinnys Vogue · <a href="https://www.vinnysvogue.in" style="color:#1C3A2A;text-decoration:none;">vinnysvogue.in</a><br/><a href="mailto:support@vinnysvogue.in" style="color:#1C3A2A;text-decoration:none;">support@vinnysvogue.in</a></div></td></tr>
+<tr><td bgcolor="#1a1a1a" style="padding:32px 32px 36px 32px;background-color:#1a1a1a;"><div style="border-top:1px solid #333;padding-top:16px;font-size:11px;color:#666;text-align:center;">© ${new Date().getFullYear()} Vinnys Vogue · <a href="https://www.vinnysvogue.in" style="color:#1C3A2A;text-decoration:none;">vinnysvogue.in</a><br/><a href="mailto:support@vinnysvogue.in" style="color:#1C3A2A;text-decoration:none;">support@vinnysvogue.in</a></div></td></tr>
 </table></td></tr></table></body></html>`,
                     }),
                 });
@@ -242,19 +242,19 @@ Deno.serve(async (req: Request) => {
                         to: [email],
                         subject: "Welcome to Vinnys Vogue ✨",
                         html: `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
-<body style="margin:0;padding:0;background:#F8F5F0;font-family:Arial,Helvetica,sans-serif;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F8F5F0;">
-<tr><td align="center" style="padding:40px 16px;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="520" style="max-width:520px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;">
-<tr><td align="center" style="padding:32px 32px 0 32px;"><img src="https://www.vinnysvogue.in/icon-512.png" width="72" height="72" alt="Vinnys Vogue" style="display:block;width:72px;height:72px;border-radius:12px;" /></td></tr>
-<tr><td align="center" style="padding:20px 32px 0 32px;"><h1 style="margin:0;font-size:22px;font-weight:700;color:#1C3A2A;">Welcome to Vinnys Vogue ✨</h1></td></tr>
-<tr><td style="padding:16px 32px 0 32px;"><div style="border-top:1px solid #E8E4DF;"></div></td></tr>
-<tr><td style="padding:20px 32px 0 32px;font-size:14px;line-height:1.7;color:#333;">
+<body bgcolor="#000000" style="margin:0;padding:0;background-color:#000000;font-family:Arial,Helvetica,sans-serif;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#000000" style="background-color:#000000;">
+<tr><td align="center" bgcolor="#000000" style="padding:40px 16px;background-color:#000000;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="520" bgcolor="#1a1a1a" style="max-width:520px;width:100%;background-color:#1a1a1a;border-radius:16px;overflow:hidden;">
+<tr><td align="center" bgcolor="#1a1a1a" style="padding:36px 32px 0 32px;background-color:#1a1a1a;"><img src="https://www.vinnysvogue.in/icon-512.png" width="72" height="72" alt="Vinnys Vogue" style="display:block;width:72px;height:72px;border-radius:14px;" /></td></tr>
+<tr><td align="center" bgcolor="#1a1a1a" style="padding:24px 32px 0 32px;background-color:#1a1a1a;"><h1 style="margin:0;font-size:24px;font-weight:700;color:#1C3A2A;">Welcome to Vinnys Vogue ✨</h1></td></tr>
+<tr><td bgcolor="#1a1a1a" style="padding:20px 32px 0 32px;background-color:#1a1a1a;"><div style="border-top:1px solid #333;"></div></td></tr>
+<tr><td bgcolor="#1a1a1a" style="padding:24px 32px 0 32px;font-size:15px;line-height:1.7;color:#cccccc;background-color:#1a1a1a;">
 <p style="margin:0 0 12px 0;">Your account has been successfully created.</p>
 <p style="margin:0 0 16px 0;">Welcome to <strong>Vinnys Vogue</strong> — where fashion meets elegance. Start exploring our curated collections today.</p>
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:20px auto 0 auto;"><tr><td align="center" style="border-radius:8px;background:#1C3A2A;"><a href="https://www.vinnysvogue.in" target="_blank" style="display:inline-block;padding:14px 28px;font-family:Arial,sans-serif;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:8px;background:#1C3A2A;">Explore Collection</a></td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:20px auto 0 auto;"><tr><td align="center" bgcolor="#1C3A2A" style="border-radius:8px;background-color:#1C3A2A;"><a href="https://www.vinnysvogue.in" target="_blank" style="display:inline-block;padding:14px 28px;font-family:Arial,sans-serif;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:8px;">Explore Collection</a></td></tr></table>
 </td></tr>
-<tr><td style="padding:28px 32px 32px 32px;"><div style="border-top:1px solid #E8E4DF;padding-top:16px;font-size:11px;color:#AAA;text-align:center;">© ${new Date().getFullYear()} Vinnys Vogue · <a href="https://www.vinnysvogue.in" style="color:#1C3A2A;text-decoration:none;">vinnysvogue.in</a><br/><a href="mailto:support@vinnysvogue.in" style="color:#1C3A2A;text-decoration:none;">support@vinnysvogue.in</a></div></td></tr>
+<tr><td bgcolor="#1a1a1a" style="padding:32px 32px 36px 32px;background-color:#1a1a1a;"><div style="border-top:1px solid #333;padding-top:16px;font-size:11px;color:#666;text-align:center;">© ${new Date().getFullYear()} Vinnys Vogue · <a href="https://www.vinnysvogue.in" style="color:#1C3A2A;text-decoration:none;">vinnysvogue.in</a><br/><a href="mailto:support@vinnysvogue.in" style="color:#1C3A2A;text-decoration:none;">support@vinnysvogue.in</a></div></td></tr>
 </table></td></tr></table></body></html>`,
                     }),
                 });
