@@ -67,7 +67,7 @@ export default async function AdminProductsPage({
     <div className="min-h-screen bg-bg-admin">
       <div className="w-full px-6 lg:px-16 xl:px-24 py-16">
         <FadeIn>
-          <div className="flex items-end justify-between gap-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="space-y-3">
               <div className="gold-divider" />
               <div className="text-[11px] font-medium tracking-[0.25em] text-gold uppercase">Catalogue</div>
@@ -95,94 +95,92 @@ export default async function AdminProductsPage({
         {searchParams?.deleted === "1" ? <div className="mt-4 rounded-[20px] border border-red-200 bg-red-50 p-4 text-[14px] text-red-700">Product deleted.</div> : null}
 
         <FadeIn delay={0.1}>
-          <div className="mt-10 overflow-hidden rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-white">
-
-            {/* ── Desktop Header (hidden on mobile) ── */}
-            <div className="hidden lg:grid grid-cols-12 gap-4 border-b border-[rgba(0,0,0,0.06)] px-6 py-4 text-[11px] font-medium uppercase tracking-[0.15em] text-muted">
-              <div className="col-span-4">Product</div>
-              <div className="col-span-2">Category</div>
-              <div className="col-span-2">Price</div>
-              <div className="col-span-2">Status</div>
-              <div className="col-span-1">Stock</div>
-              <div className="col-span-1 text-right">Actions</div>
+          {products.length === 0 ? (
+            <div className="mt-10 rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-white px-6 py-16 text-center text-[15px] text-muted">
+              No products found.
             </div>
-
-            <div className="divide-y divide-[rgba(0,0,0,0.04)]">
+          ) : (
+            <div className="mt-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
               {products.map((p) => (
-                <div key={p.id}>
-                  {/* ── Mobile Card ── */}
-                  <div className="lg:hidden px-5 py-4 space-y-3">
-                    <div className="flex items-start gap-3">
-                      <div className="h-16 w-14 flex-shrink-0 overflow-hidden rounded-[10px] bg-[#EDE8E0]">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={getProductImagePublicUrl(supabase, p.image_path)} alt={p.title} className="h-full w-full object-cover" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[14px] font-medium text-heading line-clamp-1">{p.title}</div>
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          {p.category ? <span className="inline-flex items-center rounded-full bg-[#F4EFE8] px-2 py-0.5 text-[11px] text-heading">{getCategoryLabel(p.category)}</span> : null}
-                          {p.show_on_home ? <span className="inline-flex items-center gap-1 text-[11px] text-gold"><span className="inline-block h-1 w-1 rounded-full bg-gold" />Featured</span> : null}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="font-serif text-[14px] font-light text-gold">{formatMoney(p.price, p.currency)}</span>
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium ${p.active ? "bg-green-50 text-green-800" : "bg-[#F4EFE8] text-muted"}`}>{p.active ? "Active" : "Inactive"}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className={`text-[13px] ${p.stock < 3 ? "text-red-700 font-medium" : "text-muted"}`}>Stock: {p.stock}</span>
-                        {p.stock < 3 ? <span className="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-700">Low</span> : null}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 pt-1">
-                      <a href={`/admin/products/${p.id}`} className="h-8 rounded-full border border-[rgba(0,0,0,0.1)] px-3 text-[12px] text-heading transition hover:border-[rgba(0,0,0,0.2)] inline-flex items-center">Edit</a>
-                      <StockAdjustModal productId={p.id} productTitle={p.title} currentStock={p.stock} />
-                      <form action={toggleActive}>
-                        <input type="hidden" name="productId" value={p.id} />
-                        <input type="hidden" name="current" value={String(p.active)} />
-                        <button className="h-8 rounded-full bg-accent px-3 text-[12px] font-medium text-white hover:bg-accent-hover">Toggle</button>
-                      </form>
-                    </div>
-                  </div>
+                <div
+                  key={p.id}
+                  className="group relative flex flex-col overflow-hidden rounded-[16px] border border-[rgba(0,0,0,0.06)] bg-white transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                >
+                  {/* ── Image ── */}
+                  <a href={`/admin/products/${p.id}`} className="relative block aspect-[3/4] overflow-hidden bg-[#EDE8E0]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={getProductImagePublicUrl(supabase, p.image_path)}
+                      alt={p.title}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
 
-                  {/* ── Desktop Row ── */}
-                  <div className="hidden lg:grid grid-cols-12 gap-4 px-6 py-4">
-                    <div className="col-span-4 flex items-center gap-4">
-                      <div className="h-14 w-12 overflow-hidden rounded-[10px] bg-[#EDE8E0]">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={getProductImagePublicUrl(supabase, p.image_path)} alt={p.title} className="h-full w-full object-cover" />
-                      </div>
-                      <div>
-                        <div className="text-[14px] font-medium text-heading line-clamp-1">{p.title}</div>
-                        {p.show_on_home ? <div className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-gold"><span className="inline-block h-1 w-1 rounded-full bg-gold" />Featured</div> : null}
-                        {p.stock < 3 ? <div className="mt-1 inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-medium text-red-700">Low stock</div> : null}
-                      </div>
+                    {/* ── Overlay Badges (top-left) ── */}
+                    <div className="absolute top-2 left-2 flex flex-col gap-1">
+                      <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide backdrop-blur-sm ${p.active ? "bg-green-500/90 text-white" : "bg-zinc-800/80 text-zinc-300"}`}>
+                        {p.active ? "Active" : "Hidden"}
+                      </span>
+                      {p.show_on_home ? (
+                        <span className="inline-flex items-center rounded-md bg-gold/90 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide text-white backdrop-blur-sm">
+                          ★ Featured
+                        </span>
+                      ) : null}
+                      {p.stock < 3 ? (
+                        <span className="inline-flex items-center rounded-md bg-red-500/90 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide text-white backdrop-blur-sm">
+                          Low Stock
+                        </span>
+                      ) : null}
                     </div>
-                    <div className="col-span-2 flex items-center">
-                      {p.category ? <span className="inline-flex items-center rounded-full bg-[#F4EFE8] px-2.5 py-1 text-[12px] text-heading">{getCategoryLabel(p.category)}</span> : <span className="text-[12px] text-muted">—</span>}
+
+                    {/* ── Stock count (top-right) ── */}
+                    <div className="absolute top-2 right-2">
+                      <span className={`inline-flex items-center justify-center min-w-[24px] h-6 rounded-md px-1.5 text-[10px] font-bold backdrop-blur-sm ${p.stock < 3 ? "bg-red-500/90 text-white" : "bg-white/85 text-heading shadow-sm"}`}>
+                        {p.stock}
+                      </span>
                     </div>
-                    <div className="col-span-2 flex items-center font-serif text-[14px] font-light text-gold">{formatMoney(p.price, p.currency)}</div>
-                    <div className="col-span-2 flex items-center">
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium ${p.active ? "bg-green-50 text-green-800" : "bg-[#F4EFE8] text-muted"}`}>{p.active ? "Active" : "Inactive"}</span>
+                  </a>
+
+                  {/* ── Product Info ── */}
+                  <div className="flex flex-1 flex-col p-3 sm:p-3.5">
+                    {p.category ? (
+                      <span className="mb-1 text-[9px] sm:text-[10px] font-medium uppercase tracking-[0.15em] text-muted line-clamp-1">
+                        {getCategoryLabel(p.category)}
+                      </span>
+                    ) : null}
+
+                    <a
+                      href={`/admin/products/${p.id}`}
+                      className="text-[12px] sm:text-[13px] font-medium text-heading leading-snug line-clamp-2 hover:text-gold transition-colors"
+                    >
+                      {p.title}
+                    </a>
+
+                    <div className="mt-auto pt-2 font-serif text-[13px] sm:text-[15px] font-light text-gold">
+                      {formatMoney(p.price, p.currency)}
                     </div>
-                    <div className="col-span-1 flex items-center">
-                      <span className={`text-[14px] ${p.stock < 3 ? "text-red-700 font-medium" : "text-heading"}`}>{p.stock}</span>
-                    </div>
-                    <div className="col-span-1 flex items-center justify-end gap-2">
-                      <a href={`/admin/products/${p.id}`} className="h-8 rounded-full border border-[rgba(0,0,0,0.1)] px-3 text-[12px] text-heading transition hover:border-[rgba(0,0,0,0.2)] inline-flex items-center">Edit</a>
+
+                    {/* ── Compact Actions ── */}
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <a
+                        href={`/admin/products/${p.id}`}
+                        className="h-6 sm:h-7 rounded-full border border-[rgba(0,0,0,0.1)] px-2 sm:px-2.5 text-[10px] sm:text-[11px] text-heading transition hover:border-[rgba(0,0,0,0.2)] hover:bg-zinc-50 inline-flex items-center"
+                      >
+                        Edit
+                      </a>
                       <StockAdjustModal productId={p.id} productTitle={p.title} currentStock={p.stock} />
                       <form action={toggleActive}>
                         <input type="hidden" name="productId" value={p.id} />
                         <input type="hidden" name="current" value={String(p.active)} />
-                        <button className="h-8 rounded-full bg-accent px-3 text-[12px] font-medium text-white hover:bg-accent-hover">Toggle</button>
+                        <button className="h-6 sm:h-7 rounded-full bg-accent px-2 sm:px-2.5 text-[10px] sm:text-[11px] font-medium text-white hover:bg-accent-hover transition">
+                          {p.active ? "Hide" : "Show"}
+                        </button>
                       </form>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
+          )}
         </FadeIn>
       </div>
     </div>

@@ -283,13 +283,45 @@ export default async function AdminEditProductPage({
       throw new Error("Not authorized.");
     }
 
-    const { error: deleteError } = await supabase
+    // Use service-role client to bypass RLS and handle FK-dependent rows
+    const { createClient } = await import("@supabase/supabase-js");
+    const serviceClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    );
+
+    // Fetch product to clean up storage image
+    const { data: prod } = await serviceClient
+      .from("products")
+      .select("image_path")
+      .eq("id", productId)
+      .maybeSingle();
+
+    // Delete dependent rows that lack ON DELETE CASCADE
+    await serviceClient.from("cart_items").delete().eq("product_id", productId);
+    await serviceClient.from("inventory_logs").delete().eq("product_id", productId);
+    await serviceClient.from("reviews").delete().eq("product_id", productId);
+    await serviceClient.from("wishlist").delete().eq("product_id", productId);
+
+    // Nullify order_items references (preserve order history, just unlink product)
+    await serviceClient.from("order_items").update({ product_id: null }).eq("product_id", productId);
+
+    // Delete product variants first (FK child)
+    await serviceClient.from("product_variants").delete().eq("product_id", productId);
+
+    // Delete the product
+    const { error: deleteError } = await serviceClient
       .from("products")
       .delete()
       .eq("id", productId);
 
     if (deleteError) {
       throw new Error(deleteError.message);
+    }
+
+    // Clean up product image from storage
+    if (prod?.image_path) {
+      await serviceClient.storage.from(PRODUCT_IMAGE_BUCKET).remove([prod.image_path]);
     }
 
     redirect("/admin/products?deleted=1");
@@ -508,7 +540,7 @@ export default async function AdminEditProductPage({
               </label>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-2">
+            <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
               <a
                 href="/admin/products"
                 className="h-11 rounded-xl border border-zinc-200 bg-white px-5 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50 inline-flex items-center"

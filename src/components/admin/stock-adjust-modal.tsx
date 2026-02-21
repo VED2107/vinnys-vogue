@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 
 type InventoryLogRow = {
   id: string;
@@ -103,7 +104,7 @@ export default function StockAdjustModal({
         Adjust
       </button>
 
-      {open ? (
+      {open ? createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <button
             type="button"
@@ -112,7 +113,7 @@ export default function StockAdjustModal({
             aria-label="Close"
           />
 
-          <div className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl">
+          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-zinc-200 bg-white shadow-xl">
             <div className="flex items-start justify-between gap-6 border-b border-zinc-200 px-6 py-5">
               <div className="space-y-1">
                 <div className="text-sm font-medium text-zinc-900">Adjust Stock</div>
@@ -228,8 +229,8 @@ export default function StockAdjustModal({
                             </div>
                             <div
                               className={`flex-shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${l.change >= 0
-                                  ? "bg-emerald-50 text-emerald-700"
-                                  : "bg-red-50 text-red-700"
+                                ? "bg-emerald-50 text-emerald-700"
+                                : "bg-red-50 text-red-700"
                                 }`}
                             >
                               {l.change >= 0 ? `+${l.change}` : l.change}
@@ -244,7 +245,7 @@ export default function StockAdjustModal({
             </div>
           </div>
         </div>
-      ) : null}
+        , document.body) : null}
     </>
   );
 }
