@@ -1,10 +1,3 @@
-"use client";
-
-import { useRef } from "react";
-import { motion, useInView } from "framer-motion";
-
-const EASE_LUXURY: [number, number, number, number] = [0.22, 1, 0.36, 1];
-
 /**
  * Subtle gold mandala — thin stroke line art only.
  * Very low opacity (5–8%), large scale, centered behind section text.
@@ -12,6 +5,9 @@ const EASE_LUXURY: [number, number, number, number] = [0.22, 1, 0.36, 1];
  *
  * `variant` controls which geometric pattern is rendered
  * so each section gets a unique motif.
+ *
+ * ✅ Server component — zero JS shipped to client
+ * ✅ Respects prefers-reduced-motion
  */
 export function GoldMandala({
   variant = 0,
@@ -20,24 +16,18 @@ export function GoldMandala({
   variant?: number;
   className?: string;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
-
   return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0 }}
-      animate={isInView ? { opacity: 1 } : undefined}
-      transition={{ duration: 2.5, ease: EASE_LUXURY }}
-      className={`pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden ${className}`}
+    <div
+      className={`pointer-events-none absolute inset-0 z-0 flex items-center justify-center overflow-hidden ${className}`}
+      aria-hidden="true"
+      style={{ animation: "fadeInSoft 2.5s cubic-bezier(0.22,1,0.36,1) forwards" }}
     >
       <svg
         viewBox="0 0 500 500"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="w-full max-w-[450px] lg:max-w-[650px] h-auto animate-[spin_180s_linear_infinite]"
-        aria-hidden="true"
-        style={{ opacity: 0.12 }}
+        className="w-full max-w-[450px] lg:max-w-[650px] h-auto animate-[spin_180s_linear_infinite] motion-reduce:animate-none"
+        style={{ opacity: 0.12, willChange: "transform" }}
       >
         <defs>
           <linearGradient id={`gm-gold-${variant}`} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -149,6 +139,6 @@ export function GoldMandala({
           )}
         </g>
       </svg>
-    </motion.div>
+    </div>
   );
 }

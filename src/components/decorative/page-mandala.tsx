@@ -1,40 +1,30 @@
-"use client";
-
-import { useRef } from "react";
-import { motion, useInView } from "framer-motion";
-
-const EASE_LUXURY: [number, number, number, number] = [0.22, 1, 0.36, 1];
-
 /**
  * PageMandala — Lightweight centered mandala for non-homepage pages.
  * Decorative only: low opacity, behind content, pointer-events-none.
  * Use inside a `relative overflow-hidden` wrapper.
+ *
+ * ✅ Server component — zero JS shipped to client
+ * ✅ Respects prefers-reduced-motion
  */
 export function PageMandala({
     className = "",
 }: {
     className?: string;
 }) {
-    const ref = useRef<HTMLDivElement>(null);
-    const isInView = useInView(ref, { once: true, margin: "100px" });
-
     const uid = "pm";
 
     return (
-        <motion.div
-            ref={ref}
-            initial={{ opacity: 0 }}
-            animate={isInView ? { opacity: 1 } : undefined}
-            transition={{ duration: 2, ease: EASE_LUXURY }}
+        <div
             className={`pointer-events-none absolute inset-0 z-0 flex items-center justify-center ${className}`}
             aria-hidden="true"
+            style={{ animation: "fadeInSoft 2s cubic-bezier(0.22,1,0.36,1) forwards" }}
         >
             <svg
                 viewBox="0 0 500 500"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                className="w-full h-auto animate-[spin_180s_linear_infinite]"
-                style={{ opacity: 0.5 }}
+                className="w-full h-auto animate-[spin_180s_linear_infinite] motion-reduce:animate-none"
+                style={{ opacity: 0.5, willChange: "transform" }}
             >
                 <defs>
                     <linearGradient id={uid} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -73,6 +63,6 @@ export function PageMandala({
                     })}
                 </g>
             </svg>
-        </motion.div>
+        </div>
     );
 }

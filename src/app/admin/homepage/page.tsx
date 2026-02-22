@@ -1,3 +1,4 @@
+import dynamic from "next/dynamic";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
@@ -13,9 +14,15 @@ import {
     type StoryItem,
     type CollectionsContent,
 } from "@/lib/site-defaults";
-import { ImageUploadInput } from "@/components/admin/image-upload-input";
+const ImageUploadInput = dynamic(
+    () => import("@/components/admin/image-upload-input").then((m) => ({ default: m.ImageUploadInput })),
+    { ssr: false, loading: () => <div className="h-24 animate-pulse rounded-xl bg-[rgba(0,0,0,0.03)]" /> }
+);
 import { SaveContentForm } from "@/components/admin/save-content-form";
-import { RichTextEditor } from "@/components/admin/rich-text-editor";
+const RichTextEditor = dynamic(
+    () => import("@/components/admin/rich-text-editor").then((m) => ({ default: m.RichTextEditor })),
+    { ssr: false, loading: () => <div className="h-32 animate-pulse rounded-xl bg-[rgba(0,0,0,0.03)]" /> }
+);
 import { AdminSubmitButton } from "@/components/ui/AdminSubmitButton";
 
 export default async function AdminHomepagePage({

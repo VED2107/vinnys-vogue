@@ -70,6 +70,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Preconnect to critical origins — eliminates DNS+TLS roundtrip for LCP image */}
+        <link rel="preconnect" href="https://jluenrlmtfbfvpawqfuc.supabase.co" />
+        <link rel="preconnect" href="https://api.resend.com" />
+      </head>
       <body
         className={`${inter.variable} ${playfair.variable} antialiased relative`}
         suppressHydrationWarning
@@ -78,9 +83,11 @@ export default function RootLayout({
         <ScrollHeader>
           <Header />
         </ScrollHeader>
-        <PageTransition>
-          {children}
-        </PageTransition>
+        <main>
+          <PageTransition>
+            {children}
+          </PageTransition>
+        </main>
         <Footer />
         <SpeedInsights />
       </body>

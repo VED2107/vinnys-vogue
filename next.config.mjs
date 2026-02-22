@@ -70,6 +70,10 @@ const nextConfig = {
                         key: "Permissions-Policy",
                         value: "camera=(), microphone=(), geolocation=()",
                     },
+                    {
+                        key: "Cross-Origin-Opener-Policy",
+                        value: "same-origin",
+                    },
                 ],
             },
             /* Immutable cache for static assets */

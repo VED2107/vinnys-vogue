@@ -1,40 +1,26 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
-import { usePathname } from "next/navigation";
+import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
-import { FlyToIconLayer } from "@/components/fly-to-icon";
-
-const TRANSITION = {
-    duration: 0.5,
-    ease: [0.22, 1, 0.36, 1] as const,
-};
 
 /**
- * Cinematic page transition with AnimatePresence.
- *
- * - Exit animation completes before new page enters (mode="wait")
- * - Fade + subtle Y-shift for luxury feel
- * - pathname as key ensures each route gets its own animation lifecycle
+ * Lightweight page wrapper.
+ * - CSS-only fade-in animation (no framer-motion AnimatePresence)
+ * - FlyToIconLayer lazy-loaded separately (only ships when user interacts)
  */
-export function PageTransition({ children }: { children: ReactNode }) {
-    const pathname = usePathname();
 
+const FlyToIconLayer = dynamic(
+    () => import("@/components/fly-to-icon").then((m) => ({ default: m.FlyToIconLayer })),
+    { ssr: false }
+);
+
+export function PageTransition({ children }: { children: ReactNode }) {
     return (
         <>
             <FlyToIconLayer />
-            <AnimatePresence mode="wait">
-                <motion.div
-                    key={pathname}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    transition={TRANSITION}
-                >
-                    {children}
-                </motion.div>
-            </AnimatePresence>
+            <div className="animate-fadeIn">
+                {children}
+            </div>
         </>
     );
 }
-

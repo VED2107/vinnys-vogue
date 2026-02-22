@@ -12,7 +12,7 @@ import type { ReviewItem } from "@/components/product-reviews";
 import ProductReviewForm from "@/components/product-review-form";
 import { ProductBadges } from "@/components/product-badges";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export async function generateMetadata({
   params,

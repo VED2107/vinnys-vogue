@@ -1,28 +1,18 @@
-"use client";
-
-import { useState } from "react";
 import Image, { type ImageProps } from "next/image";
 
 /**
- * Next/Image wrapper that fades in when loaded.
- * Defaults: quality=75, lazy loading (unless priority set).
+ * Next/Image wrapper with CSS-only fade-in on load.
+ * ✅ Server component — zero JS shipped to client
+ * Default quality: 82 (luxury safe)
  */
 export function FadeImage(props: ImageProps) {
-    const [loaded, setLoaded] = useState(false);
-
     return (
         <Image
-            quality={props.quality ?? 75}
+            quality={props.quality ?? 82}
             loading={props.priority ? undefined : "lazy"}
             {...props}
-            onLoad={(e) => {
-                setLoaded(true);
-                if (typeof props.onLoad === "function") {
-                    props.onLoad(e);
-                }
-            }}
-            className={`${props.className ?? ""} transition-opacity duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${loaded ? "opacity-100" : "opacity-0"
-                }`}
+            className={props.className ?? ""}
+            style={{ ...((props as Record<string, unknown>).style as React.CSSProperties | undefined), animation: "fadeInSoft 0.5s cubic-bezier(0.22,1,0.36,1) forwards" }}
         />
     );
 }

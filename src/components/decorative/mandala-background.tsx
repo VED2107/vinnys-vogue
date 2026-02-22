@@ -1,14 +1,12 @@
-"use client";
 
-import { useRef } from "react";
-import { motion, useInView } from "framer-motion";
-
-const EASE_LUXURY: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 /**
  * MandalaBackground — Gold mandala, spinning slowly.
  * Place inside a `relative overflow-hidden` container.
  * Responsive: 300px mobile → 500px tablet → 700px desktop.
+ *
+ * ✅ Server component — zero JS shipped to client
+ * ✅ Respects prefers-reduced-motion
  */
 export function MandalaBackground({
   variant = "lotus",
@@ -21,9 +19,6 @@ export function MandalaBackground({
   className?: string;
   opacity?: number;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "100px" });
-
   // Tailwind position classes — places the wrapper at the right spot
   const posMap: Record<string, string> = {
     "top-right": "top-0 right-0 -translate-y-[10%] translate-x-[10%]",
@@ -36,22 +31,22 @@ export function MandalaBackground({
   const uid = `mb-${variant}-${position}`;
 
   return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0 }}
-      animate={isInView ? { opacity: 1 } : undefined}
-      transition={{ duration: 2, ease: EASE_LUXURY }}
+    <div
       className={`pointer-events-none absolute inset-0 z-0 ${className}`}
       aria-hidden="true"
+      style={{ animation: "fadeInSoft 2s cubic-bezier(0.22,1,0.36,1) forwards" }}
     >
-      {/* Positioning wrapper — translate offsets, stays still */}
-      <div className={`absolute ${posMap[position]} w-[300px] h-[300px] sm:w-[450px] sm:h-[450px] md:w-[550px] md:h-[550px] lg:w-[700px] lg:h-[700px]`}>
-        {/* SVG — only spins */}
+      {/* Positioning wrapper */}
+      <div
+        className={`absolute ${posMap[position]} w-[300px] h-[300px] sm:w-[450px] sm:h-[450px] md:w-[550px] md:h-[550px] lg:w-[700px] lg:h-[700px]`}
+        style={{ willChange: "transform" }}
+      >
+        {/* SVG — only spins via CSS */}
         <svg
           viewBox="0 0 500 500"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className="w-full h-full animate-[spin_180s_linear_infinite]"
+          className="w-full h-full animate-[spin_180s_linear_infinite] motion-reduce:animate-none"
           style={{ opacity: opacity ?? 0.45 }}
         >
           <defs>
@@ -185,6 +180,6 @@ export function MandalaBackground({
           )}
         </svg>
       </div>
-    </motion.div>
+    </div>
   );
 }

@@ -44,6 +44,38 @@ html {
     transform: none !important;
     transition: none !important;
   }
+
+  /* Disable all decorative spin animations */
+  .motion-reduce\:animate-none {
+    animation: none !important;
+  }
+}
+
+/* ——— Decorative Keyframes (server-component safe) ——— */
+@keyframes fadeInSoft {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleXIn {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* ——— Accessibility: Gold Focus Ring ——— */
+:focus-visible {
+  outline: 2px solid #B8923F;
+  outline-offset: 2px;
 }
 
 body {

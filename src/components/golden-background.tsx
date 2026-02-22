@@ -1,15 +1,10 @@
-"use client";
-
 /**
  * Global decorative gold background layer.
  * Placed once in layout.tsx — all pages inherit it.
  *
- * - Thin SVG line art only (no fills)
- * - 4–6% opacity, muted gold gradient
- * - Absolute positioned, pointer-events: none, behind content
- * - Responsive scaling
- * - Optional extremely slow rotation
- * - No heavy filters, no large duplication
+ * ✅ Server component — zero JS shipped to client
+ * ✅ GPU-accelerated spin animation via CSS
+ * ✅ Respects prefers-reduced-motion
  */
 export function GoldenBackground() {
   return (
@@ -22,8 +17,11 @@ export function GoldenBackground() {
         viewBox="0 0 500 500"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="absolute -top-32 -right-32 w-[70vw] max-w-[700px] h-auto hidden sm:block animate-[spin_150s_linear_infinite]"
-        style={{ opacity: 0.045 }}
+        className="absolute -top-32 -right-32 w-[70vw] max-w-[700px] h-auto hidden sm:block animate-[spin_150s_linear_infinite] motion-reduce:animate-none"
+        style={{
+          opacity: 0.045,
+          willChange: "transform",
+        }}
       >
         <defs>
           <linearGradient id="gb-g1" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -51,8 +49,11 @@ export function GoldenBackground() {
         viewBox="0 0 400 400"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="absolute -bottom-24 -left-24 w-[55vw] max-w-[550px] h-auto hidden sm:block animate-[spin_180s_linear_infinite_reverse]"
-        style={{ opacity: 0.035 }}
+        className="absolute -bottom-24 -left-24 w-[55vw] max-w-[550px] h-auto hidden sm:block animate-[spin_180s_linear_infinite_reverse] motion-reduce:animate-none"
+        style={{
+          opacity: 0.035,
+          willChange: "transform",
+        }}
       >
         <defs>
           <linearGradient id="gb-g2" x1="0%" y1="0%" x2="100%" y2="100%">

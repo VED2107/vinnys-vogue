@@ -1,32 +1,21 @@
-"use client";
-
-import { useRef } from "react";
-import { motion, useInView } from "framer-motion";
-
-const EASE_LUXURY: [number, number, number, number] = [0.22, 1, 0.36, 1];
-
 /**
+ * ✅ Server component — CSS-only animations, zero JS
  * Thin gold line with a centered diamond icon.
- * Fades in softly when scrolled into view.
+ * Fades in with CSS animation.
  */
 export function GoldDivider({ className = "" }: { className?: string }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-40px" });
-
   return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0 }}
-      animate={isInView ? { opacity: 1 } : undefined}
-      transition={{ duration: 1.6, ease: EASE_LUXURY }}
+    <div
       className={`flex items-center justify-center gap-4 py-2 ${className}`}
+      style={{ animation: "fadeInSoft 1.6s cubic-bezier(0.22,1,0.36,1) forwards" }}
     >
-      <motion.div
-        initial={{ scaleX: 0 }}
-        animate={isInView ? { scaleX: 1 } : undefined}
-        transition={{ duration: 1.4, ease: EASE_LUXURY, delay: 0.1 }}
+      <div
         className="h-px w-16 origin-right"
-        style={{ background: "linear-gradient(90deg, transparent, #C6A75E)" }}
+        style={{
+          background: "linear-gradient(90deg, transparent, #C6A75E)",
+          transform: "scaleX(0)",
+          animation: "scaleXIn 1.4s cubic-bezier(0.22,1,0.36,1) 0.1s forwards",
+        }}
       />
       <svg
         width="10"
@@ -44,21 +33,21 @@ export function GoldDivider({ className = "" }: { className?: string }) {
           opacity="0.6"
         />
       </svg>
-      <motion.div
-        initial={{ scaleX: 0 }}
-        animate={isInView ? { scaleX: 1 } : undefined}
-        transition={{ duration: 1.4, ease: EASE_LUXURY, delay: 0.1 }}
+      <div
         className="h-px w-16 origin-left"
-        style={{ background: "linear-gradient(90deg, #C6A75E, transparent)" }}
+        style={{
+          background: "linear-gradient(90deg, #C6A75E, transparent)",
+          transform: "scaleX(0)",
+          animation: "scaleXIn 1.4s cubic-bezier(0.22,1,0.36,1) 0.1s forwards",
+        }}
       />
-    </motion.div>
+    </div>
   );
 }
 
 /**
+ * ✅ Server component — CSS-only animation, zero JS
  * Minimal geometric watermark pattern for backgrounds.
- * Each `variant` produces a different geometric motif.
- * Very low opacity, fades in on scroll.
  */
 export function GeometricWatermark({
   variant = 0,
@@ -67,17 +56,11 @@ export function GeometricWatermark({
   variant?: number;
   className?: string;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-80px" });
-
   return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0 }}
-      animate={isInView ? { opacity: 1 } : undefined}
-      transition={{ duration: 2, ease: EASE_LUXURY }}
+    <div
       className={`pointer-events-none absolute overflow-hidden ${className}`}
       aria-hidden="true"
+      style={{ animation: "fadeInSoft 2s cubic-bezier(0.22,1,0.36,1) forwards" }}
     >
       <svg
         viewBox="0 0 200 200"
@@ -144,6 +127,6 @@ export function GeometricWatermark({
           )}
         </g>
       </svg>
-    </motion.div>
+    </div>
   );
 }

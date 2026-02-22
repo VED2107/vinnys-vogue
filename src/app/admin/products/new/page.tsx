@@ -1,9 +1,13 @@
+import dynamic from "next/dynamic";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { PRODUCT_IMAGE_BUCKET } from "@/lib/product-images";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
 import VariantManager from "@/components/variant-manager";
-import { RichTextEditor } from "@/components/admin/rich-text-editor";
+const RichTextEditor = dynamic(
+  () => import("@/components/admin/rich-text-editor").then((m) => ({ default: m.RichTextEditor })),
+  { ssr: false, loading: () => <div className="h-32 animate-pulse rounded-xl bg-[rgba(0,0,0,0.03)]" /> }
+);
 import { AdminSubmitButton } from "@/components/ui/AdminSubmitButton";
 
 function parsePrice(value: string | null | undefined) {
