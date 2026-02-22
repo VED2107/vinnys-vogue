@@ -132,8 +132,11 @@ export function ChangePasswordButton() {
     return (
         <a
             href="/change-password"
-            className="inline-flex h-12 items-center rounded-full border border-[rgba(0,0,0,0.1)] px-8 text-[14px] text-heading transition-all duration-300 hover:border-[rgba(0,0,0,0.2)]"
+            className="inline-flex h-11 items-center gap-2 rounded-full border border-gold/30 px-7 text-[13px] font-medium text-gold tracking-wide transition-all duration-300 hover:bg-gold/5 hover:border-gold/50"
         >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+            </svg>
             Change Password
         </a>
     );

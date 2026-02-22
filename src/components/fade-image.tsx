@@ -4,20 +4,19 @@ import { useState } from "react";
 import Image, { type ImageProps } from "next/image";
 
 /**
- * Next/Image wrapper that fades in when the image has loaded.
- * Removes the jarring "image pop-in" effect.
- *
- * Accepts all standard next/image props.
+ * Next/Image wrapper that fades in when loaded.
+ * Defaults: quality=75, lazy loading (unless priority set).
  */
 export function FadeImage(props: ImageProps) {
     const [loaded, setLoaded] = useState(false);
 
     return (
         <Image
+            quality={props.quality ?? 75}
+            loading={props.priority ? undefined : "lazy"}
             {...props}
             onLoad={(e) => {
                 setLoaded(true);
-                // Forward original onLoad if provided
                 if (typeof props.onLoad === "function") {
                     props.onLoad(e);
                 }

@@ -24,7 +24,7 @@ export default async function AdminAbandonedCartsPage() {
 
   return (
     <div className="min-h-screen bg-bg-admin">
-      <div className="w-full px-6 lg:px-16 xl:px-24 py-16">
+      <div className="w-full max-w-[1400px] mx-auto px-6 lg:px-16 xl:px-24 py-16">
         <FadeIn>
           <div className="flex items-end justify-between gap-6">
             <div className="space-y-3">

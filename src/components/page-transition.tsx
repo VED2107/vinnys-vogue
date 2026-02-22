@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { FlyToIconLayer } from "@/components/fly-to-icon";
 
 const TRANSITION = {
     duration: 0.5,
@@ -20,16 +21,20 @@ export function PageTransition({ children }: { children: ReactNode }) {
     const pathname = usePathname();
 
     return (
-        <AnimatePresence mode="wait">
-            <motion.div
-                key={pathname}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={TRANSITION}
-            >
-                {children}
-            </motion.div>
-        </AnimatePresence>
+        <>
+            <FlyToIconLayer />
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={pathname}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={TRANSITION}
+                >
+                    {children}
+                </motion.div>
+            </AnimatePresence>
+        </>
     );
 }
+

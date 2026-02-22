@@ -3,7 +3,18 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-export default function CheckoutForm() {
+interface CheckoutProfile {
+    full_name: string;
+    email: string;
+    phone: string;
+    address_line1: string;
+    address_line2: string;
+    city: string;
+    state: string;
+    pincode: string;
+}
+
+export default function CheckoutForm({ initialProfile }: { initialProfile?: CheckoutProfile }) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState<string | null>(null);
@@ -52,46 +63,48 @@ export default function CheckoutForm() {
 
     const labelClass = "text-[11px] font-medium tracking-[0.2em] text-muted uppercase";
 
+    const p = initialProfile;
+
     return (
         <form onSubmit={handleSubmit} className="space-y-5">
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <div className="space-y-2">
                     <label htmlFor="checkout_full_name" className={labelClass}>Full Name</label>
-                    <input id="checkout_full_name" name="full_name" required className={inputClass} placeholder="Jane Doe" />
+                    <input id="checkout_full_name" name="full_name" required className={inputClass} placeholder="Jane Doe" defaultValue={p?.full_name} />
                 </div>
                 <div className="space-y-2">
                     <label htmlFor="checkout_phone" className={labelClass}>Phone</label>
-                    <input id="checkout_phone" name="phone" required className={inputClass} placeholder="+91 98765 43210" />
+                    <input id="checkout_phone" name="phone" required className={inputClass} placeholder="+91 98765 43210" defaultValue={p?.phone} />
                 </div>
             </div>
 
             <div className="space-y-2">
                 <label htmlFor="checkout_email" className={labelClass}>Email</label>
-                <input id="checkout_email" name="email" type="email" required className={inputClass} placeholder="jane@example.com" />
+                <input id="checkout_email" name="email" type="email" required className={inputClass} placeholder="jane@example.com" defaultValue={p?.email} />
             </div>
 
             <div className="space-y-2">
                 <label htmlFor="checkout_address1" className={labelClass}>Address Line 1</label>
-                <input id="checkout_address1" name="address_line1" required className={inputClass} placeholder="House / Flat / Apartment" />
+                <input id="checkout_address1" name="address_line1" required className={inputClass} placeholder="House / Flat / Apartment" defaultValue={p?.address_line1} />
             </div>
 
             <div className="space-y-2">
                 <label htmlFor="checkout_address2" className={labelClass}>Address Line 2</label>
-                <input id="checkout_address2" name="address_line2" className={inputClass} placeholder="Street / Area (optional)" />
+                <input id="checkout_address2" name="address_line2" className={inputClass} placeholder="Street / Area (optional)" defaultValue={p?.address_line2} />
             </div>
 
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
                 <div className="space-y-2">
                     <label htmlFor="checkout_city" className={labelClass}>City</label>
-                    <input id="checkout_city" name="city" required className={inputClass} placeholder="Mumbai" />
+                    <input id="checkout_city" name="city" required className={inputClass} placeholder="Mumbai" defaultValue={p?.city} />
                 </div>
                 <div className="space-y-2">
                     <label htmlFor="checkout_state" className={labelClass}>State</label>
-                    <input id="checkout_state" name="state" required className={inputClass} placeholder="Maharashtra" />
+                    <input id="checkout_state" name="state" required className={inputClass} placeholder="Maharashtra" defaultValue={p?.state} />
                 </div>
                 <div className="space-y-2">
                     <label htmlFor="checkout_pincode" className={labelClass}>Pincode</label>
-                    <input id="checkout_pincode" name="pincode" required className={inputClass} placeholder="400001" />
+                    <input id="checkout_pincode" name="pincode" required className={inputClass} placeholder="400001" defaultValue={p?.pincode} />
                 </div>
             </div>
 

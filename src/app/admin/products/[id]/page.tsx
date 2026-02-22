@@ -31,8 +31,9 @@ type ProductRow = {
   product_variants: VariantRow[];
 };
 
-function parsePrice(value: string) {
-  const normalized = value.replace(/,/g, "").trim();
+function parsePrice(value: string | null | undefined) {
+  if (!value || !value.trim()) return 0;
+  const normalized = value.replace(/,/g, "").replace(/₹/g, "").trim();
   const numberValue = Number.parseFloat(normalized);
 
   if (!Number.isFinite(numberValue) || numberValue < 0) {
@@ -115,15 +116,22 @@ export default async function AdminEditProductPage({
     const removeImage = formData.get("remove_image") === "on";
     const newImage = formData.get("image") as File | null;
 
-    const priceDisplay = String(formData.get("price") || "");
-    const nextPrice = parsePrice(priceDisplay);
+    const priceRaw = formData.get("price");
+    const priceDisplay = priceRaw != null ? String(priceRaw).trim() : "";
+    let nextPrice = parsePrice(priceDisplay);
 
     if (!title) {
       throw new Error("Title is required.");
     }
 
-    if (nextPrice === null) {
-      throw new Error("Please enter a valid price.");
+    // If price is invalid or empty, fetch the current price from DB as fallback
+    if (nextPrice === null || (priceDisplay === "" && nextPrice === 0)) {
+      const { data: existingProduct } = await createSupabaseServerClient()
+        .from("products")
+        .select("price")
+        .eq("id", productId)
+        .maybeSingle();
+      nextPrice = existingProduct?.price ?? nextPrice ?? 0;
     }
 
     const supabase = createSupabaseServerClient();
@@ -283,13 +291,45 @@ export default async function AdminEditProductPage({
       throw new Error("Not authorized.");
     }
 
-    const { error: deleteError } = await supabase
+    // Use service-role client to bypass RLS and handle FK-dependent rows
+    const { createClient } = await import("@supabase/supabase-js");
+    const serviceClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    );
+
+    // Fetch product to clean up storage image
+    const { data: prod } = await serviceClient
+      .from("products")
+      .select("image_path")
+      .eq("id", productId)
+      .maybeSingle();
+
+    // Delete dependent rows that lack ON DELETE CASCADE
+    await serviceClient.from("cart_items").delete().eq("product_id", productId);
+    await serviceClient.from("inventory_logs").delete().eq("product_id", productId);
+    await serviceClient.from("reviews").delete().eq("product_id", productId);
+    await serviceClient.from("wishlist").delete().eq("product_id", productId);
+
+    // Nullify order_items references (preserve order history, just unlink product)
+    await serviceClient.from("order_items").update({ product_id: null }).eq("product_id", productId);
+
+    // Delete product variants first (FK child)
+    await serviceClient.from("product_variants").delete().eq("product_id", productId);
+
+    // Delete the product
+    const { error: deleteError } = await serviceClient
       .from("products")
       .delete()
       .eq("id", productId);
 
     if (deleteError) {
       throw new Error(deleteError.message);
+    }
+
+    // Clean up product image from storage
+    if (prod?.image_path) {
+      await serviceClient.storage.from(PRODUCT_IMAGE_BUCKET).remove([prod.image_path]);
     }
 
     redirect("/admin/products?deleted=1");
@@ -370,8 +410,9 @@ export default async function AdminEditProductPage({
                 name="price"
                 type="text"
                 inputMode="decimal"
-                defaultValue={String(product.price)}
+                defaultValue={String(product.price ?? 0)}
                 className="h-11 w-full rounded-xl border border-zinc-200 bg-white px-4 text-sm text-zinc-900 outline-none transition focus:border-zinc-400"
+                required
               />
               <div className="text-xs text-zinc-500">
                 Stored in rupees ({product.currency}). Example: 249.99
@@ -443,29 +484,10 @@ export default async function AdminEditProductPage({
               </div>
             </div>
 
-            {/* Has Variants toggle */}
-            <div className="flex items-center justify-between rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
-              <div>
-                <div className="text-sm font-medium text-zinc-900">Has Variants</div>
-                <div className="text-xs text-zinc-500">
-                  Enable size variants with individual stock levels.
-                </div>
-              </div>
-              <label className="relative inline-flex cursor-pointer items-center">
-                <input
-                  name="has_variants"
-                  type="checkbox"
-                  defaultChecked={product.has_variants}
-                  className="peer sr-only"
-                />
-                <div className="h-6 w-11 rounded-full bg-zinc-200 transition peer-checked:bg-zinc-900" />
-                <div className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition peer-checked:translate-x-5" />
-              </label>
-            </div>
-
-            {/* Variant rows */}
+            {/* Variant management (toggle + rows) */}
             <VariantManager
               initialVariants={safeVariants.length > 0 ? safeVariants : undefined}
+              initialEnabled={product.has_variants}
             />
 
             {/* Active toggle */}
@@ -508,7 +530,7 @@ export default async function AdminEditProductPage({
               </label>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-2">
+            <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
               <a
                 href="/admin/products"
                 className="h-11 rounded-xl border border-zinc-200 bg-white px-5 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50 inline-flex items-center"

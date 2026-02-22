@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useCallback, useOptimistic } from "react";
+import { useState, useCallback, useOptimistic, useRef } from "react";
+import { triggerFlyToIcon } from "@/components/fly-to-icon";
+import { emitBadgeUpdate } from "@/components/header-badge";
 
 export default function WishlistToggle({
   productId,
@@ -13,6 +15,7 @@ export default function WishlistToggle({
 }) {
   const [inWishlist, setInWishlist] = useOptimistic(initialInWishlist);
   const [pending, setPending] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
 
   const toggle = useCallback(async () => {
     if (pending) return;
@@ -20,6 +23,14 @@ export default function WishlistToggle({
     const next = !inWishlist;
     setInWishlist(next);
     onToggle?.(productId, next);
+
+    // Fire fly animation when adding
+    if (next && btnRef.current) {
+      triggerFlyToIcon(btnRef.current, "wishlist");
+    }
+
+    // Update header badge instantly
+    emitBadgeUpdate("wishlist", next ? 1 : -1);
 
     try {
       const endpoint = next ? "/api/wishlist/add" : "/api/wishlist/remove";
@@ -31,10 +42,12 @@ export default function WishlistToggle({
       if (!res.ok) {
         setInWishlist(!next);
         onToggle?.(productId, !next);
+        emitBadgeUpdate("wishlist", next ? -1 : 1); // rollback
       }
     } catch {
       setInWishlist(!next);
       onToggle?.(productId, !next);
+      emitBadgeUpdate("wishlist", next ? -1 : 1); // rollback
     } finally {
       setPending(false);
     }
@@ -42,6 +55,7 @@ export default function WishlistToggle({
 
   return (
     <button
+      ref={btnRef}
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -68,3 +82,4 @@ export default function WishlistToggle({
     </button>
   );
 }
+

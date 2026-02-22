@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { sendResendEmail } from "@/lib/email";
+import { sendResendEmail, EMAIL_FROM } from "@/lib/email";
 import { buildEmailLayout, escapeHtml } from "@/lib/emailTemplates";
 import {
   generateInvoiceNumber,
@@ -174,7 +174,7 @@ export async function sendOrderConfirmation(orderId: string) {
     await sendResendEmail(
       {
         to: toEmail,
-        from: "support@vinnysvogue.in",
+        from: EMAIL_FROM,
         subject: "Your Order is Confirmed — Vinnys Vogue",
         html,
         attachments,

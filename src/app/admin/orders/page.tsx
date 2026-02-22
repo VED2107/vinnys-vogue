@@ -39,7 +39,7 @@ export default async function AdminOrdersPage({
     if (error) {
         return (
             <div className="min-h-screen bg-bg-admin">
-                <div className="w-full px-6 lg:px-16 xl:px-24 py-16">
+                <div className="w-full max-w-[1400px] mx-auto px-6 lg:px-16 xl:px-24 py-16">
                     <div className="rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-white p-6 text-[15px] text-muted">{error.message}</div>
                 </div>
             </div>
@@ -55,7 +55,7 @@ export default async function AdminOrdersPage({
     return (
         <div className="relative min-h-screen overflow-hidden bg-bg-admin">
             <MandalaBackground variant="lotus" position="bottom-right" />
-            <div className="relative z-10 w-full px-6 lg:px-16 xl:px-24 py-16">
+            <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-16 xl:px-24 py-16">
                 <FadeIn>
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                         <div className="space-y-3">

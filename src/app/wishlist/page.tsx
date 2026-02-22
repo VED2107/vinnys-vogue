@@ -26,7 +26,7 @@ export default async function WishlistPage() {
   if (wishlistError) {
     return (
       <div className="min-h-screen bg-bg-primary">
-        <div className="w-full px-6 lg:px-16 xl:px-24 py-16">
+        <div className="w-full max-w-[1400px] mx-auto px-6 lg:px-16 xl:px-24 py-16">
           <div className="rounded-[20px] border border-red-200 bg-red-50 p-8 text-center text-[15px] text-red-700">
             Failed to load wishlist. Please try again.
           </div>
@@ -50,7 +50,7 @@ export default async function WishlistPage() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-bg-primary">
       <MandalaBackground variant="lotus" position="center" />
-      <div className="relative z-10 w-full px-6 lg:px-16 xl:px-24 py-16">
+      <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-16 xl:px-24 py-16">
         <FadeIn>
           <SectionTitle
             subtitle="Saved"

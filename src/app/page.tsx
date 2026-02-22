@@ -83,6 +83,7 @@ export default async function Home() {
     reception: collections.reception_image,
     mehendi: collections.mehendi_image,
     sangeet: collections.sangeet_image,
+    stock_clearing: collections.stock_clearing_image,
   };
 
   const renderHighlight = (text: string, highlight: string) => {
@@ -106,58 +107,59 @@ export default async function Home() {
         subtext={hero.subtext}
         cta_primary={hero.cta_primary}
         cta_secondary={hero.cta_secondary}
-        image_url={hero.image_url}
       />
 
       {/* ——— 2. CURATED COLLECTIONS ——— */}
       <CinematicReveal delay={100}>
         <section className="w-full py-16 lg:py-20 px-6 lg:px-16 xl:px-24">
-          <FadeIn>
-            <div className="mb-12">
-              <p className="text-[11px] tracking-[0.3em] uppercase text-gold font-medium">
-                Curated
-              </p>
-              <h2 className="mt-2 font-serif text-3xl lg:text-4xl font-light text-heading">
-                Collections
-              </h2>
-            </div>
-          </FadeIn>
+          <div className="max-w-[1400px] mx-auto">
+            <FadeIn>
+              <div className="mb-12">
+                <p className="text-[11px] tracking-[0.3em] uppercase text-gold font-medium">
+                  Curated
+                </p>
+                <h2 className="mt-2 font-serif text-3xl lg:text-4xl font-light text-heading">
+                  Collections
+                </h2>
+              </div>
+            </FadeIn>
 
-          <StaggerGrid className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 lg:gap-6" stagger={0.08}>
-            {PRODUCT_CATEGORIES.map((c) => {
-              const imgSrc = categoryImages[c.value];
-              return (
-                <StaggerItem key={c.value}>
-                  <a
-                    href={`/products?category=${encodeURIComponent(c.value)}`}
-                    className="group relative block overflow-hidden rounded-xl bg-[#EDE8E0] aspect-[3/4]"
-                  >
-                    {imgSrc ? (
-                      <Image src={imgSrc} alt={c.label} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" className="img-matte object-cover" />
-                    ) : null}
-                    <div className="glass-overlay pointer-events-none" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-                    <div className="absolute bottom-5 left-5">
-                      <span className="font-serif text-base font-light text-white tracking-wide">
-                        {c.label}
-                      </span>
-                    </div>
-                  </a>
-                </StaggerItem>
-              );
-            })}
-          </StaggerGrid>
+            <StaggerGrid className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 lg:gap-6" stagger={0.08}>
+              {PRODUCT_CATEGORIES.map((c) => {
+                const imgSrc = categoryImages[c.value];
+                return (
+                  <StaggerItem key={c.value}>
+                    <a
+                      href={`/products?category=${encodeURIComponent(c.value)}`}
+                      className="group relative block overflow-hidden rounded-xl bg-[#EDE8E0] aspect-[3/4]"
+                    >
+                      {imgSrc ? (
+                        <Image src={imgSrc} alt={c.label} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" className="img-matte object-cover" />
+                      ) : null}
+                      <div className="glass-overlay pointer-events-none" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+                      <div className="absolute bottom-5 left-5">
+                        <span className="font-serif text-base font-light text-white tracking-wide">
+                          {c.label}
+                        </span>
+                      </div>
+                    </a>
+                  </StaggerItem>
+                );
+              })}
+            </StaggerGrid>
+          </div>
         </section>
       </CinematicReveal>
 
       {/* ——— 3. EDITORIAL STORIES ——— */}
       {storiesData.stories.map((story, i) => (
-        <div key={i} className="relative overflow-hidden">
+        <div key={i} className="relative overflow-visible">
           <StorySection
             index={i}
             reversed={i % 2 === 1}
             mandala={
-              <MandalaBackground variant="lotus" position="center" opacity={0.18} />
+              <MandalaBackground variant="lotus" position="center" opacity={0.35} />
             }
             image={
               story.image_url ? (
@@ -194,19 +196,21 @@ export default async function Home() {
       {/* ——— 4. LATEST ARRIVALS ——— */}
       <CinematicReveal delay={300}>
         <section className="w-full py-28 px-6 lg:px-16 xl:px-24">
-          <FadeIn>
-            <div className="mb-12">
-              <p className="text-[11px] tracking-[0.3em] uppercase text-gold font-medium">
-                New In
-              </p>
-              <h2 className="mt-2 font-serif text-3xl lg:text-4xl font-light text-heading">
-                Latest Arrivals
-              </h2>
-            </div>
-          </FadeIn>
-          <Suspense fallback={<FeaturedProductsSkeleton />}>
-            <FeaturedProducts />
-          </Suspense>
+          <div className="max-w-[1400px] mx-auto">
+            <FadeIn>
+              <div className="mb-12">
+                <p className="text-[11px] tracking-[0.3em] uppercase text-gold font-medium">
+                  New In
+                </p>
+                <h2 className="mt-2 font-serif text-3xl lg:text-4xl font-light text-heading">
+                  Latest Arrivals
+                </h2>
+              </div>
+            </FadeIn>
+            <Suspense fallback={<FeaturedProductsSkeleton />}>
+              <FeaturedProducts />
+            </Suspense>
+          </div>
         </section>
       </CinematicReveal>
 
@@ -216,10 +220,10 @@ export default async function Home() {
       {/* ——— 5. CRAFTSMANSHIP ——— */}
       <CinematicReveal delay={350}>
         <section id="craftsmanship" className="w-full py-28 px-6 lg:px-16 xl:px-24">
-          <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-12 lg:gap-16">
+          <div className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-2 items-start gap-12 lg:gap-16">
             {/* Text */}
             <div className="relative flex items-center lg:min-h-[560px]">
-              <MandalaBackground variant="lotus" position="center" opacity={0.18} />
+              <MandalaBackground variant="lotus" position="center" opacity={0.35} />
               <div className="relative z-10 max-w-[480px]">
                 <div className="flex items-center gap-2">
                   <span className="text-gold text-sm">✦</span>
@@ -259,20 +263,22 @@ export default async function Home() {
       {/* ——— 6. NEWSLETTER ——— */}
       <CinematicReveal delay={400}>
         <section className="w-full py-28 px-6 lg:px-16 xl:px-24">
-          <FadeIn>
-            <div className="max-w-[520px] mx-auto text-center">
-              <p className="text-[11px] tracking-[0.3em] uppercase text-gold font-medium">
-                Stay Connected
-              </p>
-              <h3 className="mt-2 font-serif text-2xl lg:text-3xl font-light text-heading">
-                {newsletter.title}
-              </h3>
-              <div className="mt-3 text-[14px] leading-[1.7] text-neutral-600 [&>p]:m-0" dangerouslySetInnerHTML={{ __html: newsletter.description }} />
-              <div className="mt-6 flex justify-center">
-                <NewsletterForm />
+          <div className="max-w-[1400px] mx-auto">
+            <FadeIn>
+              <div className="max-w-[520px] mx-auto text-center">
+                <p className="text-[11px] tracking-[0.3em] uppercase text-gold font-medium">
+                  Stay Connected
+                </p>
+                <h3 className="mt-2 font-serif text-2xl lg:text-3xl font-light text-heading">
+                  {newsletter.title}
+                </h3>
+                <div className="mt-3 text-[14px] leading-[1.7] text-neutral-600 [&>p]:m-0" dangerouslySetInnerHTML={{ __html: newsletter.description }} />
+                <div className="mt-6 flex justify-center">
+                  <NewsletterForm />
+                </div>
               </div>
-            </div>
-          </FadeIn>
+            </FadeIn>
+          </div>
         </section>
       </CinematicReveal>
     </div>

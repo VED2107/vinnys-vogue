@@ -147,7 +147,6 @@ export interface HeroProps {
   subtext?: string;
   cta_primary?: string;
   cta_secondary?: string;
-  image_url?: string;
 }
 
 export default function Hero({
@@ -258,7 +257,7 @@ export default function Hero({
           className="max-w-[420px] text-[15px] leading-[1.75] font-light"
           style={{ color: "#6B6560" }}
         >
-          <p>{subtext}</p>
+          <div dangerouslySetInnerHTML={{ __html: subtext }} className="[&>p]:m-0" />
         </motion.div>
 
         {/* CTA */}

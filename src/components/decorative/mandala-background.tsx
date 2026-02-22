@@ -26,10 +26,10 @@ export function MandalaBackground({
 
   // Tailwind position classes — places the wrapper at the right spot
   const posMap: Record<string, string> = {
-    "top-right": "top-0 right-0 -translate-y-1/4 translate-x-1/4",
-    "top-left": "top-0 left-0 -translate-y-1/4 -translate-x-1/4",
-    "bottom-right": "bottom-0 right-0 translate-y-1/4 translate-x-1/4",
-    "bottom-left": "bottom-0 left-0 translate-y-1/4 -translate-x-1/4",
+    "top-right": "top-0 right-0 -translate-y-[10%] translate-x-[10%]",
+    "top-left": "top-0 left-0 -translate-y-[10%] -translate-x-[10%]",
+    "bottom-right": "bottom-0 right-0 translate-y-[10%] translate-x-[10%]",
+    "bottom-left": "bottom-0 left-0 translate-y-[10%] -translate-x-[10%]",
     center: "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
   };
 
@@ -41,7 +41,7 @@ export function MandalaBackground({
       initial={{ opacity: 0 }}
       animate={isInView ? { opacity: 1 } : undefined}
       transition={{ duration: 2, ease: EASE_LUXURY }}
-      className={`pointer-events-none absolute inset-0 z-0 overflow-hidden ${className}`}
+      className={`pointer-events-none absolute inset-0 z-0 ${className}`}
       aria-hidden="true"
     >
       {/* Positioning wrapper — translate offsets, stays still */}

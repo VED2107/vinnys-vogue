@@ -111,7 +111,7 @@ export default async function CartPage() {
     return (
         <div className="relative min-h-screen overflow-hidden bg-bg-primary">
             <MandalaBackground variant="lotus" position="top-left" />
-            <div className="relative z-10 w-full px-6 lg:px-16 xl:px-24 py-16">
+            <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-16 xl:px-24 py-16">
                 <FadeIn>
                     <div className="space-y-3">
                         <div className="gold-divider" />

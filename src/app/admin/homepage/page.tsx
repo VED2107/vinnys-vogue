@@ -138,12 +138,6 @@ export default async function AdminHomepagePage({
                                 <input name="field_cta_secondary" defaultValue={hero.cta_secondary} className={inputClass} />
                             </div>
                         </div>
-                        <ImageUploadInput
-                            name="field_image_url"
-                            defaultValue={hero.image_url}
-                            label="Hero Image"
-                            sublabel="public URL or upload"
-                        />
                         <AdminSubmitButton className={saveBtn} pendingText="Saving…">Save Hero</AdminSubmitButton>
                     </div>
                 </SaveContentForm>
@@ -304,6 +298,7 @@ export default async function AdminHomepagePage({
                             <ImageUploadInput name="field_reception_image" defaultValue={collections.reception_image} label="Reception" />
                             <ImageUploadInput name="field_mehendi_image" defaultValue={collections.mehendi_image} label="Mehendi Ceremony" />
                             <ImageUploadInput name="field_sangeet_image" defaultValue={collections.sangeet_image} label="Sangeet" />
+                            <ImageUploadInput name="field_stock_clearing_image" defaultValue={collections.stock_clearing_image} label="Stock Clearing" />
                         </div>
                         <AdminSubmitButton className={saveBtn} pendingText="Saving…">Save Collection Images</AdminSubmitButton>
                     </div>

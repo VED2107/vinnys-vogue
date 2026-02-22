@@ -30,7 +30,7 @@ export default async function AdminLayout({
                 <AdminSidebar />
 
                 {/* Right content area */}
-                <main className="relative flex-1 overflow-hidden">
+                <main className="relative flex-1 overflow-x-hidden">
                     <MandalaBackground variant="lotus" position="center" />
                     <div className="relative z-10 w-full px-6 lg:px-12 xl:px-16 py-8 lg:py-12 pb-28 md:pb-12">
                         {children}

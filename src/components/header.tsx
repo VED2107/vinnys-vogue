@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { MobileNav } from "@/components/mobile-nav";
+import { HeaderBadge } from "@/components/header-badge";
 
 export async function Header() {
     const supabase = createSupabaseServerClient();
@@ -107,23 +108,21 @@ export async function Header() {
                     {user ? (
                         <Link
                             href="/wishlist"
+                            id="header-wishlist-icon"
                             className="nav-link-editorial relative inline-flex items-center justify-center text-[#1C1A18] py-1"
                             aria-label="Wishlist"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M20.8 4.6c-1.6-1.6-4.2-1.6-5.8 0L12 7.6l-3-3c-1.6-1.6-4.2-1.6-5.8 0s-1.6 4.2 0 5.8l3 3L12 21l5.8-7.6 3-3c1.6-1.6 1.6-4.2 0-5.8Z" />
                             </svg>
-                            {wishlistCount > 0 ? (
-                                <span className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#1C3A2A] px-1 text-[9px] font-medium text-white">
-                                    {wishlistCount > 99 ? "99+" : wishlistCount}
-                                </span>
-                            ) : null}
+                            <HeaderBadge type="wishlist" initialCount={wishlistCount} />
                         </Link>
                     ) : null}
 
                     {user ? (
                         <Link
                             href="/cart"
+                            id="header-cart-icon"
                             className="nav-link-editorial relative inline-flex items-center justify-center text-[#1C1A18] py-1"
                             aria-label="Cart"
                         >
@@ -132,11 +131,7 @@ export async function Header() {
                                 <line x1="3" x2="21" y1="6" y2="6" />
                                 <path d="M16 10a4 4 0 0 1-8 0" />
                             </svg>
-                            {cartCount > 0 ? (
-                                <span className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#1C3A2A] px-1 text-[9px] font-medium text-white">
-                                    {cartCount > 99 ? "99+" : cartCount}
-                                </span>
-                            ) : null}
+                            <HeaderBadge type="cart" initialCount={cartCount} />
                         </Link>
                     ) : null}
 

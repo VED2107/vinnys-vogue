@@ -112,6 +112,18 @@ export function ImageUploadInput({ name, defaultValue, label, sublabel }: ImageU
                         Preview
                     </a>
                 )}
+                {url && (
+                    <button
+                        type="button"
+                        onClick={() => { setUrl(""); if (fileRef.current) fileRef.current.value = ""; }}
+                        className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-[11px] font-medium text-red-600 transition hover:bg-red-100"
+                    >
+                        <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M18 6L6 18M6 6l12 12" />
+                        </svg>
+                        Remove
+                    </button>
+                )}
             </div>
 
             {/* Small preview */}

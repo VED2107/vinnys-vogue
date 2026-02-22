@@ -38,6 +38,24 @@ export default async function CheckoutPage() {
 
     if (validItems.length === 0) redirect("/cart");
 
+    // Fetch user profile for address pre-fill
+    const { data: profileRow } = await supabase
+        .from("profiles")
+        .select("full_name,phone,address_line1,address_line2,city,state,postal_code,country")
+        .eq("id", user.id)
+        .maybeSingle();
+
+    const profile = profileRow as {
+        full_name: string | null;
+        phone: string | null;
+        address_line1: string | null;
+        address_line2: string | null;
+        city: string | null;
+        state: string | null;
+        postal_code: string | null;
+        country: string | null;
+    } | null;
+
     const totalCents = validItems.reduce(
         (sum, item) => sum + (item.products as { price: number }).price * item.quantity,
         0,
@@ -47,7 +65,7 @@ export default async function CheckoutPage() {
     return (
         <div className="relative min-h-screen overflow-hidden bg-bg-primary">
             <MandalaBackground variant="lotus" position="top-right" />
-            <div className="relative z-10 w-full px-6 lg:px-16 xl:px-24 py-16">
+            <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-16 xl:px-24 py-16">
                 <FadeIn>
                     <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-16">
                         {/* Order Summary — sticky glass card */}
@@ -99,7 +117,18 @@ export default async function CheckoutPage() {
                                 </h1>
                             </div>
                             <div className="gold-divider-anim active mb-6" />
-                            <CheckoutForm />
+                            <CheckoutForm
+                                initialProfile={profile ? {
+                                    full_name: profile.full_name ?? "",
+                                    email: user.email ?? "",
+                                    phone: profile.phone ?? "",
+                                    address_line1: profile.address_line1 ?? "",
+                                    address_line2: profile.address_line2 ?? "",
+                                    city: profile.city ?? "",
+                                    state: profile.state ?? "",
+                                    pincode: profile.postal_code ?? "",
+                                } : undefined}
+                            />
                         </div>
                     </div>
                 </FadeIn>

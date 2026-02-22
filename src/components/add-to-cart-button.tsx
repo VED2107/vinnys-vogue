@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useTransition, useRef, useEffect } from "react";
+import { triggerFlyToIcon } from "@/components/fly-to-icon";
+import { emitBadgeUpdate } from "@/components/header-badge";
 
 function Spinner() {
     return (
@@ -15,16 +17,19 @@ export default function AddToCartButton({
     onAddToCart,
     onBuyNow,
     disabled,
+    imageUrl,
 }: {
     onAddToCart: () => Promise<void>;
     onBuyNow?: () => Promise<void>;
     disabled: boolean;
+    imageUrl?: string;
 }) {
     const [cartPending, startCartTransition] = useTransition();
     const [buyPending, startBuyTransition] = useTransition();
     const [added, setAdded] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const cartBtnRef = useRef<HTMLButtonElement>(null);
 
     const anyPending = cartPending || buyPending;
 
@@ -40,6 +45,12 @@ export default function AddToCartButton({
             try {
                 await onAddToCart();
                 setAdded(true);
+                // Fire fly animation on success
+                if (cartBtnRef.current) {
+                    triggerFlyToIcon(cartBtnRef.current, "cart", imageUrl);
+                }
+                // Update header badge instantly
+                emitBadgeUpdate("cart", 1);
                 timeoutRef.current = setTimeout(() => setAdded(false), 2000);
             } catch (err) {
                 setError(err instanceof Error ? err.message : "Failed to add to cart");
@@ -63,6 +74,7 @@ export default function AddToCartButton({
         <div className="space-y-3">
             <div className="flex flex-col gap-3 sm:flex-row">
                 <button
+                    ref={cartBtnRef}
                     onClick={handleAddToCart}
                     disabled={disabled || anyPending}
                     className="h-12 flex-1 rounded-full bg-accent text-[14px] font-medium tracking-wide text-white hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center gap-2"
@@ -95,3 +107,4 @@ export default function AddToCartButton({
         </div>
     );
 }
+

@@ -1,11 +1,13 @@
+export const revalidate = 60;
+
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ProductCard } from "@/components/product-card";
 import { getProductImagePublicUrl } from "@/lib/product-images";
-import { PRODUCT_CATEGORIES } from "@/lib/categories";
 import { SectionTitle } from "@/components/ui";
 import { FadeIn, StaggerGrid, StaggerItem } from "@/components/fade-in";
 import { MandalaBackground } from "@/components/decorative";
 import { GoldDivider } from "@/components/section-divider";
+import { CollectionSidebar } from "@/components/collection-sidebar";
 
 type ProductRow = {
   id: string;
@@ -26,12 +28,9 @@ export default async function ProductsPage({
 }) {
   const supabase = createSupabaseServerClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   const filterCategory = searchParams?.category;
 
+  // Parallel fetch: products + user + wishlist
   let query = supabase
     .from("products")
     .select("id,title,price,currency,image_path,active,stock,is_bestseller,is_new")
@@ -42,7 +41,14 @@ export default async function ProductsPage({
     query = query.eq("category", filterCategory);
   }
 
-  const { data } = await query;
+  const [
+    { data },
+    { data: { user } },
+  ] = await Promise.all([
+    query,
+    supabase.auth.getUser(),
+  ]);
+
   const products = (data ?? []) as ProductRow[];
 
   const wishlistProductIds = new Set<string>();
@@ -61,7 +67,7 @@ export default async function ProductsPage({
   return (
     <div className="relative min-h-screen overflow-hidden bg-bg-primary">
       <MandalaBackground variant="lotus" position="center" />
-      <div className="relative z-10 w-full px-6 lg:px-16 xl:px-24 py-24">
+      <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-16 xl:px-24 py-24">
         <FadeIn>
           <SectionTitle
             subtitle="Browse"
@@ -71,71 +77,53 @@ export default async function ProductsPage({
           />
         </FadeIn>
 
-        <GoldDivider className="my-8" />
+        <GoldDivider className="my-10" />
 
-        <div className="mt-16 flex gap-12">
-          {/* Filter Sidebar */}
-          <aside className="hidden md:block w-[240px] flex-shrink-0">
-            <div className="sticky top-24 space-y-1">
-              <div className="text-[11px] font-medium tracking-[0.25em] text-neutral-400 uppercase mb-4">Categories</div>
-              <a
-                href="/products"
-                className={`block px-3 py-2 text-[13px] transition-opacity ${!filterCategory
-                  ? "text-heading font-medium"
-                  : "text-neutral-500 hover:opacity-70"
-                  }`}
-              >
-                All
-              </a>
-              {PRODUCT_CATEGORIES.map((c) => (
-                <a
-                  key={c.value}
-                  href={`/products?category=${encodeURIComponent(c.value)}`}
-                  className={`block px-3 py-2 text-[13px] transition-opacity ${filterCategory === c.value
-                    ? "text-heading font-medium"
-                    : "text-neutral-500 hover:opacity-70"
-                    }`}
-                >
-                  {c.label}
-                </a>
-              ))}
-            </div>
-          </aside>
+        <div className="mt-12 flex gap-12 lg:gap-16">
+          {/* Sidebar */}
+          <CollectionSidebar activeCategory={filterCategory} />
 
-          <div className="flex-1">
-            {/* Mobile pills */}
-            <div className="flex flex-wrap gap-2 md:hidden mb-10">
-              <a
-                href="/products"
-                className={`inline-flex h-9 items-center rounded-full px-4 text-[13px] transition ${!filterCategory
-                  ? "bg-[#0F2E22] text-white"
-                  : "border border-neutral-200 text-neutral-500 hover:border-neutral-300"
-                  }`}
-              >
-                All
-              </a>
-              {PRODUCT_CATEGORIES.map((c) => (
-                <a
-                  key={c.value}
-                  href={`/products?category=${encodeURIComponent(c.value)}`}
-                  className={`inline-flex h-9 items-center rounded-full px-4 text-[13px] transition ${filterCategory === c.value
-                    ? "bg-[#0F2E22] text-white"
-                    : "border border-neutral-200 text-neutral-500 hover:border-neutral-300"
-                    }`}
-                >
-                  {c.label}
-                </a>
-              ))}
-            </div>
-
+          {/* Product Grid */}
+          <div className="flex-1 min-w-0">
             {products.length === 0 ? (
               <FadeIn>
-                <div className="p-12 text-[15px] text-neutral-400">
-                  No products found{filterCategory ? " in this category" : ""}.
+                <div className="py-20 text-center">
+                  <svg
+                    className="mx-auto h-12 w-12 text-neutral-300"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+                    />
+                  </svg>
+                  <div className="mt-4 text-[15px] font-medium text-heading">
+                    No products found
+                  </div>
+                  <div className="mt-1 text-[13px] text-muted">
+                    {filterCategory
+                      ? "Try browsing a different category."
+                      : "New pieces are coming soon."}
+                  </div>
+                  {filterCategory && (
+                    <a
+                      href="/products"
+                      className="mt-4 inline-flex h-9 items-center rounded-full bg-accent px-5 text-[13px] font-medium text-white transition hover:bg-accent-hover"
+                    >
+                      View All
+                    </a>
+                  )}
                 </div>
               </FadeIn>
             ) : (
-              <StaggerGrid className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 lg:gap-6" stagger={0.08}>
+              <StaggerGrid
+                className="grid grid-cols-2 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 lg:gap-6"
+                stagger={0.06}
+              >
                 {products.map((p) => (
                   <StaggerItem key={p.id}>
                     <ProductCard
@@ -150,7 +138,7 @@ export default async function ProductsPage({
           </div>
         </div>
 
-        <GoldDivider className="mt-16 mb-4" />
+        <GoldDivider className="mt-20 mb-4" />
       </div>
     </div>
   );

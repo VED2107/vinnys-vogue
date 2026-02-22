@@ -110,40 +110,70 @@ export default async function ProductDetailPage({
   const p = product as ProductRow;
   const imageUrl = getProductImagePublicUrl(supabase, p.image_path);
 
-  const { data: variants } = await supabase
-    .from("product_variants")
-    .select("id,size,stock")
-    .eq("product_id", p.id)
-    .order("size", { ascending: true });
+  // ── Parallel data fetching ──────────────────────────────
+  const [
+    { data: variants },
+    { data: rawReviews },
+    { data: existingReview },
+  ] = await Promise.all([
+    supabase
+      .from("product_variants")
+      .select("id,size,stock")
+      .eq("product_id", p.id)
+      .order("size", { ascending: true }),
+    supabase
+      .from("reviews")
+      .select("id, rating, review_text, is_verified, created_at, user_id")
+      .eq("product_id", p.id)
+      .eq("status", "approved")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("reviews")
+      .select("id")
+      .eq("product_id", p.id)
+      .eq("user_id", user.id)
+      .maybeSingle(),
+  ]);
 
   const variantRows = (variants ?? []) as VariantRow[];
 
-  // ── Server-fetch reviews ──────────────────────────────
-  const { data: rawReviews } = await supabase
-    .from("reviews")
-    .select("id, rating, review_text, is_verified, created_at, user_id, profiles(email)")
-    .eq("product_id", p.id)
-    .eq("status", "approved")
-    .order("created_at", { ascending: false });
-
-  const approvedReviews: ReviewItem[] = ((rawReviews ?? []) as unknown as {
+  // Batch-lookup profile emails for review authors
+  const reviewRows = (rawReviews ?? []) as unknown as {
     id: string;
     rating: number;
     review_text: string | null;
     is_verified: boolean;
     created_at: string;
     user_id: string;
-    profiles: { email: string | null } | null;
-  }[]).map((r) => ({
-    id: r.id,
-    rating: r.rating,
-    review_text: r.review_text,
-    is_verified: r.is_verified,
-    created_at: r.created_at,
-    reviewer: r.profiles?.email
-      ? r.profiles.email.replace(/(.{2}).*(@.*)/, "$1***$2")
-      : "Anonymous",
-  }));
+  }[];
+
+  const reviewUserIds = [...new Set(reviewRows.map((r) => r.user_id).filter(Boolean))];
+  let reviewEmailMap: Record<string, string> = {};
+  if (reviewUserIds.length > 0) {
+    const { data: reviewProfiles } = await supabase
+      .from("profiles")
+      .select("id, email")
+      .in("id", reviewUserIds);
+    if (reviewProfiles) {
+      reviewEmailMap = Object.fromEntries(
+        reviewProfiles.map((pr: { id: string; email: string | null }) => [pr.id, pr.email ?? ""])
+      );
+    }
+  }
+
+  const approvedReviews: ReviewItem[] = reviewRows.map((r) => {
+    const email = reviewEmailMap[r.user_id];
+    return {
+      id: r.id,
+      rating: r.rating,
+      review_text: r.review_text,
+      is_verified: r.is_verified,
+      created_at: r.created_at,
+      reviewer: email
+        ? email.replace(/(.{2}).*(@.*)/, "$1***$2")
+        : "Anonymous",
+    };
+  });
 
   const reviewCount = approvedReviews.length;
   const avgRating =
@@ -153,48 +183,25 @@ export default async function ProductDetailPage({
       ) / 10
       : 0;
 
-  // ── Eligibility: has reviewed? eligible to review? ───
-  let hasReviewed = false;
-  let showForm = false;
-
-  if (user) {
-    const { data: existingReview } = await supabase
-      .from("reviews")
-      .select("id")
-      .eq("product_id", p.id)
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (existingReview) {
-      hasReviewed = true;
-    } else {
-      // Check if user has a delivered order with this product
-      const { data: deliveredItem } = await supabase
-        .from("order_items")
-        .select("id, orders!inner(status)")
-        .eq("product_id", p.id)
-        .eq("orders.user_id", user.id)
-        .eq("orders.status", "delivered")
-        .limit(1);
-
-      showForm = (deliveredItem ?? []).length > 0;
-    }
-  }
+  const hasReviewed = !!existingReview;
+  const showForm = !hasReviewed;
 
   return (
     <div className="min-h-screen bg-bg-primary">
-      <div className="w-full px-6 lg:px-16 xl:px-24 py-16">
+      <div className="w-full max-w-[1400px] mx-auto px-6 lg:px-16 xl:px-24 py-16">
         <FadeIn>
-          <div className="grid grid-cols-1 gap-20 md:grid-cols-2">
-            <div className="relative overflow-hidden rounded-[20px] bg-[#EDE8E0] aspect-[3/4]">
-              <FadeImage
-                src={imageUrl}
-                alt={p.title}
-                fill
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="img-matte object-cover"
-                priority
-              />
+          <div className="grid grid-cols-1 gap-10 lg:gap-16 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+            <div className="md:sticky md:top-24 md:self-start">
+              <div className="relative overflow-hidden rounded-[20px] bg-[#EDE8E0] aspect-[4/5] w-full">
+                <FadeImage
+                  src={imageUrl}
+                  alt={p.title}
+                  fill
+                  sizes="(max-width: 768px) 90vw, (max-width: 1200px) 42vw, 480px"
+                  className="img-matte object-cover"
+                  priority
+                />
+              </div>
             </div>
 
             <div className="flex flex-col justify-center space-y-8">
@@ -238,6 +245,7 @@ export default async function ProductDetailPage({
                 productId={p.id}
                 variants={variantRows}
                 productStock={p.stock}
+                imageUrl={imageUrl}
               />
             </div>
           </div>

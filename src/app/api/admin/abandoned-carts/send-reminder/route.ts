@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createClient } from "@supabase/supabase-js";
-import { sendResendEmail, SITE_URL } from "@/lib/email";
+import { sendResendEmail, SITE_URL, EMAIL_FROM } from "@/lib/email";
 import { buildEmailLayout, escapeHtml } from "@/lib/emailTemplates";
 
 function getServiceRoleSupabase() {
@@ -124,7 +124,7 @@ export async function POST(request: Request) {
     const sent = await sendResendEmail(
       {
         to: email,
-        from: "support@vinnysvogue.in",
+        from: EMAIL_FROM,
         subject: "You left something behind — Vinnys Vogue",
         html,
       },

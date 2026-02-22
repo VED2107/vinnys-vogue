@@ -97,13 +97,37 @@ for each row execute function public.create_profile_on_signup();
 -- PRODUCTS
 -- ==========================================================
 
+-- Create enum if it does not exist
+do $$ begin
+  if not exists (select 1 from pg_type where typname = 'product_category') then
+    create type public.product_category as enum (
+      'bridal','festive','haldi','reception','mehendi','sangeet','stock_clearing'
+    );
+  end if;
+end $$;
+
+-- Add stock_clearing to existing enum if missing
+do $$ begin
+  if not exists (
+    select 1 from pg_enum
+    where enumtypid = 'public.product_category'::regtype
+      and enumlabel = 'stock_clearing'
+  ) then
+    alter type public.product_category add value 'stock_clearing';
+  end if;
+end $$;
+
 create table if not exists public.products (
   id uuid primary key default gen_random_uuid(),
   title text not null,
   description text,
   price numeric(10,2) not null check (price >= 0),
   currency text default 'INR',
+  category public.product_category,
   stock integer not null default 0,
+  has_variants boolean default false,
+  show_on_home boolean default false,
+  display_order integer default 0,
   image_path text,
   active boolean default true,
   is_bestseller boolean default false,
@@ -129,6 +153,26 @@ with check (public.is_admin());
 create index if not exists idx_products_stock
 on public.products(stock);
 
+-- Idempotent column additions for existing databases
+do $$ begin
+  if not exists (select 1 from information_schema.columns where table_schema='public' and table_name='products' and column_name='category') then
+    alter table public.products add column category public.product_category;
+  end if;
+  if not exists (select 1 from information_schema.columns where table_schema='public' and table_name='products' and column_name='has_variants') then
+    alter table public.products add column has_variants boolean default false;
+  end if;
+  if not exists (select 1 from information_schema.columns where table_schema='public' and table_name='products' and column_name='show_on_home') then
+    alter table public.products add column show_on_home boolean default false;
+  end if;
+  if not exists (select 1 from information_schema.columns where table_schema='public' and table_name='products' and column_name='display_order') then
+    alter table public.products add column display_order integer default 0;
+  end if;
+end $$;
+
+create index if not exists idx_products_category on public.products(category);
+create index if not exists idx_products_display_order on public.products(display_order);
+create index if not exists idx_products_show_on_home on public.products(show_on_home) where show_on_home = true;
+
 -- ==========================================================
 -- PRODUCT VARIANTS
 -- ==========================================================
@@ -136,10 +180,23 @@ on public.products(stock);
 create table if not exists public.product_variants (
   id uuid primary key default gen_random_uuid(),
   product_id uuid references public.products(id) on delete cascade,
-  name text,
+  size text,
   stock integer default 0,
   created_at timestamptz default now()
 );
+
+-- Rename `name` → `size` for existing databases that have the old column
+do $$ begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema='public' and table_name='product_variants' and column_name='name'
+  ) and not exists (
+    select 1 from information_schema.columns
+    where table_schema='public' and table_name='product_variants' and column_name='size'
+  ) then
+    alter table public.product_variants rename column name to size;
+  end if;
+end $$;
 
 alter table public.product_variants enable row level security;
 
@@ -380,21 +437,83 @@ create table if not exists public.reviews (
   user_id uuid references auth.users(id),
   rating integer check (rating between 1 and 5),
   comment text,
+  review_text text,
+  is_verified boolean default false,
+  status text default 'pending',
   created_at timestamptz default now()
 );
 
+-- Idempotent column additions (safe to re-run)
+do $$ begin
+  if not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'reviews' and column_name = 'review_text'
+  ) then
+    alter table public.reviews add column review_text text;
+  end if;
+
+  if not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'reviews' and column_name = 'is_verified'
+  ) then
+    alter table public.reviews add column is_verified boolean default false;
+  end if;
+
+  if not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'reviews' and column_name = 'status'
+  ) then
+    alter table public.reviews add column status text default 'pending';
+  end if;
+end $$;
+
+-- Check constraint on status (idempotent)
+do $$ begin
+  if not exists (
+    select 1 from information_schema.constraint_column_usage
+    where table_schema = 'public' and table_name = 'reviews' and constraint_name = 'reviews_status_check'
+  ) then
+    alter table public.reviews
+      add constraint reviews_status_check
+      check (status in ('pending', 'approved', 'rejected'));
+  end if;
+end $$;
+
+-- Safe data migration: copy comment → review_text where review_text is null
+update public.reviews
+set review_text = comment
+where review_text is null and comment is not null;
+
 alter table public.reviews enable row level security;
 
+-- Drop old generic policy
 drop policy if exists reviews_policy on public.reviews;
 
-create policy reviews_policy
+-- Granular RLS policies
+drop policy if exists reviews_public_read on public.reviews;
+create policy reviews_public_read
+on public.reviews
+for select
+using (status = 'approved' or user_id = auth.uid() or public.is_admin());
+
+drop policy if exists reviews_user_insert on public.reviews;
+create policy reviews_user_insert
+on public.reviews
+for insert
+with check (user_id = auth.uid());
+
+drop policy if exists reviews_admin_manage on public.reviews;
+create policy reviews_admin_manage
 on public.reviews
 for all
-using (user_id = auth.uid() or public.is_admin())
-with check (user_id = auth.uid());
+using (public.is_admin())
+with check (public.is_admin());
 
 create index if not exists idx_reviews_product
 on public.reviews(product_id, created_at desc);
+
+create index if not exists idx_reviews_status
+on public.reviews(status);
 
 -- ==========================================================
 -- WISHLIST (table name = "wishlist", not "wishlists")
@@ -1027,8 +1146,8 @@ begin
     raise exception 'You have already reviewed this product';
   end if;
 
-  insert into public.reviews (product_id, user_id, rating, comment)
-  values (p_product_id, v_user_id, p_rating, p_review_text)
+  insert into public.reviews (product_id, user_id, rating, review_text, comment, status, is_verified)
+  values (p_product_id, v_user_id, p_rating, p_review_text, p_review_text, 'pending', false)
   returning id into v_review_id;
 
   return v_review_id;

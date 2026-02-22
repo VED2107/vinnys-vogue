@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { updateCartItemQuantity, removeCartItem } from "@/app/cart/actions";
+import { emitBadgeUpdate } from "@/components/header-badge";
 
 export default function CartItemControls({
     cartItemId,
@@ -24,6 +25,7 @@ export default function CartItemControls({
         startTransition(async () => {
             try {
                 await updateCartItemQuantity(cartItemId, currentQty + delta);
+                emitBadgeUpdate("cart", delta);
                 router.refresh();
             } catch (err) {
                 setError("Failed to update quantity.");
@@ -36,6 +38,7 @@ export default function CartItemControls({
         startTransition(async () => {
             try {
                 await removeCartItem(cartItemId);
+                emitBadgeUpdate("cart", -currentQty);
                 router.refresh();
             } catch (err) {
                 setError("Failed to remove item.");

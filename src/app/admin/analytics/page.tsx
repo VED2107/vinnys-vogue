@@ -1,8 +1,13 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatMoney } from "@/lib/format";
-import AnalyticsCharts from "@/components/admin/analytics-charts";
+import dynamic from "next/dynamic";
 import { FadeIn, StaggerGrid, StaggerItem } from "@/components/fade-in";
+
+const AnalyticsCharts = dynamic(
+    () => import("@/components/admin/analytics-charts"),
+    { ssr: false, loading: () => <div className="mt-14 h-80 animate-pulse rounded-[20px] bg-[rgba(0,0,0,0.03)]" /> }
+);
 import Link from "next/link";
 
 type OrdersByStatusRow = { status: string; count: number };
@@ -39,14 +44,14 @@ export default async function AdminAnalyticsPage() {
     const ordersToday = ordersTodayCount ?? 0;
 
     const { data: statusRows, error: statusError } = await supabase.from("orders").select("status");
-    if (statusError) return <div className="min-h-screen bg-bg-admin"><div className="w-full px-6 lg:px-16 xl:px-24 py-16"><div className="rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-white p-6 text-[15px] text-muted">{statusError.message}</div></div></div>;
+    if (statusError) return <div className="min-h-screen bg-bg-admin"><div className="w-full max-w-[1400px] mx-auto px-6 lg:px-16 xl:px-24 py-16"><div className="rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-white p-6 text-[15px] text-muted">{statusError.message}</div></div></div>;
 
     const statusMap = new Map<string, number>();
     for (const row of statusRows ?? []) { const s = String((row as { status: string }).status || "").trim() || "unknown"; statusMap.set(s, (statusMap.get(s) ?? 0) + 1); }
     const ordersByStatus: OrdersByStatusRow[] = Array.from(statusMap.entries()).map(([status, count]) => ({ status, count })).sort((a, b) => b.count - a.count);
 
     const { data: topProductItems, error: topError } = await supabase.from("order_items").select("product_id, quantity").not("product_id", "is", null);
-    if (topError) return <div className="min-h-screen bg-bg-admin"><div className="w-full px-6 lg:px-16 xl:px-24 py-16"><div className="rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-white p-6 text-[15px] text-muted">{topError.message}</div></div></div>;
+    if (topError) return <div className="min-h-screen bg-bg-admin"><div className="w-full max-w-[1400px] mx-auto px-6 lg:px-16 xl:px-24 py-16"><div className="rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-white p-6 text-[15px] text-muted">{topError.message}</div></div></div>;
 
     const soldMap = new Map<string, number>();
     for (const row of topProductItems ?? []) { const pid = String((row as { product_id: string | null }).product_id || ""); const qty = Number((row as { quantity: number }).quantity || 0); if (pid) soldMap.set(pid, (soldMap.get(pid) ?? 0) + qty); }
@@ -58,7 +63,7 @@ export default async function AdminAnalyticsPage() {
     if (topProductId) { const { data: prod } = await supabase.from("products").select("title").eq("id", topProductId).maybeSingle(); topProductTitle = (prod as { title?: string } | null)?.title ?? null; }
 
     const { data: paid30, error: paid30Error } = await supabase.from("orders").select("created_at,total_amount").eq("payment_status", "paid").gte("created_at", start30.toISOString()).lt("created_at", startOfTomorrow.toISOString()).order("created_at", { ascending: true });
-    if (paid30Error) return <div className="min-h-screen bg-bg-admin"><div className="w-full px-6 lg:px-16 xl:px-24 py-16"><div className="rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-white p-6 text-[15px] text-muted">{paid30Error.message}</div></div></div>;
+    if (paid30Error) return <div className="min-h-screen bg-bg-admin"><div className="w-full max-w-[1400px] mx-auto px-6 lg:px-16 xl:px-24 py-16"><div className="rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-white p-6 text-[15px] text-muted">{paid30Error.message}</div></div></div>;
 
     const revenueByDay = new Map<string, number>();
     for (const row of paid30 ?? []) { const d = new Date(String((row as { created_at: string }).created_at)); const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; revenueByDay.set(key, (revenueByDay.get(key) ?? 0) + Number((row as { total_amount: number }).total_amount || 0)); }
@@ -74,7 +79,7 @@ export default async function AdminAnalyticsPage() {
 
     return (
         <div className="min-h-screen bg-bg-admin">
-            <div className="w-full px-6 lg:px-16 xl:px-24 py-16">
+            <div className="w-full max-w-[1400px] mx-auto px-6 lg:px-16 xl:px-24 py-16">
                 <FadeIn>
                     <div className="flex items-end justify-between gap-6">
                         <div className="space-y-3">

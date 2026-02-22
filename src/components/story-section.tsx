@@ -76,13 +76,13 @@ export function StorySection({
       className="w-full py-16 sm:py-28 px-6 lg:px-16 xl:px-24"
     >
       <div
-        className={`flex flex-col sm:flex-row items-center gap-8 sm:gap-12 lg:gap-24 ${reversed ? "sm:flex-row-reverse" : ""
+        className={`max-w-[1400px] mx-auto flex flex-col sm:flex-row items-center gap-8 sm:gap-12 lg:gap-24 ${reversed ? "sm:flex-row-reverse" : ""
           }`}
       >
         {/* Image with parallax */}
         <motion.div
           style={{ y: prefersReduced ? 0 : imageY }}
-          className="relative w-full sm:w-[45%] flex-shrink-0 aspect-[4/5] sm:aspect-[3/4] max-h-[400px] sm:max-h-none overflow-hidden rounded-xl bg-[#EDE8E0]"
+          className="relative w-full sm:w-[45%] flex-shrink-0 aspect-[4/5] sm:aspect-[3/4] overflow-hidden rounded-xl bg-[#EDE8E0]"
         >
           {image}
         </motion.div>

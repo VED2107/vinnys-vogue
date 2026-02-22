@@ -102,7 +102,7 @@ export default async function AdminReliabilityPage() {
 
   return (
     <div className="min-h-screen bg-bg-admin">
-      <div className="w-full px-6 lg:px-16 xl:px-24 py-16">
+      <div className="w-full max-w-[1400px] mx-auto px-6 lg:px-16 xl:px-24 py-16">
         <FadeIn>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="space-y-3">

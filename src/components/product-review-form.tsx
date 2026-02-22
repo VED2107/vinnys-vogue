@@ -66,8 +66,26 @@ export default function ProductReviewForm({
 
   if (submitSuccess) {
     return (
-      <div className="mt-8 rounded-xl border border-green-200 bg-green-50 px-5 py-3 text-[14px] text-green-800">
-        Thank you for your review!
+      <div className="mt-8 rounded-xl border border-green-200 bg-green-50 px-5 py-4 text-center">
+        <svg
+          className="mx-auto h-8 w-8 text-green-600"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={1.5}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+        <div className="mt-2 text-[14px] font-medium text-green-800">
+          Thank you for your review!
+        </div>
+        <div className="mt-1 text-[12px] text-green-600">
+          Your review will appear after it&apos;s been approved.
+        </div>
       </div>
     );
   }
@@ -105,7 +123,7 @@ export default function ProductReviewForm({
       setReviewText("");
       router.refresh();
     } catch {
-      setSubmitError("Network error");
+      setSubmitError("Network error — please try again");
     } finally {
       setSubmitting(false);
     }
@@ -123,12 +141,14 @@ export default function ProductReviewForm({
         className="w-full rounded-xl border border-[rgba(0,0,0,0.08)] bg-white px-4 py-3 text-[14px] text-heading outline-none transition focus:border-gold resize-y"
       />
       {submitError && (
-        <div className="text-[13px] text-red-600">{submitError}</div>
+        <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-2 text-[13px] text-red-700">
+          {submitError}
+        </div>
       )}
       <button
         type="submit"
-        disabled={submitting}
-        className="h-10 rounded-full bg-accent px-6 text-[13px] font-medium text-white transition hover:bg-accent-hover disabled:opacity-50 flex items-center gap-2"
+        disabled={submitting || rating === 0}
+        className="h-10 rounded-full bg-accent px-6 text-[13px] font-medium text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
       >
         {submitting ? (
           <>

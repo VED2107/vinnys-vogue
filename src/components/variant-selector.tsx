@@ -10,10 +10,12 @@ export default function VariantSelector({
     productId,
     variants,
     productStock = 0,
+    imageUrl,
 }: {
     productId: string;
     variants: Variant[];
     productStock?: number;
+    imageUrl?: string;
 }) {
     const [selectedId, setSelectedId] = useState<string | null>(
         variants.length > 0 ? variants[0].id : null,
@@ -45,6 +47,7 @@ export default function VariantSelector({
                         await buyNow(productId);
                     }}
                     disabled={productStock <= 0}
+                    imageUrl={imageUrl}
                 />
             </div>
         );
@@ -84,6 +87,7 @@ export default function VariantSelector({
                 onAddToCart={handleAddToCart}
                 onBuyNow={handleBuyNow}
                 disabled={outOfStock}
+                imageUrl={imageUrl}
             />
         </div>
     );

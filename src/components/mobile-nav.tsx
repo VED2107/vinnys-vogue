@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { useBadgeCount } from "@/components/header-badge";
 
 interface MobileNavProps {
     isLoggedIn: boolean;
@@ -12,9 +13,11 @@ interface MobileNavProps {
     wishlistCount: number;
 }
 
-export function MobileNav({ isLoggedIn, isAdmin, cartCount, wishlistCount }: MobileNavProps) {
+export function MobileNav({ isLoggedIn, isAdmin, cartCount: initialCartCount, wishlistCount: initialWishlistCount }: MobileNavProps) {
     const [open, setOpen] = useState(false);
     const pathname = usePathname();
+    const cartCount = useBadgeCount("cart", initialCartCount);
+    const wishlistCount = useBadgeCount("wishlist", initialWishlistCount);
 
     useEffect(() => {
         setOpen(false);
@@ -89,8 +92,8 @@ export function MobileNav({ isLoggedIn, isAdmin, cartCount, wishlistCount }: Mob
                                 key={link.href}
                                 href={link.href}
                                 className={`text-[20px] font-light tracking-wide py-4 border-b border-neutral-200 transition-opacity ${pathname === link.href
-                                        ? "text-heading"
-                                        : "text-neutral-600 hover:opacity-70"
+                                    ? "text-heading"
+                                    : "text-neutral-600 hover:opacity-70"
                                     }`}
                             >
                                 {link.label}

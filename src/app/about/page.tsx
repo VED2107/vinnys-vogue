@@ -70,7 +70,7 @@ export default async function AboutPage() {
                         </div>
 
                         {/* 3 staggered images */}
-                        <div className="relative grid grid-cols-2 gap-4" style={{ minHeight: "480px" }}>
+                        <div className="relative grid grid-cols-2 gap-4">
                             <div className="relative overflow-hidden rounded-2xl bg-[#EDE8E0] row-span-2" style={{ marginTop: "40px" }}>
                                 <ImageOrPlaceholder src={craft.image_url_1} alt="Artisan Detail 1" />
                             </div>
