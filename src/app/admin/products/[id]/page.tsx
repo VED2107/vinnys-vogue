@@ -31,8 +31,9 @@ type ProductRow = {
   product_variants: VariantRow[];
 };
 
-function parsePrice(value: string) {
-  const normalized = value.replace(/,/g, "").trim();
+function parsePrice(value: string | null | undefined) {
+  if (!value || !value.trim()) return 0;
+  const normalized = value.replace(/,/g, "").replace(/₹/g, "").trim();
   const numberValue = Number.parseFloat(normalized);
 
   if (!Number.isFinite(numberValue) || numberValue < 0) {
@@ -402,8 +403,9 @@ export default async function AdminEditProductPage({
                 name="price"
                 type="text"
                 inputMode="decimal"
-                defaultValue={String(product.price)}
+                defaultValue={String(product.price ?? 0)}
                 className="h-11 w-full rounded-xl border border-zinc-200 bg-white px-4 text-sm text-zinc-900 outline-none transition focus:border-zinc-400"
+                required
               />
               <div className="text-xs text-zinc-500">
                 Stored in rupees ({product.currency}). Example: 249.99

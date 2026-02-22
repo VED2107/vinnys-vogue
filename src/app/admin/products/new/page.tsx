@@ -6,8 +6,9 @@ import VariantManager from "@/components/variant-manager";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import { AdminSubmitButton } from "@/components/ui/AdminSubmitButton";
 
-function parsePrice(value: string) {
-  const normalized = value.replace(/,/g, "").trim();
+function parsePrice(value: string | null | undefined) {
+  if (!value || !value.trim()) return 0;
+  const normalized = value.replace(/,/g, "").replace(/₹/g, "").trim();
   const numberValue = Number.parseFloat(normalized);
 
   if (!Number.isFinite(numberValue) || numberValue < 0) {
@@ -190,6 +191,7 @@ export default async function AdminNewProductPage() {
                   inputMode="decimal"
                   placeholder="0.00"
                   className="h-11 w-full rounded-xl border border-zinc-200 bg-white px-4 text-sm text-zinc-900 outline-none transition focus:border-zinc-400"
+                  required
                 />
               </div>
 
