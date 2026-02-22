@@ -380,21 +380,83 @@ create table if not exists public.reviews (
   user_id uuid references auth.users(id),
   rating integer check (rating between 1 and 5),
   comment text,
+  review_text text,
+  is_verified boolean default false,
+  status text default 'pending',
   created_at timestamptz default now()
 );
 
+-- Idempotent column additions (safe to re-run)
+do $$ begin
+  if not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'reviews' and column_name = 'review_text'
+  ) then
+    alter table public.reviews add column review_text text;
+  end if;
+
+  if not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'reviews' and column_name = 'is_verified'
+  ) then
+    alter table public.reviews add column is_verified boolean default false;
+  end if;
+
+  if not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'reviews' and column_name = 'status'
+  ) then
+    alter table public.reviews add column status text default 'pending';
+  end if;
+end $$;
+
+-- Check constraint on status (idempotent)
+do $$ begin
+  if not exists (
+    select 1 from information_schema.constraint_column_usage
+    where table_schema = 'public' and table_name = 'reviews' and constraint_name = 'reviews_status_check'
+  ) then
+    alter table public.reviews
+      add constraint reviews_status_check
+      check (status in ('pending', 'approved', 'rejected'));
+  end if;
+end $$;
+
+-- Safe data migration: copy comment → review_text where review_text is null
+update public.reviews
+set review_text = comment
+where review_text is null and comment is not null;
+
 alter table public.reviews enable row level security;
 
+-- Drop old generic policy
 drop policy if exists reviews_policy on public.reviews;
 
-create policy reviews_policy
+-- Granular RLS policies
+drop policy if exists reviews_public_read on public.reviews;
+create policy reviews_public_read
+on public.reviews
+for select
+using (status = 'approved' or user_id = auth.uid() or public.is_admin());
+
+drop policy if exists reviews_user_insert on public.reviews;
+create policy reviews_user_insert
+on public.reviews
+for insert
+with check (user_id = auth.uid());
+
+drop policy if exists reviews_admin_manage on public.reviews;
+create policy reviews_admin_manage
 on public.reviews
 for all
-using (user_id = auth.uid() or public.is_admin())
-with check (user_id = auth.uid());
+using (public.is_admin())
+with check (public.is_admin());
 
 create index if not exists idx_reviews_product
 on public.reviews(product_id, created_at desc);
+
+create index if not exists idx_reviews_status
+on public.reviews(status);
 
 -- ==========================================================
 -- WISHLIST (table name = "wishlist", not "wishlists")
@@ -1027,8 +1089,8 @@ begin
     raise exception 'You have already reviewed this product';
   end if;
 
-  insert into public.reviews (product_id, user_id, rating, comment)
-  values (p_product_id, v_user_id, p_rating, p_review_text)
+  insert into public.reviews (product_id, user_id, rating, review_text, comment, status, is_verified)
+  values (p_product_id, v_user_id, p_rating, p_review_text, p_review_text, 'pending', false)
   returning id into v_review_id;
 
   return v_review_id;

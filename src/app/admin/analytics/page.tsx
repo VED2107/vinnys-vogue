@@ -1,8 +1,13 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatMoney } from "@/lib/format";
-import AnalyticsCharts from "@/components/admin/analytics-charts";
+import dynamic from "next/dynamic";
 import { FadeIn, StaggerGrid, StaggerItem } from "@/components/fade-in";
+
+const AnalyticsCharts = dynamic(
+    () => import("@/components/admin/analytics-charts"),
+    { ssr: false, loading: () => <div className="mt-14 h-80 animate-pulse rounded-[20px] bg-[rgba(0,0,0,0.03)]" /> }
+);
 import Link from "next/link";
 
 type OrdersByStatusRow = { status: string; count: number };

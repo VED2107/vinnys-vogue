@@ -110,21 +110,40 @@ export default async function ProductDetailPage({
   const p = product as ProductRow;
   const imageUrl = getProductImagePublicUrl(supabase, p.image_path);
 
-  const { data: variants } = await supabase
-    .from("product_variants")
-    .select("id,size,stock")
-    .eq("product_id", p.id)
-    .order("size", { ascending: true });
+  // ── Parallel data fetching ──────────────────────────────
+  const [
+    { data: variants },
+    { data: rawReviews },
+    { data: existingReview },
+    { data: deliveredItem },
+  ] = await Promise.all([
+    supabase
+      .from("product_variants")
+      .select("id,size,stock")
+      .eq("product_id", p.id)
+      .order("size", { ascending: true }),
+    supabase
+      .from("reviews")
+      .select("id, rating, review_text, is_verified, created_at, user_id, profiles(email)")
+      .eq("product_id", p.id)
+      .eq("status", "approved")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("reviews")
+      .select("id")
+      .eq("product_id", p.id)
+      .eq("user_id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("order_items")
+      .select("id, orders!inner(status)")
+      .eq("product_id", p.id)
+      .eq("orders.user_id", user.id)
+      .eq("orders.status", "delivered")
+      .limit(1),
+  ]);
 
   const variantRows = (variants ?? []) as VariantRow[];
-
-  // ── Server-fetch reviews ──────────────────────────────
-  const { data: rawReviews } = await supabase
-    .from("reviews")
-    .select("id, rating, review_text, is_verified, created_at, user_id, profiles(email)")
-    .eq("product_id", p.id)
-    .eq("status", "approved")
-    .order("created_at", { ascending: false });
 
   const approvedReviews: ReviewItem[] = ((rawReviews ?? []) as unknown as {
     id: string;
@@ -153,39 +172,14 @@ export default async function ProductDetailPage({
       ) / 10
       : 0;
 
-  // ── Eligibility: has reviewed? eligible to review? ───
-  let hasReviewed = false;
-  let showForm = false;
-
-  if (user) {
-    const { data: existingReview } = await supabase
-      .from("reviews")
-      .select("id")
-      .eq("product_id", p.id)
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (existingReview) {
-      hasReviewed = true;
-    } else {
-      // Check if user has a delivered order with this product
-      const { data: deliveredItem } = await supabase
-        .from("order_items")
-        .select("id, orders!inner(status)")
-        .eq("product_id", p.id)
-        .eq("orders.user_id", user.id)
-        .eq("orders.status", "delivered")
-        .limit(1);
-
-      showForm = (deliveredItem ?? []).length > 0;
-    }
-  }
+  const hasReviewed = !!existingReview;
+  const showForm = !hasReviewed && (deliveredItem ?? []).length > 0;
 
   return (
     <div className="min-h-screen bg-bg-primary">
       <div className="w-full px-6 lg:px-16 xl:px-24 py-16">
         <FadeIn>
-          <div className="grid grid-cols-1 gap-20 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-16 lg:gap-20 md:grid-cols-2">
             <div className="relative overflow-hidden rounded-[20px] bg-[#EDE8E0] aspect-[3/4]">
               <FadeImage
                 src={imageUrl}

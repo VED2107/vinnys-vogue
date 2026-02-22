@@ -5,6 +5,7 @@ import { Footer } from "@/components/footer";
 import { ScrollHeader } from "@/components/scroll-header";
 import { GoldenBackground } from "@/components/golden-background";
 import { PageTransition } from "@/components/page-transition";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 const inter = Inter({
@@ -81,6 +82,7 @@ export default function RootLayout({
           {children}
         </PageTransition>
         <Footer />
+        <SpeedInsights />
       </body>
     </html>
   );

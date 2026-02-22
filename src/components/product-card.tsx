@@ -24,7 +24,7 @@ export function ProductCard({ product, imageUrl, initialInWishlist, onWishlistTo
 
   return (
     <Link href={`/product/${product.id}`} className="group block product-card-lift">
-      <div className="relative overflow-hidden rounded-xl bg-[#EDE8E0] aspect-[4/5]">
+      <div className="relative overflow-hidden rounded-xl bg-[#EDE8E0] aspect-[4/5] card-premium">
         <FadeImage
           src={imageUrl}
           alt={product.title}
@@ -53,7 +53,7 @@ export function ProductCard({ product, imageUrl, initialInWishlist, onWishlistTo
         ) : null}
       </div>
 
-      <div className="mt-3 space-y-1">
+      <div className="mt-4 space-y-1.5">
         <div className="font-serif text-[14px] font-light text-heading leading-snug">
           {product.title}
         </div>

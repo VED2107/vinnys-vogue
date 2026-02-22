@@ -3,8 +3,13 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatMoney } from "@/lib/format";
 import { getProductImagePublicUrl } from "@/lib/product-images";
 import { getCategoryLabel, PRODUCT_CATEGORIES } from "@/lib/categories";
-import StockAdjustModal from "@/components/admin/stock-adjust-modal";
+import dynamic from "next/dynamic";
 import { FadeIn } from "@/components/fade-in";
+
+const StockAdjustModal = dynamic(
+  () => import("@/components/admin/stock-adjust-modal"),
+  { ssr: false, loading: () => <span className="h-6 w-12 rounded-full bg-[rgba(0,0,0,0.04)] inline-block" /> }
+);
 
 type ProductRow = {
   id: string;
