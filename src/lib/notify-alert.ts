@@ -1,4 +1,5 @@
-import { sendResendEmail } from "@/lib/email";
+import { sendResendEmail, EMAIL_FROM } from "@/lib/email";
+import { buildEmailLayout } from "@/lib/emailTemplates";
 
 function formatAlertMessage(title: string, details: unknown) {
   const detailsJson = (() => {
@@ -44,12 +45,17 @@ export async function notifyCriticalAlert(title: string, details: unknown) {
       .replaceAll(">", "&gt;")
       .replaceAll("\n", "<br/>");
 
+    const html = buildEmailLayout({
+      title: `🚨 Critical Alert`,
+      bodyHtml: `<pre style="margin:0;font-family:monospace;font-size:13px;color:#ccc;white-space:pre-wrap;word-break:break-word;">${escapedMessage}</pre>`,
+    });
+
     await sendResendEmail(
       {
         to: alertEmail,
-        from: "support@vinnysvogue.in",
+        from: EMAIL_FROM,
         subject: `Critical Alert: ${title}`,
-        html: `<div style="font-family:monospace;font-size:13px;padding:16px;background:#fff;color:#111;">${escapedMessage}</div>`,
+        html,
       },
       "critical_alert",
     );

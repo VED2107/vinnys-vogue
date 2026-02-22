@@ -9,6 +9,10 @@ export const resendConfigured = !!RESEND_API_KEY;
 export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL || "https://www.vinnysvogue.in";
 
+/** Branded from addresses — use these everywhere instead of raw strings */
+export const EMAIL_FROM = "Vinnys Vogue <support@vinnysvogue.in>";
+export const EMAIL_FROM_NOREPLY = "Vinnys Vogue <no-reply@vinnysvogue.in>";
+
 /* ── Service-role Supabase (for monitoring_events) ──────── */
 
 function getMonitoringSupabase() {

@@ -83,6 +83,7 @@ export default async function Home() {
     reception: collections.reception_image,
     mehendi: collections.mehendi_image,
     sangeet: collections.sangeet_image,
+    stock_clearing: collections.stock_clearing_image,
   };
 
   const renderHighlight = (text: string, highlight: string) => {
@@ -106,7 +107,6 @@ export default async function Home() {
         subtext={hero.subtext}
         cta_primary={hero.cta_primary}
         cta_secondary={hero.cta_secondary}
-        image_url={hero.image_url}
       />
 
       {/* ——— 2. CURATED COLLECTIONS ——— */}
@@ -157,7 +157,7 @@ export default async function Home() {
             index={i}
             reversed={i % 2 === 1}
             mandala={
-              <MandalaBackground variant="lotus" position="center" opacity={0.18} />
+              <MandalaBackground variant="lotus" position="center" opacity={0.35} />
             }
             image={
               story.image_url ? (
@@ -219,7 +219,7 @@ export default async function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-12 lg:gap-16">
             {/* Text */}
             <div className="relative flex items-center lg:min-h-[560px]">
-              <MandalaBackground variant="lotus" position="center" opacity={0.18} />
+              <MandalaBackground variant="lotus" position="center" opacity={0.35} />
               <div className="relative z-10 max-w-[480px]">
                 <div className="flex items-center gap-2">
                   <span className="text-gold text-sm">✦</span>

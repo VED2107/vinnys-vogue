@@ -147,7 +147,6 @@ export interface HeroProps {
   subtext?: string;
   cta_primary?: string;
   cta_secondary?: string;
-  image_url?: string;
 }
 
 export default function Hero({

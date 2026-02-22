@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { sendResendEmail } from "@/lib/email";
+import { sendResendEmail, EMAIL_FROM } from "@/lib/email";
 import { buildEmailLayout, escapeHtml } from "@/lib/emailTemplates";
 
 function getServiceRoleSupabase() {
@@ -91,7 +91,7 @@ export async function sendShippingConfirmation(orderId: string) {
     const sent = await sendResendEmail(
       {
         to,
-        from: "support@vinnysvogue.in",
+        from: EMAIL_FROM,
         subject: "Your Order Has Been Shipped — Vinnys Vogue",
         html,
       },

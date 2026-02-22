@@ -38,6 +38,24 @@ export default async function CheckoutPage() {
 
     if (validItems.length === 0) redirect("/cart");
 
+    // Fetch user profile for address pre-fill
+    const { data: profileRow } = await supabase
+        .from("profiles")
+        .select("full_name,phone,address_line1,address_line2,city,state,postal_code,country")
+        .eq("id", user.id)
+        .maybeSingle();
+
+    const profile = profileRow as {
+        full_name: string | null;
+        phone: string | null;
+        address_line1: string | null;
+        address_line2: string | null;
+        city: string | null;
+        state: string | null;
+        postal_code: string | null;
+        country: string | null;
+    } | null;
+
     const totalCents = validItems.reduce(
         (sum, item) => sum + (item.products as { price: number }).price * item.quantity,
         0,
@@ -99,7 +117,18 @@ export default async function CheckoutPage() {
                                 </h1>
                             </div>
                             <div className="gold-divider-anim active mb-6" />
-                            <CheckoutForm />
+                            <CheckoutForm
+                                initialProfile={profile ? {
+                                    full_name: profile.full_name ?? "",
+                                    email: user.email ?? "",
+                                    phone: profile.phone ?? "",
+                                    address_line1: profile.address_line1 ?? "",
+                                    address_line2: profile.address_line2 ?? "",
+                                    city: profile.city ?? "",
+                                    state: profile.state ?? "",
+                                    pincode: profile.postal_code ?? "",
+                                } : undefined}
+                            />
                         </div>
                     </div>
                 </FadeIn>

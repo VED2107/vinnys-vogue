@@ -103,7 +103,11 @@ create table if not exists public.products (
   description text,
   price numeric(10,2) not null check (price >= 0),
   currency text default 'INR',
+  category text check (category in ('bridal','festive','haldi','reception','mehendi','sangeet','stock_clearing')),
   stock integer not null default 0,
+  has_variants boolean default false,
+  show_on_home boolean default false,
+  display_order integer default 0,
   image_path text,
   active boolean default true,
   is_bestseller boolean default false,
@@ -128,6 +132,31 @@ with check (public.is_admin());
 
 create index if not exists idx_products_stock
 on public.products(stock);
+
+-- Idempotent column additions for existing databases
+do $$ begin
+  if not exists (select 1 from information_schema.columns where table_schema='public' and table_name='products' and column_name='category') then
+    alter table public.products add column category text;
+  end if;
+  if not exists (select 1 from information_schema.columns where table_schema='public' and table_name='products' and column_name='has_variants') then
+    alter table public.products add column has_variants boolean default false;
+  end if;
+  if not exists (select 1 from information_schema.columns where table_schema='public' and table_name='products' and column_name='show_on_home') then
+    alter table public.products add column show_on_home boolean default false;
+  end if;
+  if not exists (select 1 from information_schema.columns where table_schema='public' and table_name='products' and column_name='display_order') then
+    alter table public.products add column display_order integer default 0;
+  end if;
+end $$;
+
+-- Ensure category check includes stock_clearing (drop + re-add idempotent)
+alter table public.products drop constraint if exists products_category_check;
+alter table public.products add constraint products_category_check
+  check (category in ('bridal','festive','haldi','reception','mehendi','sangeet','stock_clearing'));
+
+create index if not exists idx_products_category on public.products(category);
+create index if not exists idx_products_display_order on public.products(display_order);
+create index if not exists idx_products_show_on_home on public.products(show_on_home) where show_on_home = true;
 
 -- ==========================================================
 -- PRODUCT VARIANTS

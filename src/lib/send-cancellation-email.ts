@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { sendResendEmail } from "@/lib/email";
+import { sendResendEmail, EMAIL_FROM } from "@/lib/email";
 import { buildEmailLayout, escapeHtml } from "@/lib/emailTemplates";
 
 function getServiceRoleSupabase() {
@@ -54,7 +54,7 @@ export async function sendOrderCancellationEmail(orderId: string) {
     await sendResendEmail(
       {
         to,
-        from: "support@vinnysvogue.in",
+        from: EMAIL_FROM,
         subject: "Your Order Has Been Cancelled — Vinnys Vogue",
         html,
       },

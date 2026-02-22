@@ -13,7 +13,6 @@ export interface HeroContent {
     subtext: string;
     cta_primary: string;
     cta_secondary: string;
-    image_url: string;
 }
 
 export interface StoryItem {
@@ -54,7 +53,6 @@ export const DEFAULT_HERO: HeroContent = {
         "Exquisite Indian bridal and festive couture crafted for your most treasured moments",
     cta_primary: "Explore Collections →",
     cta_secondary: "Our Story",
-    image_url: "/og-banner.jpg",
 };
 
 export const DEFAULT_STORIES: StoriesContent = {
@@ -124,6 +122,7 @@ export interface CollectionsContent {
     reception_image: string;
     mehendi_image: string;
     sangeet_image: string;
+    stock_clearing_image: string;
 }
 
 export const DEFAULT_COLLECTIONS: CollectionsContent = {
@@ -133,4 +132,5 @@ export const DEFAULT_COLLECTIONS: CollectionsContent = {
     reception_image: "",
     mehendi_image: "",
     sangeet_image: "",
+    stock_clearing_image: "",
 };

@@ -475,29 +475,10 @@ export default async function AdminEditProductPage({
               </div>
             </div>
 
-            {/* Has Variants toggle */}
-            <div className="flex items-center justify-between rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
-              <div>
-                <div className="text-sm font-medium text-zinc-900">Has Variants</div>
-                <div className="text-xs text-zinc-500">
-                  Enable size variants with individual stock levels.
-                </div>
-              </div>
-              <label className="relative inline-flex cursor-pointer items-center">
-                <input
-                  name="has_variants"
-                  type="checkbox"
-                  defaultChecked={product.has_variants}
-                  className="peer sr-only"
-                />
-                <div className="h-6 w-11 rounded-full bg-zinc-200 transition peer-checked:bg-zinc-900" />
-                <div className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition peer-checked:translate-x-5" />
-              </label>
-            </div>
-
-            {/* Variant rows */}
+            {/* Variant management (toggle + rows) */}
             <VariantManager
               initialVariants={safeVariants.length > 0 ? safeVariants : undefined}
+              initialEnabled={product.has_variants}
             />
 
             {/* Active toggle */}
