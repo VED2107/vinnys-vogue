@@ -116,15 +116,22 @@ export default async function AdminEditProductPage({
     const removeImage = formData.get("remove_image") === "on";
     const newImage = formData.get("image") as File | null;
 
-    const priceDisplay = String(formData.get("price") || "");
-    const nextPrice = parsePrice(priceDisplay);
+    const priceRaw = formData.get("price");
+    const priceDisplay = priceRaw != null ? String(priceRaw).trim() : "";
+    let nextPrice = parsePrice(priceDisplay);
 
     if (!title) {
       throw new Error("Title is required.");
     }
 
-    if (nextPrice === null) {
-      throw new Error("Please enter a valid price.");
+    // If price is invalid or empty, fetch the current price from DB as fallback
+    if (nextPrice === null || (priceDisplay === "" && nextPrice === 0)) {
+      const { data: existingProduct } = await createSupabaseServerClient()
+        .from("products")
+        .select("price")
+        .eq("id", productId)
+        .maybeSingle();
+      nextPrice = existingProduct?.price ?? nextPrice ?? 0;
     }
 
     const supabase = createSupabaseServerClient();

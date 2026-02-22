@@ -97,13 +97,33 @@ for each row execute function public.create_profile_on_signup();
 -- PRODUCTS
 -- ==========================================================
 
+-- Create enum if it does not exist
+do $$ begin
+  if not exists (select 1 from pg_type where typname = 'product_category') then
+    create type public.product_category as enum (
+      'bridal','festive','haldi','reception','mehendi','sangeet','stock_clearing'
+    );
+  end if;
+end $$;
+
+-- Add stock_clearing to existing enum if missing
+do $$ begin
+  if not exists (
+    select 1 from pg_enum
+    where enumtypid = 'public.product_category'::regtype
+      and enumlabel = 'stock_clearing'
+  ) then
+    alter type public.product_category add value 'stock_clearing';
+  end if;
+end $$;
+
 create table if not exists public.products (
   id uuid primary key default gen_random_uuid(),
   title text not null,
   description text,
   price numeric(10,2) not null check (price >= 0),
   currency text default 'INR',
-  category text check (category in ('bridal','festive','haldi','reception','mehendi','sangeet','stock_clearing')),
+  category public.product_category,
   stock integer not null default 0,
   has_variants boolean default false,
   show_on_home boolean default false,
@@ -136,7 +156,7 @@ on public.products(stock);
 -- Idempotent column additions for existing databases
 do $$ begin
   if not exists (select 1 from information_schema.columns where table_schema='public' and table_name='products' and column_name='category') then
-    alter table public.products add column category text;
+    alter table public.products add column category public.product_category;
   end if;
   if not exists (select 1 from information_schema.columns where table_schema='public' and table_name='products' and column_name='has_variants') then
     alter table public.products add column has_variants boolean default false;
@@ -149,11 +169,6 @@ do $$ begin
   end if;
 end $$;
 
--- Ensure category check includes stock_clearing (drop + re-add idempotent)
-alter table public.products drop constraint if exists products_category_check;
-alter table public.products add constraint products_category_check
-  check (category in ('bridal','festive','haldi','reception','mehendi','sangeet','stock_clearing'));
-
 create index if not exists idx_products_category on public.products(category);
 create index if not exists idx_products_display_order on public.products(display_order);
 create index if not exists idx_products_show_on_home on public.products(show_on_home) where show_on_home = true;
@@ -165,10 +180,23 @@ create index if not exists idx_products_show_on_home on public.products(show_on_
 create table if not exists public.product_variants (
   id uuid primary key default gen_random_uuid(),
   product_id uuid references public.products(id) on delete cascade,
-  name text,
+  size text,
   stock integer default 0,
   created_at timestamptz default now()
 );
+
+-- Rename `name` → `size` for existing databases that have the old column
+do $$ begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema='public' and table_name='product_variants' and column_name='name'
+  ) and not exists (
+    select 1 from information_schema.columns
+    where table_schema='public' and table_name='product_variants' and column_name='size'
+  ) then
+    alter table public.product_variants rename column name to size;
+  end if;
+end $$;
 
 alter table public.product_variants enable row level security;
 
