@@ -67,7 +67,7 @@ export default async function ProductsPage({
   return (
     <div className="relative min-h-screen overflow-hidden bg-bg-primary">
       <MandalaBackground variant="lotus" position="center" />
-      <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-16 xl:px-24 py-24">
+      <div className="relative z-10 w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-16 xl:px-24 py-16 sm:py-24">
         <FadeIn>
           <SectionTitle
             subtitle="Browse"
@@ -79,7 +79,7 @@ export default async function ProductsPage({
 
         <GoldDivider className="my-10" />
 
-        <div className="mt-12 flex gap-12 lg:gap-16">
+        <div className="mt-8 sm:mt-12 flex flex-col md:flex-row gap-6 md:gap-12 lg:gap-16">
           {/* Sidebar */}
           <CollectionSidebar activeCategory={filterCategory} />
 
@@ -121,7 +121,7 @@ export default async function ProductsPage({
               </FadeIn>
             ) : (
               <StaggerGrid
-                className="grid grid-cols-2 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 lg:gap-6"
+                className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4 lg:gap-6"
                 stagger={0.06}
               >
                 {products.map((p) => (

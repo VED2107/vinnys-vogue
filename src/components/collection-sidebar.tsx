@@ -23,8 +23,8 @@ export function CollectionSidebar({ activeCategory }: CollectionSidebarProps) {
                         <a
                             href="/products"
                             className={`sidebar-link block px-3 py-2.5 text-[13px] transition-all rounded-lg ${!activeCategory
-                                    ? "sidebar-link-active"
-                                    : "text-neutral-500 hover:text-heading"
+                                ? "sidebar-link-active"
+                                : "text-neutral-500 hover:text-heading"
                                 }`}
                         >
                             All Pieces
@@ -34,8 +34,8 @@ export function CollectionSidebar({ activeCategory }: CollectionSidebarProps) {
                                 key={c.value}
                                 href={`/products?category=${encodeURIComponent(c.value)}`}
                                 className={`sidebar-link block px-3 py-2.5 text-[13px] transition-all rounded-lg ${activeCategory === c.value
-                                        ? "sidebar-link-active"
-                                        : "text-neutral-500 hover:text-heading"
+                                    ? "sidebar-link-active"
+                                    : "text-neutral-500 hover:text-heading"
                                     }`}
                             >
                                 {c.label}
@@ -46,7 +46,7 @@ export function CollectionSidebar({ activeCategory }: CollectionSidebarProps) {
             </aside>
 
             {/* Mobile Filter Button */}
-            <div className="md:hidden mb-6">
+            <div className="md:hidden">
                 <button
                     onClick={() => setMobileOpen(true)}
                     className="inline-flex h-10 items-center gap-2 rounded-full border border-[rgba(0,0,0,0.08)] px-5 text-[13px] text-heading transition hover:border-[rgba(0,0,0,0.16)]"
@@ -97,8 +97,8 @@ export function CollectionSidebar({ activeCategory }: CollectionSidebarProps) {
                                     href="/products"
                                     onClick={() => setMobileOpen(false)}
                                     className={`block px-4 py-3 text-[14px] rounded-xl transition ${!activeCategory
-                                            ? "bg-accent text-white font-medium"
-                                            : "text-neutral-600 hover:bg-[rgba(0,0,0,0.03)]"
+                                        ? "bg-accent text-white font-medium"
+                                        : "text-neutral-600 hover:bg-[rgba(0,0,0,0.03)]"
                                         }`}
                                 >
                                     All Pieces
@@ -109,8 +109,8 @@ export function CollectionSidebar({ activeCategory }: CollectionSidebarProps) {
                                         href={`/products?category=${encodeURIComponent(c.value)}`}
                                         onClick={() => setMobileOpen(false)}
                                         className={`block px-4 py-3 text-[14px] rounded-xl transition ${activeCategory === c.value
-                                                ? "bg-accent text-white font-medium"
-                                                : "text-neutral-600 hover:bg-[rgba(0,0,0,0.03)]"
+                                            ? "bg-accent text-white font-medium"
+                                            : "text-neutral-600 hover:bg-[rgba(0,0,0,0.03)]"
                                             }`}
                                     >
                                         {c.label}

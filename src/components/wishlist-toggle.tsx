@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useOptimistic, useRef } from "react";
+import { useState, useCallback, useOptimistic, useRef, startTransition } from "react";
 import { triggerFlyToIcon } from "@/components/fly-to-icon";
 import { emitBadgeUpdate } from "@/components/header-badge";
 
@@ -21,7 +21,7 @@ export default function WishlistToggle({
     if (pending) return;
     setPending(true);
     const next = !inWishlist;
-    setInWishlist(next);
+    startTransition(() => setInWishlist(next));
     onToggle?.(productId, next);
 
     // Fire fly animation when adding
@@ -40,12 +40,12 @@ export default function WishlistToggle({
         body: JSON.stringify({ productId }),
       });
       if (!res.ok) {
-        setInWishlist(!next);
+        startTransition(() => setInWishlist(!next));
         onToggle?.(productId, !next);
         emitBadgeUpdate("wishlist", next ? -1 : 1); // rollback
       }
     } catch {
-      setInWishlist(!next);
+      startTransition(() => setInWishlist(!next));
       onToggle?.(productId, !next);
       emitBadgeUpdate("wishlist", next ? -1 : 1); // rollback
     } finally {

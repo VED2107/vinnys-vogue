@@ -5,7 +5,6 @@ import { revalidatePath } from "next/cache";
 import { getProductImagePublicUrl } from "@/lib/product-images";
 import { FadeIn } from "@/components/fade-in";
 import { PremiumButton } from "@/components/ui";
-import { MandalaBackground } from "@/components/decorative";
 import { GoldDivider } from "@/components/section-divider";
 import CartItemControls from "@/components/cart-item-controls";
 
@@ -110,8 +109,7 @@ export default async function CartPage() {
 
     return (
         <div className="relative min-h-screen overflow-hidden bg-bg-primary">
-            <MandalaBackground variant="lotus" position="top-left" />
-            <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-16 xl:px-24 py-16">
+            <div className="relative z-10 w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-16 xl:px-24 py-12 sm:py-16">
                 <FadeIn>
                     <div className="space-y-3">
                         <div className="gold-divider" />
@@ -139,9 +137,9 @@ export default async function CartPage() {
                                 {items.map((item) => (
                                     <div
                                         key={item.id}
-                                        className="flex flex-col gap-4 sm:flex-row sm:gap-6 sm:items-center rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-bg-card p-5"
+                                        className="flex flex-row gap-3 sm:gap-6 items-start rounded-[16px] sm:rounded-[20px] border border-[rgba(0,0,0,0.06)] bg-bg-card p-3 sm:p-5"
                                     >
-                                        <div className="w-full sm:w-32 md:w-40 flex-shrink-0 overflow-hidden rounded-2xl bg-[#EDE8E0]">
+                                        <div className="w-24 sm:w-32 md:w-40 flex-shrink-0 overflow-hidden rounded-2xl bg-[#EDE8E0]">
                                             {/* eslint-disable-next-line @next/next/no-img-element */}
                                             <img
                                                 src={getProductImagePublicUrl(supabase, item.products.image_path)}
@@ -149,13 +147,13 @@ export default async function CartPage() {
                                                 className="img-matte h-full w-full object-cover aspect-[3/4]"
                                             />
                                         </div>
-                                        <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:justify-between">
-                                            <div className="space-y-2">
-                                                <div className="text-[14px] font-medium text-heading">{item.products.title}</div>
+                                        <div className="flex flex-1 flex-col gap-2 min-w-0">
+                                            <div className="space-y-1">
+                                                <div className="text-[13px] sm:text-[14px] font-medium text-heading truncate">{item.products.title}</div>
                                                 {item.product_variants ? (
                                                     <div className="text-[13px] text-muted">Size: {item.product_variants.size}</div>
                                                 ) : null}
-                                                <div className="font-serif text-[15px] font-light text-gold">
+                                                <div className="font-serif text-[13px] sm:text-[15px] font-light text-gold">
                                                     {formatMoney(item.products.price, item.products.currency)}
                                                 </div>
                                                 {item.products.stock <= 0 && (
@@ -165,18 +163,19 @@ export default async function CartPage() {
                                                     </div>
                                                 )}
                                             </div>
-                                            <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end sm:justify-between">
-                                                <form action={removeItem}>
-                                                    <input type="hidden" name="itemId" value={item.id} />
-                                                    <button className="text-[13px] text-muted transition hover:text-heading">Remove</button>
-                                                </form>
+                                            <div className="flex items-center gap-3">
                                                 {item.products.stock > 0 ? (
                                                     <CartItemControls
                                                         cartItemId={item.id}
                                                         currentQty={item.quantity}
                                                         availableStock={item.products.stock}
                                                     />
-                                                ) : null}
+                                                ) : (
+                                                    <form action={removeItem}>
+                                                        <input type="hidden" name="itemId" value={item.id} />
+                                                        <button className="text-[12px] text-red-600 font-medium transition hover:text-red-800">Remove</button>
+                                                    </form>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
