@@ -38,42 +38,26 @@ export default async function Home() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // ── Fetch editable content with safe fallbacks ──
-  const { data: heroRow } = await supabase
-    .from("site_content")
-    .select("value")
-    .eq("key", "hero")
-    .maybeSingle();
+  // ── Fetch editable content with safe fallbacks (parallelized) ──
+  const [
+    { data: heroRow },
+    { data: storiesRow },
+    { data: craftRow },
+    { data: newsRow },
+    { data: collectionsRow },
+  ] = await Promise.all([
+    supabase.from("site_content").select("value").eq("key", "hero").maybeSingle(),
+    supabase.from("site_content").select("value").eq("key", "stories").maybeSingle(),
+    supabase.from("site_content").select("value").eq("key", "craftsmanship").maybeSingle(),
+    supabase.from("site_content").select("value").eq("key", "newsletter").maybeSingle(),
+    supabase.from("site_content").select("value").eq("key", "collections").maybeSingle(),
+  ]);
   const hero: HeroContent = { ...DEFAULT_HERO, ...(heroRow?.value as Partial<HeroContent> | null) };
-
-  const { data: storiesRow } = await supabase
-    .from("site_content")
-    .select("value")
-    .eq("key", "stories")
-    .maybeSingle();
   const storiesData: StoriesContent = {
     stories: (storiesRow?.value as StoriesContent | null)?.stories ?? DEFAULT_STORIES.stories,
   };
-
-  const { data: craftRow } = await supabase
-    .from("site_content")
-    .select("value")
-    .eq("key", "craftsmanship")
-    .maybeSingle();
   const craft: CraftsmanshipContent = { ...DEFAULT_CRAFTSMANSHIP, ...(craftRow?.value as Partial<CraftsmanshipContent> | null) };
-
-  const { data: newsRow } = await supabase
-    .from("site_content")
-    .select("value")
-    .eq("key", "newsletter")
-    .maybeSingle();
   const newsletter: NewsletterContent = { ...DEFAULT_NEWSLETTER, ...(newsRow?.value as Partial<NewsletterContent> | null) };
-
-  const { data: collectionsRow } = await supabase
-    .from("site_content")
-    .select("value")
-    .eq("key", "collections")
-    .maybeSingle();
   const collections: CollectionsContent = { ...DEFAULT_COLLECTIONS, ...(collectionsRow?.value as Partial<CollectionsContent> | null) };
 
   const categoryImages: Record<string, string> = {

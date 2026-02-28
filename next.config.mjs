@@ -1,3 +1,9 @@
+import withBundleAnalyzer from "@next/bundle-analyzer";
+
+const analyzer = withBundleAnalyzer({
+    enabled: process.env.ANALYZE === "true",
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     /* ── Hide framework fingerprint ── */
@@ -5,6 +11,11 @@ const nextConfig = {
 
     /* ── React strict mode for development hygiene ── */
     reactStrictMode: true,
+
+    /* ── ESLint: skip during build (run separately via `npx next lint`) ── */
+    eslint: {
+        ignoreDuringBuilds: true,
+    },
 
     experimental: {
         serverComponentsExternalPackages: ["pdfkit"],
@@ -110,4 +121,4 @@ const nextConfig = {
     },
 };
 
-export default nextConfig;
+export default analyzer(nextConfig);
