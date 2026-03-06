@@ -171,21 +171,21 @@ export default async function AccountOrdersPage() {
                                         <div className="border-t border-[rgba(0,0,0,0.05)] px-4 sm:px-5 py-3 flex flex-wrap items-center gap-2">
                                             {/* Pay Now for unpaid orders */}
                                             {needsPayment && (
-                                                <div onClick={(e) => e.stopPropagation()}>
+                                                <div>
                                                     <PayNowButton orderId={order.id} userEmail={order.email ?? undefined} />
                                                 </div>
                                             )}
 
                                             {/* Download Invoice for paid orders */}
                                             {isPaid && (
-                                                <div onClick={(e) => e.stopPropagation()}>
+                                                <div>
                                                     <DownloadInvoiceButton orderId={order.id} />
                                                 </div>
                                             )}
 
                                             {/* Cancel Order for cancellable orders */}
                                             {isCancellable && order.status !== "cancelled" && (
-                                                <div onClick={(e) => e.stopPropagation()} className="ml-auto">
+                                                <div className="ml-auto">
                                                     <CancelOrderButton orderId={order.id} />
                                                 </div>
                                             )}
