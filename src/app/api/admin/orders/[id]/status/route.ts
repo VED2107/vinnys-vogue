@@ -4,6 +4,8 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { sendShippingConfirmation } from "@/lib/send-shipping-email";
+import { sendOrderConfirmation } from "@/lib/send-order-email";
+import { sendOrderCancellationEmail } from "@/lib/send-cancellation-email";
 
 async function handleStatusUpdate(
     request: NextRequest,
@@ -43,8 +45,12 @@ async function handleStatusUpdate(
         return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    if (status === "shipped") {
+    if (status === "confirmed") {
+        void sendOrderConfirmation(params.id);
+    } else if (status === "shipped") {
         void sendShippingConfirmation(params.id);
+    } else if (status === "cancelled") {
+        void sendOrderCancellationEmail(params.id);
     }
 
     return NextResponse.json({ success: true });
