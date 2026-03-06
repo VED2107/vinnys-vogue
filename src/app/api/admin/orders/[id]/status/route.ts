@@ -4,6 +4,7 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { sendShippingConfirmation } from "@/lib/send-shipping-email";
+import { sendDeliveryConfirmation } from "@/lib/send-delivery-email";
 import { sendOrderConfirmation } from "@/lib/send-order-email";
 import { sendOrderCancellationEmail } from "@/lib/send-cancellation-email";
 
@@ -45,10 +46,17 @@ async function handleStatusUpdate(
         return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
+    // Fire-and-forget email notifications based on the new status.
+    // Each email function includes a small delay to let the RPC commit.
     if (status === "confirmed") {
         void sendOrderConfirmation(params.id);
     } else if (status === "shipped") {
-        void sendShippingConfirmation(params.id);
+        void sendShippingConfirmation(params.id, {
+            courierName: courier_name,
+            trackingNumber: tracking_number,
+        });
+    } else if (status === "delivered") {
+        void sendDeliveryConfirmation(params.id);
     } else if (status === "cancelled") {
         void sendOrderCancellationEmail(params.id);
     }

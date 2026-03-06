@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { sendResendEmail, EMAIL_FROM } from "@/lib/email";
+import { buildEmailLayout, escapeHtml } from "@/lib/emailTemplates";
 
 function getServiceRoleSupabase() {
   return createClient(
@@ -15,15 +16,6 @@ function getServiceRoleSupabase() {
   );
 }
 
-function escapeHtml(input: string) {
-  return input
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
 export async function sendOrderCancellationEmail(orderId: string) {
   try {
     const supabase = getServiceRoleSupabase();
@@ -34,33 +26,49 @@ export async function sendOrderCancellationEmail(orderId: string) {
       .eq("id", orderId)
       .maybeSingle<{ id: string; user_id: string; total_amount: number }>();
 
-    if (orderError || !order) return;
+    if (orderError || !order) {
+      console.error("[sendOrderCancellationEmail] Order fetch error:", orderError?.message ?? "not found");
+      return;
+    }
 
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile } = await supabase
       .from("profiles")
       .select("email")
       .eq("id", order.user_id)
       .maybeSingle<{ email: string | null }>();
 
-    if (profileError || !profile?.email) return;
+    const to = String(profile?.email ?? "").trim();
+    if (!to) {
+      console.error("[sendOrderCancellationEmail] Missing customer email for order:", orderId);
+      return;
+    }
 
-    const to = String(profile.email).trim();
-    if (!to) return;
+    const bodyHtml = `
+      <p style="margin:0 0 4px 0;font-size:13px;color:#999;">Order ID</p>
+      <p style="margin:0 0 16px 0;font-size:15px;font-weight:600;color:#ccc;">${escapeHtml(order.id)}</p>
+
+      <p style="margin:0 0 6px 0;font-size:14px;color:#ccc;">
+        Your order of <strong style="color:#1C3A2A;">₹${order.total_amount.toFixed(2)}</strong> has been cancelled.
+      </p>
+      <p style="margin:0 0 16px 0;font-size:14px;color:#ccc;">
+        If a refund is applicable, it will be processed within 5–7 business days. For any queries, please reach out to our support team.
+      </p>
+    `;
+
+    const html = buildEmailLayout({
+      title: "Order Cancelled",
+      bodyHtml,
+      ctaText: "Contact Support",
+      ctaUrl: "mailto:support@vinnysvogue.in",
+      footerNote: "If you did not request this cancellation, please contact us immediately.",
+    });
 
     const ok = await sendResendEmail(
       {
         to,
         from: EMAIL_FROM,
         subject: "Your Order Has Been Cancelled — Vinnys Vogue",
-        html: `
-          <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111">
-            <h2 style="margin:0 0 8px 0;">Your order has been cancelled</h2>
-            <p style="margin:0 0 10px 0;">Order #${escapeHtml(order.id)}</p>
-            <p style="margin:0 0 16px 0;">No refund was initiated automatically. If you need assistance, please contact support.</p>
-            <hr style="border:none;border-top:1px solid #eee;margin:16px 0;"/>
-            <p style="margin:0;color:#666;font-size:12px;">© Vinnys Vogue — Where fashion meets elegance</p>
-          </div>
-        `,
+        html,
       },
       "sendOrderCancellationEmail",
     );
@@ -72,3 +80,4 @@ export async function sendOrderCancellationEmail(orderId: string) {
     console.error("[sendOrderCancellationEmail] Failed:", err);
   }
 }
+

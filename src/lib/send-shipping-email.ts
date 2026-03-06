@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { sendResendEmail, EMAIL_FROM } from "@/lib/email";
+import { buildEmailLayout, escapeHtml } from "@/lib/emailTemplates";
 
 function getServiceRoleSupabase() {
   return createClient(
@@ -15,18 +16,26 @@ function getServiceRoleSupabase() {
   );
 }
 
-function escapeHtml(input: string) {
-  return input
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export async function sendShippingConfirmation(orderId: string) {
+/**
+ * Send a shipping confirmation email.
+ * Accepts optional shipping data to avoid a DB timing race — when the
+ * caller already has courier/tracking info, pass it directly instead of
+ * relying on a re-read that may execute before the RPC transaction commits.
+ */
+export async function sendShippingConfirmation(
+  orderId: string,
+  opts?: {
+    courierName?: string;
+    trackingNumber?: string;
+  },
+) {
   try {
     const supabase = getServiceRoleSupabase();
+
+    // Small delay to let the RPC transaction commit before we re-read
+    await sleep(1500);
 
     const { data: order, error: orderError } = await supabase
       .from("orders")
@@ -40,43 +49,54 @@ export async function sendShippingConfirmation(orderId: string) {
         shipped_at: string | null;
       }>();
 
-    if (orderError || !order) return;
+    if (orderError || !order) {
+      console.error("[sendShippingConfirmation] Order fetch error:", orderError?.message ?? "not found");
+      return;
+    }
 
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile } = await supabase
       .from("profiles")
       .select("email")
       .eq("id", order.user_id)
       .maybeSingle<{ email: string | null }>();
 
-    if (profileError || !profile?.email) return;
+    const to = String(profile?.email ?? "").trim();
+    if (!to) {
+      console.error("[sendShippingConfirmation] Missing customer email for order:", orderId);
+      return;
+    }
 
-    const to = String(profile.email).trim();
-    if (!to) return;
+    // Prefer caller-provided data, fall back to DB values
+    const courier = String(opts?.courierName || order.courier_name || "").trim();
+    const tracking = String(opts?.trackingNumber || order.tracking_number || "").trim();
+    const shippedAt = order.shipped_at ? new Date(order.shipped_at) : new Date();
 
-    const courier = String(order.courier_name ?? "").trim();
-    const tracking = String(order.tracking_number ?? "").trim();
-    const shippedAt = order.shipped_at ? new Date(order.shipped_at) : null;
+    if (!courier || !tracking) {
+      console.error("[sendShippingConfirmation] Missing courier/tracking for order:", orderId);
+      return;
+    }
 
-    if (!courier || !tracking || !shippedAt) return;
+    const bodyHtml = `
+      <p style="margin:0 0 4px 0;font-size:13px;color:#999;">Order ID</p>
+      <p style="margin:0 0 16px 0;font-size:15px;font-weight:600;color:#ccc;">${escapeHtml(order.id)}</p>
+
+      <p style="margin:0 0 6px 0;font-size:14px;color:#ccc;"><strong style="color:#1C3A2A;">Courier:</strong> ${escapeHtml(courier)}</p>
+      <p style="margin:0 0 6px 0;font-size:14px;color:#ccc;"><strong style="color:#1C3A2A;">Tracking Number:</strong> ${escapeHtml(tracking)}</p>
+      <p style="margin:0 0 16px 0;font-size:14px;color:#ccc;"><strong style="color:#1C3A2A;">Shipped on:</strong> ${escapeHtml(shippedAt.toLocaleDateString("en-IN"))}</p>
+    `;
+
+    const html = buildEmailLayout({
+      title: "Your Order Has Been Shipped 🚚",
+      bodyHtml,
+      footerNote: "You will receive another email when your order is delivered.",
+    });
 
     const ok = await sendResendEmail(
       {
         to,
         from: EMAIL_FROM,
         subject: "Your Order Has Been Shipped — Vinnys Vogue",
-        html: `
-          <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111">
-            <h2 style="margin:0 0 8px 0;">Your order is on its way ✨</h2>
-            <p style="margin:0 0 10px 0;">Order #${escapeHtml(order.id)}</p>
-            <p style="margin:0 0 6px 0;"><strong>Courier:</strong> ${escapeHtml(courier)}</p>
-            <p style="margin:0 0 6px 0;"><strong>Tracking Number:</strong> ${escapeHtml(tracking)}</p>
-            <p style="margin:0 0 16px 0;"><strong>Shipped on:</strong> ${escapeHtml(
-          shippedAt.toLocaleDateString("en-IN"),
-        )}</p>
-            <hr style="border:none;border-top:1px solid #eee;margin:16px 0;"/>
-            <p style="margin:0;color:#666;font-size:12px;">© Vinnys Vogue — Where fashion meets elegance</p>
-          </div>
-        `,
+        html,
       },
       "sendShippingConfirmation",
     );
