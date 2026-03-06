@@ -38,35 +38,38 @@ export default function CancelOrderButton({ orderId, compact }: { orderId: strin
 
     return (
         <div className="relative inline-flex flex-col items-center gap-2">
-            {/* Confirmation overlay */}
+            {/* Confirmation popup — positioned near the button */}
             {showConfirm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 animate-[fadeInSoft_0.2s_ease-out]">
-                    <div className="mx-4 w-full max-w-sm rounded-[24px] bg-white p-8 shadow-2xl animate-[fadeInSoft_0.3s_ease-out]">
+                <>
+                    {/* Click-away backdrop */}
+                    <div className="fixed inset-0 z-40" onClick={() => !loading && setShowConfirm(false)} />
+                    {/* Dialog positioned above the button */}
+                    <div className="absolute bottom-full right-0 z-50 mb-3 w-[320px] rounded-[24px] bg-white p-6 shadow-2xl border border-[rgba(0,0,0,0.08)] animate-[fadeInSoft_0.2s_ease-out]">
                         <div className="flex flex-col items-center text-center">
-                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                                     <circle cx="12" cy="12" r="10" />
                                     <line x1="15" y1="9" x2="9" y2="15" />
                                     <line x1="9" y1="9" x2="15" y2="15" />
                                 </svg>
                             </div>
-                            <h3 className="mt-4 font-serif text-xl font-light text-heading">Cancel Order?</h3>
-                            <p className="mt-2 text-[14px] text-muted leading-relaxed">
+                            <h3 className="mt-3 font-serif text-lg font-light text-heading">Cancel Order?</h3>
+                            <p className="mt-1.5 text-[13px] text-muted leading-relaxed">
                                 This action cannot be undone. Your order will be cancelled{" "}
                                 and any payment will be refunded.
                             </p>
-                            <div className="mt-6 flex w-full gap-3">
+                            <div className="mt-5 flex w-full gap-3">
                                 <button
                                     onClick={() => setShowConfirm(false)}
                                     disabled={loading}
-                                    className="flex-1 h-11 rounded-full border border-[rgba(0,0,0,0.1)] text-[14px] font-medium text-heading transition-all duration-200 hover:border-[rgba(0,0,0,0.2)] disabled:opacity-50"
+                                    className="flex-1 h-10 rounded-full border border-[rgba(0,0,0,0.1)] text-[13px] font-medium text-heading transition-all duration-200 hover:border-[rgba(0,0,0,0.2)] disabled:opacity-50"
                                 >
                                     Keep Order
                                 </button>
                                 <button
                                     onClick={handleCancel}
                                     disabled={loading}
-                                    className="flex-1 h-11 rounded-full bg-red-600 text-[14px] font-medium text-white transition-all duration-200 hover:bg-red-700 disabled:opacity-60 flex items-center justify-center gap-2"
+                                    className="flex-1 h-10 rounded-full bg-red-600 text-[13px] font-medium text-white transition-all duration-200 hover:bg-red-700 disabled:opacity-60 flex items-center justify-center gap-2"
                                 >
                                     {loading ? (
                                         <>
@@ -81,7 +84,7 @@ export default function CancelOrderButton({ orderId, compact }: { orderId: strin
                             </div>
                         </div>
                     </div>
-                </div>
+                </>
             )}
 
             {/* Trigger button */}
