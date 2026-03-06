@@ -40,7 +40,7 @@ export default function CancelOrderButton({ orderId, compact }: { orderId: strin
         <div className="relative inline-flex flex-col items-center gap-2">
             {/* Confirmation overlay */}
             {showConfirm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm animate-[fadeInSoft_0.2s_ease-out]">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 animate-[fadeInSoft_0.2s_ease-out]">
                     <div className="mx-4 w-full max-w-sm rounded-[24px] bg-white p-8 shadow-2xl animate-[fadeInSoft_0.3s_ease-out]">
                         <div className="flex flex-col items-center text-center">
                             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50">

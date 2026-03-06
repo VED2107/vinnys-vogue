@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatMoney } from "@/lib/format";
+import { getProductImagePublicUrl } from "@/lib/product-images";
 
 import { GoldDivider } from "@/components/section-divider";
 import DownloadInvoiceButton from "@/components/download-invoice-button";
@@ -21,6 +22,7 @@ type OrderItemRow = {
     product_name: string | null;
     quantity: number;
     price: number;
+    products: { image_path: string | null } | null;
 };
 
 type OrderRow = {
@@ -45,7 +47,7 @@ export default async function AccountOrdersPage() {
 
     const { data: orders } = await supabase
         .from("orders")
-        .select("*, order_items(image_url, product_name, quantity, price)")
+        .select("*, order_items(image_url, product_name, quantity, price, products(image_path))")
         .order("created_at", { ascending: false });
 
     const rows = (orders ?? []) as unknown as OrderRow[];
@@ -107,24 +109,28 @@ export default async function AccountOrdersPage() {
                                         className="flex flex-row gap-4 sm:gap-5 p-4 sm:p-5 items-start"
                                     >
                                         {/* Product image */}
-                                        {firstItem?.image_url ? (
-                                            <div className="flex-shrink-0 w-[72px] h-[88px] sm:w-24 sm:h-28 rounded-2xl overflow-hidden bg-[#EDE8E0] shadow-sm">
-                                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                <img
-                                                    src={firstItem.image_url}
-                                                    alt={firstItem.product_name ?? "Order item"}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            </div>
-                                        ) : (
-                                            <div className="flex-shrink-0 w-[72px] h-[88px] sm:w-24 sm:h-28 rounded-2xl bg-[#EDE8E0] flex items-center justify-center">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C6A756" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-40">
-                                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                                                    <circle cx="8.5" cy="8.5" r="1.5" />
-                                                    <polyline points="21 15 16 10 5 21" />
-                                                </svg>
-                                            </div>
-                                        )}
+                                        {(() => {
+                                            const imgPath = firstItem?.image_url ?? firstItem?.products?.image_path ?? null;
+                                            const imageUrl = getProductImagePublicUrl(supabase, imgPath);
+                                            return imgPath ? (
+                                                <div className="flex-shrink-0 w-[72px] h-[88px] sm:w-24 sm:h-28 rounded-2xl overflow-hidden bg-[#EDE8E0] shadow-sm">
+                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                    <img
+                                                        src={imageUrl}
+                                                        alt={firstItem?.product_name ?? "Order item"}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div className="flex-shrink-0 w-[72px] h-[88px] sm:w-24 sm:h-28 rounded-2xl bg-[#EDE8E0] flex items-center justify-center">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C6A756" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-40">
+                                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                                        <circle cx="8.5" cy="8.5" r="1.5" />
+                                                        <polyline points="21 15 16 10 5 21" />
+                                                    </svg>
+                                                </div>
+                                            );
+                                        })()}
 
                                         {/* Order details */}
                                         <div className="flex-1 min-w-0 py-0.5">
