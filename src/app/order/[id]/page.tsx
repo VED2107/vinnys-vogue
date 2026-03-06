@@ -114,7 +114,7 @@ export default async function OrderPage({
 
     return (
         <div className="relative min-h-screen overflow-hidden bg-bg-primary">
-            <MandalaBackground variant="lotus" position="bottom-left" />
+            <MandalaBackground variant="lotus" position="center" />
             <div className="relative z-10 mx-auto w-full max-w-3xl px-6 py-16">
                 <FadeIn>
                     <div className="flex flex-col items-center text-center">
@@ -266,11 +266,11 @@ export default async function OrderPage({
                     </div>
 
                     <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center">
-                        {o.payment_status === "unpaid" ? (
+                        {o.payment_status === "unpaid" && ["pending", "payment_initiated"].includes(o.status) ? (
                             <PayNowButton orderId={o.id} userEmail={o.email ?? undefined} />
                         ) : null}
-                        <DownloadInvoiceButton orderId={o.id} />
-                        {o.status === "confirmed" ? (
+                        {isPaid ? <DownloadInvoiceButton orderId={o.id} /> : null}
+                        {["pending", "confirmed", "payment_initiated"].includes(o.status) ? (
                             <CancelOrderButton orderId={o.id} />
                         ) : null}
                         <a

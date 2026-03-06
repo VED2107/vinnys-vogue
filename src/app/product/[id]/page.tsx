@@ -1,8 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { FadeImage } from "@/components/fade-image";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { getProductImagePublicUrl } from "@/lib/product-images";
+import { getProductImagePublicUrl, getProductImagesPublicUrls } from "@/lib/product-images";
 import { formatMoney } from "@/lib/format";
 import { getCategoryLabel } from "@/lib/categories";
 import VariantSelector from "@/components/variant-selector";
@@ -11,6 +10,7 @@ import { ProductReviewSummary, ProductReviewList } from "@/components/product-re
 import type { ReviewItem } from "@/components/product-reviews";
 import ProductReviewForm from "@/components/product-review-form";
 import { ProductBadges } from "@/components/product-badges";
+import ProductImageGallery from "@/components/product-image-gallery";
 
 export const revalidate = 60;
 
@@ -108,13 +108,13 @@ export default async function ProductDetailPage({
   if (!(product as { active: boolean }).active) notFound();
 
   const p = product as ProductRow;
-  const imageUrl = getProductImagePublicUrl(supabase, p.image_path);
 
   // ── Parallel data fetching ──────────────────────────────
   const [
     { data: variants },
     { data: rawReviews },
     { data: existingReview },
+    { data: productImages },
   ] = await Promise.all([
     supabase
       .from("product_variants")
@@ -133,7 +133,19 @@ export default async function ProductDetailPage({
       .eq("product_id", p.id)
       .eq("user_id", user.id)
       .maybeSingle(),
+    supabase
+      .from("product_images")
+      .select("image_path")
+      .eq("product_id", p.id)
+      .order("display_order", { ascending: true }),
   ]);
+
+  const extraImagePaths = (productImages ?? []).map((row: { image_path: string }) => row.image_path);
+  const allImageUrls = getProductImagesPublicUrls(supabase, p.image_path, extraImagePaths);
+  // Fallback if no images at all
+  if (allImageUrls.length === 0) {
+    allImageUrls.push(getProductImagePublicUrl(supabase, null));
+  }
 
   const variantRows = (variants ?? []) as VariantRow[];
 
@@ -191,18 +203,7 @@ export default async function ProductDetailPage({
       <div className="w-full max-w-[1400px] mx-auto px-6 lg:px-16 xl:px-24 py-16">
         <FadeIn>
           <div className="grid grid-cols-1 gap-10 lg:gap-16 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-            <div className="md:sticky md:top-24 md:self-start">
-              <div className="relative overflow-hidden rounded-[20px] bg-[#EDE8E0] aspect-[4/5] w-full">
-                <FadeImage
-                  src={imageUrl}
-                  alt={p.title}
-                  fill
-                  sizes="(max-width: 768px) 90vw, (max-width: 1200px) 42vw, 480px"
-                  className="img-matte object-cover"
-                  priority
-                />
-              </div>
-            </div>
+            <ProductImageGallery images={allImageUrls} title={p.title} />
 
             <div className="flex flex-col justify-center space-y-8">
               {p.category ? (
@@ -245,7 +246,7 @@ export default async function ProductDetailPage({
                 productId={p.id}
                 variants={variantRows}
                 productStock={p.stock}
-                imageUrl={imageUrl}
+                imageUrl={allImageUrls[0]}
               />
             </div>
           </div>

@@ -64,7 +64,7 @@ export default async function CheckoutPage() {
 
     return (
         <div className="relative min-h-screen overflow-hidden bg-bg-primary">
-            <MandalaBackground variant="lotus" position="top-right" />
+            <MandalaBackground variant="lotus" position="center" />
             <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-16 xl:px-24 py-16">
                 <FadeIn>
                     <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-16">

@@ -7,6 +7,7 @@ import {
 } from "@/lib/product-images";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
 import VariantManager from "@/components/variant-manager";
+import { MultiImageUploader } from "@/components/admin/multi-image-uploader";
 const RichTextEditor = dynamic(
   () => import("@/components/admin/rich-text-editor").then((m) => ({ default: m.RichTextEditor })),
   { ssr: false, loading: () => <div className="h-32 animate-pulse rounded-xl bg-[rgba(0,0,0,0.03)]" /> }
@@ -80,6 +81,28 @@ export default async function AdminEditProductPage({
   const product = data as ProductRow;
   const currentImageUrl = getProductImagePublicUrl(supabase, product.image_path);
 
+  // Fetch extra product images
+  const { data: extraImages } = await supabase
+    .from("product_images")
+    .select("id, image_path")
+    .eq("product_id", product.id)
+    .order("display_order", { ascending: true });
+
+  const existingImages = [
+    // Primary image first (if exists)
+    ...(product.image_path ? [{
+      id: "primary",
+      url: currentImageUrl,
+      image_path: product.image_path,
+    }] : []),
+    // Then extra images
+    ...((extraImages ?? []) as { id: string; image_path: string }[]).map((img) => ({
+      id: img.id,
+      url: getProductImagePublicUrl(supabase, img.image_path),
+      image_path: img.image_path,
+    })),
+  ];
+
   const safeVariants =
     product.product_variants?.map((v) => ({
       id: v.id,
@@ -109,35 +132,7 @@ export default async function AdminEditProductPage({
         >
           <input type="hidden" name="product_id" value={product.id} />
           <div className="grid grid-cols-1 gap-5">
-            <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
-              <div className="text-sm font-medium text-zinc-900">Image</div>
-              <div className="mt-3 flex items-center gap-4">
-                <div className="h-20 w-16 overflow-hidden rounded-xl bg-zinc-100">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={currentImageUrl}
-                    alt={product.title}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <div className="flex-1 space-y-3">
-                  <input
-                    name="image"
-                    type="file"
-                    accept="image/*"
-                    className="block w-full text-sm text-zinc-700 file:mr-4 file:rounded-xl file:border-0 file:bg-zinc-900 file:px-4 file:py-2 file:text-sm file:font-medium file:text-zinc-50 hover:file:bg-zinc-800"
-                  />
-                  <label className="inline-flex items-center gap-2 text-sm text-zinc-700">
-                    <input
-                      name="remove_image"
-                      type="checkbox"
-                      className="h-4 w-4 rounded border-zinc-300"
-                    />
-                    Remove current image
-                  </label>
-                </div>
-              </div>
-            </div>
+            <MultiImageUploader existingImages={existingImages} />
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-zinc-900" htmlFor="title">

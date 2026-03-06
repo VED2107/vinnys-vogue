@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function AdminReviewActions({
@@ -13,6 +13,14 @@ export default function AdminReviewActions({
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  // Auto-reset confirm after 3 seconds
+  useEffect(() => {
+    if (!confirmDelete) return;
+    const timer = setTimeout(() => setConfirmDelete(false), 3000);
+    return () => clearTimeout(timer);
+  }, [confirmDelete]);
 
   async function updateStatus(status: string) {
     setLoading(true);
@@ -37,9 +45,13 @@ export default function AdminReviewActions({
   }
 
   async function deleteReview() {
-    if (!confirm("Delete this review permanently?")) return;
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
     setLoading(true);
     setError(null);
+    setConfirmDelete(false);
     try {
       const res = await fetch(`/api/admin/reviews/${reviewId}`, {
         method: "DELETE",
@@ -93,7 +105,10 @@ export default function AdminReviewActions({
         <button
           onClick={deleteReview}
           disabled={loading}
-          className="h-8 rounded-full bg-red-600 px-3 text-[12px] font-medium text-white hover:bg-red-700 disabled:opacity-50 flex items-center gap-1 transition"
+          className={`h-8 rounded-full px-3 text-[12px] font-medium text-white disabled:opacity-50 flex items-center gap-1 transition ${confirmDelete
+              ? "bg-red-800 ring-2 ring-red-300 animate-pulse"
+              : "bg-red-600 hover:bg-red-700"
+            }`}
         >
           {loading && (
             <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -101,7 +116,7 @@ export default function AdminReviewActions({
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
             </svg>
           )}
-          Delete
+          {confirmDelete ? "Confirm?" : "Delete"}
         </button>
       </div>
       {error && (

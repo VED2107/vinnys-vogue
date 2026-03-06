@@ -1,7 +1,30 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
+
+/* Declare Razorpay on the window object for TypeScript */
+declare global {
+    interface Window {
+        Razorpay: new (options: RazorpayOptions) => RazorpayInstance;
+    }
+}
+
+interface RazorpayOptions {
+    key: string;
+    amount: number;
+    currency: string;
+    name: string;
+    description: string;
+    order_id: string;
+    handler: () => void;
+    theme: { color: string };
+    prefill?: { email?: string };
+}
+
+interface RazorpayInstance {
+    open: () => void;
+}
 
 interface CheckoutProfile {
     full_name: string;
@@ -18,6 +41,23 @@ export default function CheckoutForm({ initialProfile }: { initialProfile?: Chec
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState<string | null>(null);
+    const [scriptReady, setScriptReady] = useState(false);
+
+    // Pre-load Razorpay script while user fills the form
+    useEffect(() => {
+        if (typeof window !== "undefined" && window.Razorpay) {
+            setScriptReady(true);
+            return;
+        }
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.async = true;
+        script.onload = () => setScriptReady(true);
+        document.body.appendChild(script);
+        return () => {
+            if (script.parentNode) script.parentNode.removeChild(script);
+        };
+    }, []);
 
     function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -28,6 +68,7 @@ export default function CheckoutForm({ initialProfile }: { initialProfile?: Chec
 
         startTransition(async () => {
             try {
+                // Step 1: Create the order
                 const res = await fetch("/api/checkout", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -50,8 +91,50 @@ export default function CheckoutForm({ initialProfile }: { initialProfile?: Chec
                     return;
                 }
 
-                router.replace(`/order/${json.orderId}`);
-                router.refresh();
+                const orderId = json.orderId;
+
+                // Step 2: Immediately initiate payment
+                if (!scriptReady) {
+                    // Fallback: if Razorpay didn't load, go to order page
+                    router.replace(`/order/${orderId}`);
+                    router.refresh();
+                    return;
+                }
+
+                const payRes = await fetch("/api/payments/create", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ orderId }),
+                });
+
+                if (!payRes.ok) {
+                    const payErr = await payRes.json();
+                    setError(payErr.error || "Failed to initiate payment");
+                    // Redirect to order page so they can retry
+                    router.replace(`/order/${orderId}`);
+                    return;
+                }
+
+                const payData = await payRes.json();
+
+                // Step 3: Open Razorpay checkout
+                const email = String(formData.get("email") || "").trim().toLowerCase();
+                const options: RazorpayOptions = {
+                    key: payData.key,
+                    amount: payData.amount,
+                    currency: payData.currency,
+                    name: "Vinnys Vogue",
+                    description: `Order ${payData.orderId.slice(0, 8).toUpperCase()}`,
+                    order_id: payData.razorpayOrderId,
+                    handler: function () {
+                        window.location.href = `/order/${orderId}`;
+                    },
+                    theme: { color: "#1C1A18" },
+                    prefill: email ? { email } : undefined,
+                };
+
+                const rzp = new window.Razorpay(options);
+                rzp.open();
             } catch {
                 setError("Something went wrong. Please try again.");
             }
@@ -125,9 +208,9 @@ export default function CheckoutForm({ initialProfile }: { initialProfile?: Chec
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                         </svg>
-                        Placing Order…
+                        Processing Payment…
                     </>
-                ) : "Place Order"}
+                ) : "Place Order & Pay"}
             </button>
         </form>
     );

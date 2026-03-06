@@ -925,12 +925,19 @@ begin
     raise exception 'Cart is empty';
   end if;
 
-  -- Create the order
-  insert into public.orders (user_id, status, payment_status)
-  values (v_user_id, 'pending', 'unpaid')
+  -- Pre-compute total from cart items
+  select coalesce(sum(p.price * ci.quantity), 0)
+  into v_total
+  from public.cart_items ci
+  join public.products p on p.id = ci.product_id
+  where ci.cart_id = v_cart_id;
+
+  -- Create the order with total_amount included
+  insert into public.orders (user_id, status, payment_status, total_amount)
+  values (v_user_id, 'pending', 'unpaid', v_total)
   returning id into v_order_id;
 
-  -- Copy cart items → order items, decrement stock
+  -- Copy cart items → order items (stock is decremented later on payment confirmation)
   for v_item in
     select ci.product_id, ci.variant_id, ci.quantity, p.price, p.title, p.image_path, p.stock
     from public.cart_items ci
@@ -943,19 +950,7 @@ begin
 
     insert into public.order_items (order_id, product_id, quantity, price, product_name, image_url)
     values (v_order_id, v_item.product_id, v_item.quantity, v_item.price, v_item.title, v_item.image_path);
-
-    update public.products
-    set stock = stock - v_item.quantity,
-        updated_at = now()
-    where id = v_item.product_id;
-
-    v_total := v_total + (v_item.price * v_item.quantity);
   end loop;
-
-  -- Set total
-  update public.orders
-  set total_amount = v_total, updated_at = now()
-  where id = v_order_id;
 
   -- Clear the cart
   delete from public.cart_items where cart_id = v_cart_id;
@@ -979,7 +974,14 @@ language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  v_item record;
 begin
+  -- Only process if not already paid (idempotent)
+  if exists (select 1 from public.orders where id = p_order_id and payment_status = 'paid') then
+    return;
+  end if;
+
   update public.orders
   set payment_status = 'paid',
       status = 'confirmed',
@@ -987,6 +989,18 @@ begin
       updated_at = now()
   where id = p_order_id
     and payment_status != 'paid';
+
+  -- Decrement stock now that payment is confirmed
+  for v_item in
+    select product_id, quantity
+    from public.order_items
+    where order_id = p_order_id
+  loop
+    update public.products
+    set stock = stock - v_item.quantity,
+        updated_at = now()
+    where id = v_item.product_id;
+  end loop;
 
   -- Log the event
   insert into public.order_events (order_id, event_type, event_data)
@@ -1083,17 +1097,19 @@ begin
     raise exception 'Order cannot be cancelled — already %', v_order.status;
   end if;
 
-  -- Restore stock
-  for v_item in
-    select product_id, quantity
-    from public.order_items
-    where order_id = p_order_id
-  loop
-    update public.products
-    set stock = stock + v_item.quantity,
-        updated_at = now()
-    where id = v_item.product_id;
-  end loop;
+  -- Restore stock only if payment was already confirmed (stock was decremented)
+  if v_order.payment_status::text = 'paid' then
+    for v_item in
+      select product_id, quantity
+      from public.order_items
+      where order_id = p_order_id
+    loop
+      update public.products
+      set stock = stock + v_item.quantity,
+          updated_at = now()
+      where id = v_item.product_id;
+    end loop;
+  end if;
 
   -- Update order
   update public.orders
@@ -1239,3 +1255,29 @@ do $$ begin
     add constraint stock_non_negative check (stock >= 0);
   end if;
 end $$;
+
+-- ==========================================================
+-- PRODUCT IMAGES TABLE (multi-image support)
+-- ==========================================================
+
+create table if not exists public.product_images (
+  id uuid primary key default gen_random_uuid(),
+  product_id uuid not null references public.products(id) on delete cascade,
+  image_path text not null,
+  display_order int not null default 0,
+  created_at timestamptz not null default now()
+);
+
+alter table public.product_images enable row level security;
+
+-- Public can read images
+drop policy if exists product_images_read on public.product_images;
+create policy product_images_read on public.product_images for select using (true);
+
+-- Admin can manage images
+drop policy if exists product_images_admin on public.product_images;
+create policy product_images_admin on public.product_images for all using (public.is_admin());
+
+-- Index for fast lookups
+create index if not exists idx_product_images_product_id on public.product_images(product_id, display_order);
+

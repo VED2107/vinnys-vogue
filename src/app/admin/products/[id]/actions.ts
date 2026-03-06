@@ -22,8 +22,6 @@ export async function updateProduct(formData: FormData) {
     const display_order = parseInt(String(formData.get("display_order") || "0"), 10) || 0;
     const has_variants = formData.get("has_variants") === "on";
     const stock = parseInt(String(formData.get("stock") || "0"), 10) || 0;
-    const removeImage = formData.get("remove_image") === "on";
-    const newImage = formData.get("image") as File | null;
 
     const priceRaw = formData.get("price");
     const priceDisplay = priceRaw != null ? String(priceRaw).trim() : "";
@@ -45,7 +43,7 @@ export async function updateProduct(formData: FormData) {
 
     const supabase = createSupabaseServerClient();
 
-    // Fetch fresh product data inside the action (no outer scope dependency)
+    // Fetch fresh product data
     const { data: currentProduct } = await supabase
         .from("products")
         .select("id, image_path, product_variants(id)")
@@ -57,38 +55,111 @@ export async function updateProduct(formData: FormData) {
     }
 
     const currentImagePath: string | null = currentProduct.image_path;
-    let nextImagePath: string | null = currentImagePath;
 
-    if (removeImage && currentImagePath) {
+    // Handle image removals
+    const removedImageIds = formData.getAll("removed_image_ids") as string[];
+
+    // If the primary image was removed
+    let nextImagePath: string | null = currentImagePath;
+    if (removedImageIds.includes("primary") && currentImagePath) {
         await supabase.storage.from(PRODUCT_IMAGE_BUCKET).remove([currentImagePath]);
         nextImagePath = null;
     }
 
-    if (newImage && newImage.size > 0) {
-        const ext = newImage.name.includes(".")
-            ? newImage.name.split(".").pop()!.toLowerCase()
-            : "jpg";
+    // Remove extra images from storage and DB
+    if (removedImageIds.length > 0) {
+        const nonPrimaryRemovedIds = removedImageIds.filter((id) => id !== "primary");
+        if (nonPrimaryRemovedIds.length > 0) {
+            // Fetch paths before deleting
+            const { data: imagesToRemove } = await supabase
+                .from("product_images")
+                .select("id, image_path")
+                .in("id", nonPrimaryRemovedIds);
 
-        const uploadPath = `products/${productId}.${ext}`;
-
-        if (currentImagePath && currentImagePath !== uploadPath) {
-            await supabase.storage
-                .from(PRODUCT_IMAGE_BUCKET)
-                .remove([currentImagePath]);
+            if (imagesToRemove && imagesToRemove.length > 0) {
+                const pathsToRemove = imagesToRemove.map((img: { image_path: string }) => img.image_path);
+                await supabase.storage.from(PRODUCT_IMAGE_BUCKET).remove(pathsToRemove);
+                await supabase
+                    .from("product_images")
+                    .delete()
+                    .in("id", nonPrimaryRemovedIds);
+            }
         }
+    }
+
+    // Handle new image uploads
+    const imageFiles = formData.getAll("images") as File[];
+    const validImages = imageFiles.filter((f) => f && f.size > 0 && f.type.startsWith("image/"));
+
+    const newImagePaths: string[] = [];
+    for (let i = 0; i < validImages.length; i++) {
+        const file = validImages[i];
+        const ext = file.name.includes(".")
+            ? file.name.split(".").pop()!.toLowerCase()
+            : "jpg";
+        const fileName = globalThis.crypto?.randomUUID
+            ? globalThis.crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        const uploadPath = `products/${fileName}.${ext}`;
 
         const uploadResult = await supabase.storage
             .from(PRODUCT_IMAGE_BUCKET)
-            .upload(uploadPath, newImage, {
+            .upload(uploadPath, file, {
                 upsert: true,
-                contentType: newImage.type || undefined,
+                contentType: file.type || undefined,
             });
 
         if (uploadResult.error) {
             throw new Error(uploadResult.error.message);
         }
 
-        nextImagePath = uploadPath;
+        newImagePaths.push(uploadPath);
+    }
+
+    // If primary was removed and we have new images, set first new one as primary
+    if (!nextImagePath && newImagePaths.length > 0) {
+        nextImagePath = newImagePaths.shift()!;
+    }
+
+    // If still no primary but we have existing extra images, promote one
+    if (!nextImagePath) {
+        const { data: firstExtra } = await supabase
+            .from("product_images")
+            .select("id, image_path")
+            .eq("product_id", productId)
+            .order("display_order", { ascending: true })
+            .limit(1)
+            .maybeSingle();
+        if (firstExtra) {
+            nextImagePath = firstExtra.image_path;
+            // Remove it from product_images since it's now the primary
+            await supabase.from("product_images").delete().eq("id", firstExtra.id);
+        }
+    }
+
+    // Insert new extra images into product_images
+    if (newImagePaths.length > 0) {
+        // Get current max display_order
+        const { data: maxOrderRow } = await supabase
+            .from("product_images")
+            .select("display_order")
+            .eq("product_id", productId)
+            .order("display_order", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        const startOrder = (maxOrderRow?.display_order ?? 0) + 1;
+
+        const imageRows = newImagePaths.map((path, idx) => ({
+            product_id: productId,
+            image_path: path,
+            display_order: startOrder + idx,
+        }));
+
+        const { error: imgError } = await supabase.from("product_images").insert(imageRows);
+        if (imgError) {
+            console.error("Failed to insert product images:", imgError);
+        }
     }
 
     const { error } = await supabase
@@ -125,14 +196,12 @@ export async function updateProduct(formData: FormData) {
             if (!size) continue;
 
             if (variantId) {
-                // Update existing variant
                 submittedVariantIds.push(variantId);
                 await supabase
                     .from("product_variants")
                     .update({ size, stock: variantStock })
                     .eq("id", variantId);
             } else {
-                // New variant
                 newVariants.push({
                     product_id: productId,
                     size,
@@ -141,7 +210,6 @@ export async function updateProduct(formData: FormData) {
             }
         }
 
-        // Delete removed variants (query fresh IDs from DB)
         const existingVariants = (currentProduct as { product_variants: { id: string }[] }).product_variants ?? [];
         const existingIds = existingVariants.map((v: { id: string }) => v.id);
         const toDelete = existingIds.filter((id: string) => !submittedVariantIds.includes(id));
@@ -152,7 +220,6 @@ export async function updateProduct(formData: FormData) {
                 .in("id", toDelete);
         }
 
-        // Insert new variants
         if (newVariants.length > 0) {
             const { error: insertError } = await supabase
                 .from("product_variants")
@@ -162,7 +229,6 @@ export async function updateProduct(formData: FormData) {
             }
         }
     } else {
-        // If switching from variants to no-variants, delete all variants
         await supabase
             .from("product_variants")
             .delete()
@@ -205,12 +271,26 @@ export async function deleteProduct(formData: FormData) {
         process.env.SUPABASE_SERVICE_ROLE_KEY!,
     );
 
-    // Fetch product to clean up storage image
+    // Fetch product + extra images to clean up storage
     const { data: prod } = await serviceClient
         .from("products")
         .select("image_path")
         .eq("id", productId)
         .maybeSingle();
+
+    const { data: extraImages } = await serviceClient
+        .from("product_images")
+        .select("image_path")
+        .eq("product_id", productId);
+
+    // Collect all image paths to remove from storage
+    const pathsToRemove: string[] = [];
+    if (prod?.image_path) pathsToRemove.push(prod.image_path);
+    if (extraImages) {
+        for (const img of extraImages as { image_path: string }[]) {
+            pathsToRemove.push(img.image_path);
+        }
+    }
 
     // Delete dependent rows that lack ON DELETE CASCADE
     await serviceClient.from("cart_items").delete().eq("product_id", productId);
@@ -220,6 +300,9 @@ export async function deleteProduct(formData: FormData) {
 
     // Nullify order_items references (preserve order history, just unlink product)
     await serviceClient.from("order_items").update({ product_id: null }).eq("product_id", productId);
+
+    // Delete product images (FK child with cascade, but just in case)
+    await serviceClient.from("product_images").delete().eq("product_id", productId);
 
     // Delete product variants first (FK child)
     await serviceClient.from("product_variants").delete().eq("product_id", productId);
@@ -234,9 +317,9 @@ export async function deleteProduct(formData: FormData) {
         throw new Error(deleteError.message);
     }
 
-    // Clean up product image from storage
-    if (prod?.image_path) {
-        await serviceClient.storage.from(PRODUCT_IMAGE_BUCKET).remove([prod.image_path]);
+    // Clean up all product images from storage
+    if (pathsToRemove.length > 0) {
+        await serviceClient.storage.from(PRODUCT_IMAGE_BUCKET).remove(pathsToRemove);
     }
 
     redirect("/admin/products?deleted=1");

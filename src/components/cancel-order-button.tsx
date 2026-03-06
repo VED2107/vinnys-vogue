@@ -3,14 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function CancelOrderButton({ orderId }: { orderId: string }) {
+export default function CancelOrderButton({ orderId, compact }: { orderId: string; compact?: boolean }) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [showConfirm, setShowConfirm] = useState(false);
 
     async function handleCancel() {
-        if (!confirm("Are you sure you want to cancel this order? This cannot be undone.")) return;
-
         setLoading(true);
         setError(null);
 
@@ -23,43 +22,85 @@ export default function CancelOrderButton({ orderId }: { orderId: string }) {
 
             if (!res.ok) {
                 setError(json.error || "Failed to cancel order");
+                setShowConfirm(false);
                 return;
             }
 
+            setShowConfirm(false);
             router.refresh();
         } catch {
             setError("Something went wrong. Please try again.");
+            setShowConfirm(false);
         } finally {
             setLoading(false);
         }
     }
 
     return (
-        <div className="flex flex-col items-center gap-2">
+        <div className="relative inline-flex flex-col items-center gap-2">
+            {/* Confirmation overlay */}
+            {showConfirm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm animate-[fadeInSoft_0.2s_ease-out]">
+                    <div className="mx-4 w-full max-w-sm rounded-[24px] bg-white p-8 shadow-2xl animate-[fadeInSoft_0.3s_ease-out]">
+                        <div className="flex flex-col items-center text-center">
+                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="15" y1="9" x2="9" y2="15" />
+                                    <line x1="9" y1="9" x2="15" y2="15" />
+                                </svg>
+                            </div>
+                            <h3 className="mt-4 font-serif text-xl font-light text-heading">Cancel Order?</h3>
+                            <p className="mt-2 text-[14px] text-muted leading-relaxed">
+                                This action cannot be undone. Your order will be cancelled{" "}
+                                and any payment will be refunded.
+                            </p>
+                            <div className="mt-6 flex w-full gap-3">
+                                <button
+                                    onClick={() => setShowConfirm(false)}
+                                    disabled={loading}
+                                    className="flex-1 h-11 rounded-full border border-[rgba(0,0,0,0.1)] text-[14px] font-medium text-heading transition-all duration-200 hover:border-[rgba(0,0,0,0.2)] disabled:opacity-50"
+                                >
+                                    Keep Order
+                                </button>
+                                <button
+                                    onClick={handleCancel}
+                                    disabled={loading}
+                                    className="flex-1 h-11 rounded-full bg-red-600 text-[14px] font-medium text-white transition-all duration-200 hover:bg-red-700 disabled:opacity-60 flex items-center justify-center gap-2"
+                                >
+                                    {loading ? (
+                                        <>
+                                            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                            </svg>
+                                            Cancelling…
+                                        </>
+                                    ) : "Yes, Cancel"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Trigger button */}
             <button
-                onClick={handleCancel}
+                onClick={() => setShowConfirm(true)}
                 disabled={loading}
-                className="inline-flex h-12 items-center justify-center rounded-full border border-red-200 bg-red-50 px-8 text-[14px] font-medium text-red-700 transition-all duration-300 hover:bg-red-100 hover:border-red-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className={
+                    compact
+                        ? "inline-flex h-9 items-center justify-center rounded-full border border-red-200 px-4 text-[12px] font-medium text-red-600 transition-all duration-300 hover:bg-red-50 hover:border-red-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                        : "inline-flex h-12 items-center justify-center rounded-full border border-red-200 bg-red-50 px-8 text-[14px] font-medium text-red-700 transition-all duration-300 hover:bg-red-100 hover:border-red-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                }
             >
-                {loading ? (
-                    <span className="flex items-center gap-2">
-                        <svg
-                            className="animate-spin h-4 w-4"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                        >
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                        </svg>
-                        Cancelling…
-                    </span>
-                ) : (
-                    "Cancel Order"
-                )}
+                Cancel Order
             </button>
+
             {error && (
-                <p className="text-[13px] text-red-600">{error}</p>
+                <div className="rounded-[14px] border border-red-200 bg-red-50 px-4 py-2 text-[13px] text-red-700 text-center">
+                    {error}
+                </div>
             )}
         </div>
     );

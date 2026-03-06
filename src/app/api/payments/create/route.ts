@@ -62,8 +62,8 @@ export async function POST(request: Request) {
             );
         }
 
-        // Fraud guard: only allow payment initiation for pending orders
-        if (order.status !== "pending") {
+        // Fraud guard: only allow payment initiation for pending or payment_initiated orders
+        if (!["pending", "payment_initiated"].includes(order.status as string)) {
             return NextResponse.json(
                 { error: "Order is not eligible for payment" },
                 { status: 400 },
@@ -79,18 +79,22 @@ export async function POST(request: Request) {
             );
         }
 
-        // Fraud guard: prevent multiple unpaid payment attempts for the same order
+        // If Razorpay order already exists, return it for retry
         if (order.razorpay_order_id) {
-            return NextResponse.json(
-                { error: "Payment attempt already initiated" },
-                { status: 400 },
-            );
+            return NextResponse.json({
+                key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+                razorpayOrderId: order.razorpay_order_id,
+                amount: Math.round(Number(order.total_amount) * 100),
+                currency: "INR",
+                orderId: order.id,
+            });
         }
 
-        // Stock validation (no deduction)
+        // Stock validation — stock is NOT decremented until payment is confirmed,
+        // so we check current stock against order quantities here.
         const { data: items, error: itemsError } = await supabase
             .from("order_items")
-            .select("quantity, products(id, stock)")
+            .select("quantity, product_name, products(id, stock)")
             .eq("order_id", order.id);
 
         if (itemsError) {
@@ -104,10 +108,11 @@ export async function POST(request: Request) {
             const qty = Number(row?.quantity ?? 0);
             const prod = row?.products;
             const stock = Number(prod?.stock ?? 0);
+            const name = row?.product_name ?? "Item";
 
             if (qty > 0 && stock < qty) {
                 return NextResponse.json(
-                    { error: "Item out of stock" },
+                    { error: `"${name}" is out of stock` },
                     { status: 400 },
                 );
             }

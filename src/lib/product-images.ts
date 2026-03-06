@@ -17,3 +17,30 @@ export function getProductImagePublicUrl(
 
   return data.publicUrl || PRODUCT_IMAGE_PLACEHOLDER_DATA_URL;
 }
+
+/**
+ * Convert an array of image paths into public URLs.
+ * If `primaryImagePath` is provided, it's prepended as the first image.
+ */
+export function getProductImagesPublicUrls(
+  supabase: SupabaseClient,
+  primaryImagePath: string | null,
+  extraPaths: string[],
+): string[] {
+  const urls: string[] = [];
+
+  if (primaryImagePath) {
+    urls.push(getProductImagePublicUrl(supabase, primaryImagePath));
+  }
+
+  for (const path of extraPaths) {
+    const url = getProductImagePublicUrl(supabase, path);
+    if (url !== PRODUCT_IMAGE_PLACEHOLDER_DATA_URL) {
+      urls.push(url);
+    }
+  }
+
+  // Deduplicate in case primary is also in extras
+  return [...new Set(urls)];
+}
+

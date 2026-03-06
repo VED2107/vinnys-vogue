@@ -12,8 +12,6 @@ export async function createProduct(formData: FormData) {
     const categoryRaw = String(formData.get("category") || "").trim();
     const category = categoryRaw ? categoryRaw : null;
 
-    const image = formData.get("image") as File | null;
-
     const currencyRaw = String(formData.get("currency") || "INR").trim();
     const currency = currencyRaw ? currencyRaw : "INR";
 
@@ -36,35 +34,47 @@ export async function createProduct(formData: FormData) {
 
     const supabase = createSupabaseServerClient();
 
-    let image_path: string | null = null;
+    // Handle multiple images
+    const imageFiles = formData.getAll("images") as File[];
+    const validImages = imageFiles.filter((f) => f && f.size > 0 && f.type.startsWith("image/"));
 
-    if (image && image.size > 0) {
-        const ext = image.name.includes(".")
-            ? image.name.split(".").pop()!.toLowerCase()
+    let primaryImagePath: string | null = null;
+    const extraImagePaths: string[] = [];
+
+    // Generate a unique product ID prefix for uploads
+    const idPrefix = globalThis.crypto?.randomUUID
+        ? globalThis.crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+    for (let i = 0; i < validImages.length; i++) {
+        const file = validImages[i];
+        const ext = file.name.includes(".")
+            ? file.name.split(".").pop()!.toLowerCase()
             : "jpg";
-        const fileName = globalThis.crypto?.randomUUID
-            ? globalThis.crypto.randomUUID()
-            : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-        const uploadPath = `products/${fileName}.${ext}`;
+        const uploadPath = `products/${idPrefix}-${i}.${ext}`;
 
         const uploadResult = await supabase.storage
             .from(PRODUCT_IMAGE_BUCKET)
-            .upload(uploadPath, image, {
+            .upload(uploadPath, file, {
                 upsert: true,
-                contentType: image.type || undefined,
+                contentType: file.type || undefined,
             });
 
         if (uploadResult.error) {
             throw new Error(uploadResult.error.message);
         }
 
-        image_path = uploadPath;
+        if (i === 0) {
+            primaryImagePath = uploadPath;
+        } else {
+            extraImagePaths.push(uploadPath);
+        }
     }
 
     const { data: insertedProduct, error } = await supabase.from("products").insert({
         title,
         description,
-        image_path,
+        image_path: primaryImagePath,
         category,
         currency,
         price,
@@ -77,6 +87,20 @@ export async function createProduct(formData: FormData) {
 
     if (error) {
         throw new Error(error.message);
+    }
+
+    // Insert extra images into product_images table
+    if (extraImagePaths.length > 0 && insertedProduct) {
+        const imageRows = extraImagePaths.map((path, idx) => ({
+            product_id: insertedProduct.id,
+            image_path: path,
+            display_order: idx + 1,
+        }));
+
+        const { error: imgError } = await supabase.from("product_images").insert(imageRows);
+        if (imgError) {
+            console.error("Failed to insert product images:", imgError);
+        }
     }
 
     // Insert variants if has_variants is true

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
 import VariantManager from "@/components/variant-manager";
+import { MultiImageUploader } from "@/components/admin/multi-image-uploader";
 const RichTextEditor = dynamic(
   () => import("@/components/admin/rich-text-editor").then((m) => ({ default: m.RichTextEditor })),
   { ssr: false, loading: () => <div className="h-32 animate-pulse rounded-xl bg-[rgba(0,0,0,0.03)]" /> }
@@ -134,21 +135,7 @@ export default async function AdminNewProductPage() {
               <RichTextEditor name="description" />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-zinc-900" htmlFor="image">
-                Image
-              </label>
-              <input
-                id="image"
-                name="image"
-                type="file"
-                accept="image/*"
-                className="block w-full text-sm text-zinc-700 file:mr-4 file:rounded-xl file:border-0 file:bg-zinc-900 file:px-4 file:py-2 file:text-sm file:font-medium file:text-zinc-50 hover:file:bg-zinc-800"
-              />
-              <div className="text-xs text-zinc-500">
-                Uploads to product-images bucket. Saved as a storage object path.
-              </div>
-            </div>
+            <MultiImageUploader />
 
             {/* Display Order */}
             <div className="space-y-2">
