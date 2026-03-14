@@ -56,8 +56,54 @@ function formatEventLabel(type: string) {
         case "CANCELLED":
         case "ORDER_CANCELLED":
             return "Order Cancelled";
+        case "status_changed":
+            return "Status Updated";
         default:
-            return type;
+            return type.replace(/_/g, " ");
+    }
+}
+
+function getStatusLabel(status: string): string {
+    switch (status) {
+        case "pending":
+            return "Pending";
+        case "confirmed":
+            return "Confirmed";
+        case "shipped":
+            return "Shipped";
+        case "delivered":
+            return "Delivered";
+        case "cancelled":
+            return "Cancelled";
+        default:
+            return status.charAt(0).toUpperCase() + status.slice(1);
+    }
+}
+
+function getPageTitle(status: string, isPaid: boolean): string {
+    if (!isPaid) return "Order Created";
+    switch (status) {
+        case "shipped":
+            return "Order Shipped";
+        case "delivered":
+            return "Order Delivered";
+        case "cancelled":
+            return "Order Cancelled";
+        default:
+            return "Order Placed";
+    }
+}
+
+function getStatusColor(status: string): string {
+    switch (status) {
+        case "shipped":
+            return "text-violet-700";
+        case "delivered":
+            return "text-emerald-700";
+        case "cancelled":
+            return "text-red-600";
+        default:
+            return "text-heading";
     }
 }
 
@@ -126,7 +172,7 @@ export default async function OrderPage({
                         <div className="mt-6">
                             <SectionTitle
                                 subtitle={`#${o.id.slice(0, 8).toUpperCase()}`}
-                                title={isPaid ? "Order Placed" : "Order Created"}
+                                title={getPageTitle(o.status, isPaid)}
                             />
                         </div>
                     </div>
@@ -143,8 +189,8 @@ export default async function OrderPage({
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-muted">Status</span>
-                                <span className={`font-medium ${isPaid ? "text-heading" : "text-gold"}`}>
-                                    {isPaid ? "Confirmed" : "Awaiting Payment"}
+                                <span className={`font-medium ${isPaid ? getStatusColor(o.status) : "text-gold"}`}>
+                                    {isPaid ? getStatusLabel(o.status) : "Awaiting Payment"}
                                 </span>
                             </div>
                             <div className="flex justify-between">
@@ -194,7 +240,7 @@ export default async function OrderPage({
                         </div>
                     </div>
 
-                    {o.status === "shipped" && o.tracking_number && (
+                    {(o.status === "shipped" || o.status === "delivered") && o.tracking_number && (
                         <div className="mt-8 border rounded-xl p-6 bg-neutral-50">
                             <h3 className="text-lg font-semibold mb-4">
                                 Shipment Details

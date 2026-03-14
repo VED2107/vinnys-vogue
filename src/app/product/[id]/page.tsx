@@ -11,6 +11,7 @@ import type { ReviewItem } from "@/components/product-reviews";
 import ProductReviewForm from "@/components/product-review-form";
 import { ProductBadges } from "@/components/product-badges";
 import ProductImageGallery from "@/components/product-image-gallery";
+import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/json-ld";
 
 export const revalidate = 60;
 
@@ -198,8 +199,32 @@ export default async function ProductDetailPage({
   const hasReviewed = !!existingReview;
   const showForm = !hasReviewed;
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.vinnysvogue.in";
+  const productUrl = `${siteUrl}/product/${p.id}`;
+  const plainDescription = p.description
+    ? p.description.replace(/<[^>]*>/g, "").slice(0, 200)
+    : `Shop ${p.title} at Vinnys Vogue.`;
+
   return (
     <div className="min-h-screen bg-bg-primary">
+      <ProductJsonLd
+        name={p.title}
+        description={plainDescription}
+        image={allImageUrls[0]}
+        price={p.price}
+        currency={p.currency}
+        availability={p.stock > 0 ? "InStock" : "OutOfStock"}
+        url={productUrl}
+        ratingValue={avgRating || undefined}
+        reviewCount={reviewCount || undefined}
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: siteUrl },
+          { name: "Collection", url: `${siteUrl}/products` },
+          { name: p.title, url: productUrl },
+        ]}
+      />
       <div className="w-full max-w-[1400px] mx-auto px-6 lg:px-16 xl:px-24 py-16">
         <FadeIn>
           <div className="grid grid-cols-1 gap-10 lg:gap-16 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">

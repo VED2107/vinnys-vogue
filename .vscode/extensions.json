@@ -1,0 +1,39 @@
+{
+  "recommendations": [
+    // TypeScript & Next.js
+    "ms-vscode.vscode-typescript-next",
+
+    // ESLint
+    "dbaeumer.vscode-eslint",
+
+    // Tailwind CSS IntelliSense (v4 compatible)
+    "bradlc.vscode-tailwindcss",
+
+    // PostCSS Language Support
+    "csstools.postcss",
+
+    // Supabase / Deno (for edge functions)
+    "denoland.vscode-deno",
+
+    // Prettier - Code Formatter
+    "esbenp.prettier-vscode",
+
+    // Auto-rename paired HTML/JSX tags
+    "formulahendry.auto-rename-tag",
+
+    // Path IntelliSense (autocomplete file paths)
+    "christian-kohler.path-intellisense",
+
+    // npm IntelliSense (autocomplete import statements)
+    "christian-kohler.npm-intellisense",
+
+    // Error Lens (inline error/warning display)
+    "usernamehw.errorlens",
+
+    // GitLens (supercharged Git)
+    "eamodio.gitlens",
+
+    // DotENV syntax highlighting
+    "mikestead.dotenv"
+  ]
+}

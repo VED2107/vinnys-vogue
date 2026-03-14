@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
@@ -7,6 +8,17 @@ import {
 import { FadeIn } from "@/components/fade-in";
 import { MandalaBackground } from "@/components/decorative";
 import { GoldDivider } from "@/components/section-divider";
+
+export const metadata: Metadata = {
+    title: "About — Vinnys Vogue",
+    description:
+        "Discover the craftsmanship behind Vinnys Vogue. Handcrafted bridal lehengas and couture made with passion for the modern Indian bride.",
+    openGraph: {
+        title: "About Vinnys Vogue — Our Craftsmanship",
+        description:
+            "Handcrafted bridal couture made with passion for the modern Indian bride.",
+    },
+};
 
 export default async function AboutPage() {
     const supabase = createSupabaseServerClient();
@@ -74,10 +86,10 @@ export default async function AboutPage() {
                             <div className="relative overflow-hidden rounded-2xl bg-[#EDE8E0] row-span-2" style={{ marginTop: "40px" }}>
                                 <ImageOrPlaceholder src={craft.image_url_1} alt="Artisan Detail 1" />
                             </div>
-                            <div className="relative overflow-hidden rounded-2xl bg-[#EDE8E0] aspect-[3/4]">
+                            <div className="relative overflow-hidden rounded-2xl bg-[#EDE8E0] aspect-3/4">
                                 <ImageOrPlaceholder src={craft.image_url_2} alt="Artisan Detail 2" />
                             </div>
-                            <div className="relative overflow-hidden rounded-2xl bg-[#EDE8E0] aspect-[3/4]">
+                            <div className="relative overflow-hidden rounded-2xl bg-[#EDE8E0] aspect-3/4">
                                 <ImageOrPlaceholder src={craft.image_url_3} alt="Artisan Detail 3" />
                             </div>
                         </div>

@@ -6,6 +6,7 @@ import { ScrollHeader } from "@/components/scroll-header";
 import { GoldenBackground } from "@/components/golden-background";
 import { PageTransition } from "@/components/page-transition";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { OrganizationJsonLd, WebSiteJsonLd } from "@/components/json-ld";
 import "./globals.css";
 
 const inter = Inter({
@@ -74,6 +75,9 @@ export default function RootLayout({
         {/* Preconnect to critical origins — eliminates DNS+TLS roundtrip for LCP image */}
         <link rel="preconnect" href="https://jluenrlmtfbfvpawqfuc.supabase.co" />
         <link rel="preconnect" href="https://api.resend.com" />
+        {/* JSON-LD structured data for rich search results */}
+        <OrganizationJsonLd />
+        <WebSiteJsonLd />
       </head>
       <body
         className={`${inter.variable} ${playfair.variable} antialiased relative`}

@@ -22,6 +22,16 @@ async function handleStatusUpdate(
         return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
+    const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
+
+    if (!profile || profile.role !== "admin") {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     let body: { status?: string; courier_name?: string; tracking_number?: string };
     try {
         body = await request.json();

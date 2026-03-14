@@ -1,4 +1,17 @@
+import type { Metadata } from "next";
+
 export const revalidate = 60;
+
+export const metadata: Metadata = {
+  title: "Collection — Vinnys Vogue",
+  description:
+    "Browse our curated collection of handcrafted bridal lehengas, sarees, and couture. Filter by category and find your perfect outfit.",
+  openGraph: {
+    title: "Our Collection — Vinnys Vogue",
+    description:
+      "Curated bridal lehengas, sarees, and couture for the modern Indian bride.",
+  },
+};
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ProductCard } from "@/components/product-card";
